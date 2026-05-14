@@ -3,12 +3,14 @@ import { useAuth } from './hooks/useAuth';
 import { useState, useEffect, useRef } from 'react';
 import api from './api';
 
-import Header from './components/Header';
-import Login from './Login';
-import AdminPage from './pages/AdminPage';
-import LandlordPage from './pages/LandlordPage';
-import GuestPage from './pages/GuestPage';
-import TenantPage from './pages/TenantPage';
+import Header from './components/Header/Header';
+import Login from './pages/Login/Login';
+import HomePage from './pages/Home/HomePage';
+import NotFoundPage from './pages/NotFound/NotFoundPage';
+import AdminPage from './pages/Admin/AdminPage';
+import LandlordPage from './pages/Landlord/LandlordPage';
+import GuestPage from './pages/Guest/GuestPage';
+import TenantPage from './pages/Tenant/TenantPage';
 import ChatBox from './components/ChatBox';
 import { ROLES } from './constants';
 
@@ -80,7 +82,6 @@ function AppContent() {
   const kiemTraHopDong = async (isBackground = false) => {
     if (user?.role !== ROLES.USER) return;
     if (!isBackground && isMounted.current) setDangKiemTra(true);
-
     try {
       const res = await api.get(`/hop-dong/khach/${user.id}`);
       if (isMounted.current) {
@@ -105,29 +106,21 @@ function AppContent() {
 
   const handleOpenChat = () => {
     const chuTroId = hopDongCuaToi?.phongTro?.chuTroId ?? hopDongCuaToi?.phongTro?.chuTro?.id;
-    if (!chuTroId) {
-      alert('Không tìm thấy thông tin chủ trọ!');
-      return;
-    }
-    setChatTarget({
-      id: chuTroId,
-      username: `Chủ trọ phòng ${hopDongCuaToi.phongTro?.tenPhong}`,
-    });
+    if (!chuTroId) { alert('Không tìm thấy thông tin chủ trọ!'); return; }
+    setChatTarget({ id: chuTroId, username: `Chủ trọ phòng ${hopDongCuaToi.phongTro?.tenPhong}` });
   };
 
   const rawRole = user?.role || '';
   const normalizedRole = rawRole.startsWith('ROLE_') ? rawRole : `ROLE_${rawRole}`;
 
   const renderContent = () => {
-    if (normalizedRole === ROLES.ADMIN) return <AdminPage currentUser={user} />;
+    if (normalizedRole === ROLES.ADMIN)    return <AdminPage currentUser={user} />;
     if (normalizedRole === ROLES.LANDLORD) return <LandlordPage currentUser={user} />;
 
     if (normalizedRole === ROLES.USER) {
       if (dangKiemTra) {
         return (
-          <div style={{
-            textAlign: 'center', padding: '60px', animation: 'fadeIn 0.3s ease',
-          }}>
+          <div style={{ textAlign: 'center', padding: '60px', animation: 'fadeIn 0.3s ease' }}>
             <div style={{
               width: '24px', height: '24px', border: '3px solid var(--border)',
               borderTopColor: 'var(--accent)', borderRadius: '50%',
@@ -137,15 +130,8 @@ function AppContent() {
           </div>
         );
       }
-
-      if (hopDongCuaToi?.trangThai === 'DA_DUYET') {
-        return <TenantPage currentUser={user} hopDongCuaToi={hopDongCuaToi} />;
-      }
-
-      if (hopDongCuaToi?.trangThai === 'CHO_DUYET') {
-        return <WaitingScreen hopDong={hopDongCuaToi} onOpenChat={handleOpenChat} />;
-      }
-
+      if (hopDongCuaToi?.trangThai === 'DA_DUYET')  return <TenantPage currentUser={user} hopDongCuaToi={hopDongCuaToi} />;
+      if (hopDongCuaToi?.trangThai === 'CHO_DUYET') return <WaitingScreen hopDong={hopDongCuaToi} onOpenChat={handleOpenChat} />;
       return <GuestPage currentUser={user} onRentSuccess={() => kiemTraHopDong(false)} />;
     }
 
@@ -162,9 +148,8 @@ function AppContent() {
   };
 
   return (
-    <div className="container" style={{ fontFamily: 'var(--font)', minHeight: '100vh' }}>
+    <div className="container app-layout">
       <Header user={user} onLogout={logout} />
-
       {dangKiemTra && (
         <div style={{
           position: 'fixed', top: '16px', right: '20px',
@@ -182,17 +167,17 @@ function AppContent() {
           Đang đồng bộ...
         </div>
       )}
-
       {renderContent()}
-
-      <ChatBox
-        currentUser={user}
-        targetUser={chatTarget}
-        isOpen={!!chatTarget}
-        onClose={() => setChatTarget(null)}
-      />
+      <ChatBox currentUser={user} targetUser={chatTarget} isOpen={!!chatTarget} onClose={() => setChatTarget(null)} />
     </div>
   );
+}
+
+function PublicOnlyRoute({ children }) {
+  const { user, isLoadingAuth } = useAuth();
+  if (isLoadingAuth) return <LoadingScreen message="Đang xác thực..." />;
+  if (user) return <Navigate to="/dashboard" replace />;
+  return children;
 }
 
 function ProtectedRoute({ children }) {
@@ -202,18 +187,21 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
+function SmartRedirect() {
+  const { user, isLoadingAuth } = useAuth();
+  if (isLoadingAuth) return <LoadingScreen />;
+  if (user) return <Navigate to="/dashboard" replace />;
+  return <NotFoundPage />;
+}
+
 export default function App() {
   return (
     <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route
-        path="/*"
-        element={
-          <ProtectedRoute>
-            <AppContent />
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/" element={<PublicOnlyRoute><HomePage /></PublicOnlyRoute>} />
+      <Route path="/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
+      <Route path="/dashboard" element={<ProtectedRoute><AppContent /></ProtectedRoute>} />
+      <Route path="/app" element={<ProtectedRoute><AppContent /></ProtectedRoute>} />
+      <Route path="*" element={<SmartRedirect />} />
     </Routes>
   );
 }

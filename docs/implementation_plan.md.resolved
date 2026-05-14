@@ -1,0 +1,38 @@
+# Kế hoạch Tái Cấu Trúc Frontend - Phase 1 (Foundation & Auth)
+
+Dự án hiện tại đang sử dụng inline-styles (CSS viết trực tiếp trong JSX), điều này gây khó khăn trong việc bảo trì và không tối ưu cho Responsive. Dưới góc độ một Senior Frontend Developer, tôi đề xuất chúng ta sẽ áp dụng **phương pháp BEM (Block Element Modifier)** kết hợp với cấu trúc component tiêu chuẩn để làm cho giao diện trở nên chuyên nghiệp, dễ bảo trì và đẹp mắt hơn.
+
+Theo yêu cầu của bạn, chúng ta sẽ **không làm tất cả cùng lúc** mà chia nhỏ ra. Phase 1 sẽ tập trung vào nền tảng cốt lõi và các trang đầu tiên mà người dùng tiếp xúc.
+
+## Phạm vi công việc (Phase 1)
+
+### 1. Nền tảng CSS (`src/index.css`)
+- Thiết lập hệ thống biến (CSS Variables) chuẩn (màu sắc, spacing, typography).
+- Định nghĩa các BEM Blocks dùng chung: `.btn`, `.card`, `.input`, `.form-group`.
+- Thiết lập Media Queries để đảm bảo chuẩn **Responsive** trên Mobile và Tablet.
+
+### 2. Header & Layout (`src/components/Header.jsx` & `src/App.jsx`)
+- [MODIFY] [Header.jsx](file:///d:/java/BTL.JAVA/fontend_pt-main/src/components/Header.jsx)
+  - Chuyển toàn bộ inline-style sang CSS class theo BEM (vd: `.header`, `.header__logo`, `.header__actions`).
+  - Tối ưu hiển thị Header trên điện thoại (ẩn bớt text, dùng icon).
+- [MODIFY] [App.jsx](file:///d:/java/BTL.JAVA/fontend_pt-main/src/App.jsx)
+  - Cập nhật wrapper layout chính (`.app-container`, `.app-content`).
+
+### 3. Trang Đăng Nhập / Đăng Ký (`src/Login.jsx`)
+- [MODIFY] [Login.jsx](file:///d:/java/BTL.JAVA/fontend_pt-main/src/Login.jsx)
+  - Chuyển đổi thành BEM (vd: `.auth-page`, `.auth-card`, `.auth-form__input`).
+  - Thêm comment giải thích chi tiết trong code.
+  - Xây dựng giao diện responsive (full width trên mobile, canh giữa trên desktop).
+
+---
+
+> [!IMPORTANT]
+> **User Review Required**
+> - Bạn có đồng ý với phạm vi của Phase 1 này không?
+> - Về mặt thẩm mỹ, bạn có muốn giữ nguyên tone màu Xanh dương (`#2563EB`) hiện tại làm màu chủ đạo (Primary color) không, hay muốn đổi sang một tone màu khác (vd: Xanh ngọc, Cam, Đen/Trắng tối giản)?
+
+## Verification Plan
+1. Khởi động lại Frontend server.
+2. Kiểm tra trang Đăng nhập / Đăng ký trên cả giao diện Desktop và Mobile (dùng Chrome DevTools).
+3. Đăng nhập vào trong để kiểm tra Header mới.
+4. Đảm bảo toàn bộ logic API cũ (login, register) vẫn hoạt động chính xác 100%.

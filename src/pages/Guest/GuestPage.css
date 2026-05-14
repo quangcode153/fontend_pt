@@ -1,0 +1,209 @@
+/* ===========================================
+   GuestPage.css — Styles riêng cho trang Tìm Trọ
+   Áp dụng phương pháp BEM: .guest-page, .guest-page__element, .guest-page__element--modifier
+   =========================================== */
+
+/* --- Thanh điều hướng Tab (Navigation Bar) --- */
+.guest-nav {
+  display: flex;
+  gap: 4px;
+  background: var(--border-light);
+  padding: 4px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  width: fit-content;
+  margin-bottom: 20px;
+}
+
+.guest-nav__item {
+  padding: 8px 20px;
+  border-radius: var(--radius-sm);
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all var(--transition);
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.guest-nav__item--active {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* --- Toolbar bên phải (Actions) --- */
+.guest-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* --- Header row tổng (chứa Nav + Toolbar) --- */
+.guest-header-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  gap: 12px;
+}
+
+/* --- Tag trạng thái phòng --- */
+.guest-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.guest-tag--empty {
+  background: var(--success-light);
+  color: var(--success);
+}
+
+.guest-tag--rented {
+  background: var(--danger-light);
+  color: var(--danger);
+}
+
+/* --- Danh sách chủ trọ --- */
+.host-card {
+  padding: 20px;
+  background: var(--bg);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  text-align: center;
+  transition: all var(--transition);
+}
+
+.host-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+.host-card__avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  margin: 0 auto 10px;
+  background: var(--accent-light);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.host-card__name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* --- Chi tiết chủ trọ --- */
+.host-profile {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.host-profile__info {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.host-profile__avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #DCFCE7;
+  color: var(--success);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.host-profile__name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--success);
+}
+
+.host-profile__contacts {
+  font-size: 12px;
+  color: #15803D;
+  margin-top: 4px;
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+/* --- Card phòng trọ --- */
+.room-card {
+  background: var(--surface);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  border: 1px solid var(--border);
+  padding: 20px;
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.room-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.room-card--empty {
+  border-top: 3px solid var(--success);
+}
+
+.room-card--rented {
+  border-top: 3px solid var(--danger);
+}
+
+.room-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.room-card__name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.room-card__price-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 13px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .guest-header-row {
+    flex-direction: column;
+  }
+  .guest-nav {
+    width: 100%;
+  }
+  .guest-nav__item {
+    flex: 1;
+    text-align: center;
+  }
+}

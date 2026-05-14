@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import api from '../api';
-import ChatBox from '../components/ChatBox';
-import QuanLyNguoiDung from '../components/QuanLyNguoiDung';
+import api from '../../api';
+import ChatBox from '../../components/ChatBox';
+import QuanLyNguoiDung from '../../components/QuanLyNguoiDung';
+import './AdminPage.css';
 
 const ROLES = { ADMIN: 'ROLE_ADMIN' };
 const ROOM_STATUS = { EMPTY: 'TRONG', RENTED: 'DA_THUE', MAINTENANCE: 'BAO_TRI' };

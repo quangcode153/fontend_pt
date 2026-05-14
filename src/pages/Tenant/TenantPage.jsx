@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import api from '../api';
-import ChatBox from '../components/ChatBox';
-import KhieuNaiForm from '../components/KhieuNaiForm';
-import HoSoForm from '../components/HoSoForm';
-import useAdminContact from '../hooks/useAdminContact';
+import api from '../../api';
+import ChatBox from '../../components/ChatBox';
+import KhieuNaiForm from '../../components/KhieuNaiForm';
+import HoSoForm from '../../components/HoSoForm';
+import useAdminContact from '../../hooks/useAdminContact';
+import './TenantPage.css';
 
 const ROLES = { USER: 'ROLE_USER' };
 
