@@ -153,6 +153,12 @@
     "btn_send": "Gửi"
   },
   "landlord": {
+    "overview_this_month": "Tổng quan tháng này",
+    "hello_landlord": "Xin chào, Chủ Trọ! 👋",
+    "manage_rooms_summary": "Quản lý {{total}} phòng · {{rented}} đang cho thuê",
+    "no_rooms_created": "Chưa có phòng nào được tạo.",
+    "room_name_ph": "VD: Phòng 101",
+    "room_price_ph": "VD: 3500000",
     "loading": "Đang tải...",
     "access_denied": "Truy cập bị từ chối.",
     "error_fetch": "Lỗi tải dữ liệu. Thử lại sau!",

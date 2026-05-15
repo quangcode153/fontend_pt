@@ -153,6 +153,12 @@
     "btn_send": "Send"
   },
   "landlord": {
+    "overview_this_month": "Overview this month",
+    "hello_landlord": "Hello, Landlord! 👋",
+    "manage_rooms_summary": "Managing {{total}} rooms · {{rented}} currently rented",
+    "no_rooms_created": "No rooms have been created yet.",
+    "room_name_ph": "e.g. Room 101",
+    "room_price_ph": "e.g. 3500000",
     "loading": "Loading...",
     "access_denied": "Access Denied.",
     "error_fetch": "Error fetching data. Try again later!",

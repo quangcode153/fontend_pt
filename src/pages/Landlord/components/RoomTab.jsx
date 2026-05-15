@@ -29,52 +29,50 @@ export default function RoomTab({
   };
 
   const tagLabel = (tt) => {
-    if (tt === ROOM_STATUS.EMPTY) return 'Trống';
-    if (tt === ROOM_STATUS.RENTED) return 'Đã thuê';
-    return 'Bảo trì';
+    return t(`landlord.room_status_${tt}`);
   };
 
   return (
     <div style={{ animation: 'fadeIn 0.3s ease' }}>
       {/* === Form thêm phòng mới === */}
       <div className="l-card" style={{ marginBottom: '20px' }}>
-        <div className="l-section-title">➕ Thêm phòng mới</div>
+        <div className="l-section-title">➕ {t('landlord.add_new_room')}</div>
         <form onSubmit={onThemPhong} className="l-add-room-form">
           <div className="l-add-room-form__field" style={{ flex: 2 }}>
-            <label className="l-form-label">Tên phòng</label>
+            <label className="l-form-label">{t('landlord.room_name')}</label>
             <input
               className="l-form-input"
               type="text"
               value={tenPhong}
               onChange={e => setTenPhong(e.target.value)}
-              placeholder="VD: Phòng 101"
+              placeholder={t('landlord.room_name_ph')}
               required
               disabled={isSubmitting}
             />
           </div>
           <div className="l-add-room-form__field" style={{ flex: 1 }}>
-            <label className="l-form-label">Giá (VNĐ)</label>
+            <label className="l-form-label">{t('landlord.price_vnd')}</label>
             <input
               className="l-form-input"
               type="number"
               value={giaPhong}
               onChange={e => setGiaPhong(e.target.value)}
-              placeholder="VD: 3500000"
+              placeholder={t('landlord.room_price_ph')}
               required
               disabled={isSubmitting}
             />
           </div>
           <div className="l-add-room-form__field" style={{ flex: 1 }}>
-            <label className="l-form-label">Trạng thái</label>
+            <label className="l-form-label">{t('landlord.status')}</label>
             <select
               className="l-form-input"
               value={trangThai}
               onChange={e => setTrangThai(e.target.value)}
               disabled={isSubmitting}
             >
-              <option value={ROOM_STATUS.EMPTY}>Trống</option>
-              <option value={ROOM_STATUS.RENTED}>Đã thuê</option>
-              <option value={ROOM_STATUS.MAINTENANCE}>Bảo trì</option>
+              <option value={ROOM_STATUS.EMPTY}>{t('landlord.room_status_TRONG')}</option>
+              <option value={ROOM_STATUS.RENTED}>{t('landlord.room_status_DA_THUE')}</option>
+              <option value={ROOM_STATUS.MAINTENANCE}>{t('landlord.room_status_BAO_TRI')}</option>
             </select>
           </div>
           <button
@@ -83,7 +81,7 @@ export default function RoomTab({
             disabled={isSubmitting}
             style={{ whiteSpace: 'nowrap', alignSelf: 'flex-end' }}
           >
-            {isSubmitting ? 'Đang lưu...' : '💾 Lưu phòng'}
+            {isSubmitting ? t('landlord.btn_saving') : `💾 ${t('landlord.btn_save_room')}`}
           </button>
         </form>
       </div>
@@ -92,7 +90,7 @@ export default function RoomTab({
       {phongTros.length === 0 ? (
         <div className="l-empty" style={{ padding: '48px 0' }}>
           <img src={emptyRoomsImg} alt="No rooms" style={{ width: '160px', marginBottom: '16px', opacity: 0.8 }} />
-          <div className="l-empty__text">Chưa có phòng nào được tạo.</div>
+          <div className="l-empty__text">{t('landlord.no_rooms_created')}</div>
         </div>
       ) : (
         <div className="l-room-grid">
@@ -130,23 +128,23 @@ export default function RoomTab({
                 <div className="l-room-card__name">{phong.tenPhong}</div>
 
                 <div className="l-info-row">
-                  <span className="l-info-row__label">Giá thuê:</span>
+                  <span className="l-info-row__label">{t('landlord.rent_price')}:</span>
                   <span className="l-info-row__value" style={{ color: 'var(--accent)' }}>
                     {phong.giaPhong?.toLocaleString()} ₫
                   </span>
                 </div>
 
                 <div className="l-info-row">
-                  <span className="l-info-row__label">Khách thuê:</span>
+                  <span className="l-info-row__label">{t('landlord.guest')}:</span>
                   <span className="l-info-row__value" style={{ fontSize: '12px' }}>
                     {hopDongHienTai
-                      ? (hopDongHienTai.khachHang?.hoTen || hopDongHienTai.khachHang?.username || 'Khách thuê')
+                      ? (hopDongHienTai.khachHang?.hoTen || hopDongHienTai.khachHang?.username || t('landlord.guest'))
                       : '—'}
                   </span>
                 </div>
 
                 <div className="l-info-row" style={{ borderBottom: 'none' }}>
-                  <span className="l-info-row__label">Trạng thái:</span>
+                  <span className="l-info-row__label">{t('landlord.status')}:</span>
                   <span className={`l-tag l-tag--${tagColor(phong.trangThai)}`}>
                     {tagLabel(phong.trangThai)}
                   </span>
@@ -157,7 +155,7 @@ export default function RoomTab({
                   style={{ marginTop: '16px' }}
                   onClick={() => onXemChiTiet(phong, hopDongHienTai)}
                 >
-                  Xem chi tiết
+                  {t('landlord.btn_details')}
                 </button>
               </div>
             );

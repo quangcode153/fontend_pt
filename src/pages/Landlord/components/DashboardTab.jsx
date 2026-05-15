@@ -7,7 +7,23 @@ import { useTranslation } from 'react-i18next';
 import dashboardBanner from '../../../assets/dashboard_banner.png';
 
 export default function DashboardTab({ thongKeData }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+
+  const getShortMonth = (month) => {
+    if (i18n.language === 'en') {
+      const enMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
+      return enMonths[month - 1] || month;
+    }
+    return `T${month}`;
+  };
+
+  const getFullMonth = (month) => {
+    if (i18n.language === 'en') {
+      const enMonths = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      return enMonths[month - 1] || month;
+    }
+    return `Tháng ${month}`;
+  };
 
   if (!thongKeData) {
     return (
@@ -37,7 +53,7 @@ export default function DashboardTab({ thongKeData }) {
         marginBottom: '24px',
         position: 'relative',
         height: '180px',
-        background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 60%, #A855F7 100%)',
+        background: 'linear-gradient(135deg, #D47A95 0%, #E09BAE 60%, #ECAFC0 100%)',
         display: 'flex',
         alignItems: 'center',
         boxShadow: 'var(--shadow-md)',
@@ -57,13 +73,13 @@ export default function DashboardTab({ thongKeData }) {
         {/* Text overlay bên trái */}
         <div style={{ padding: '28px 32px', position: 'relative', zIndex: 1 }}>
           <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', fontWeight: 500, marginBottom: '6px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-            Tổng quan tháng này
+            {t('landlord.overview_this_month')}
           </div>
           <div style={{ fontSize: '28px', fontWeight: 800, color: '#fff', letterSpacing: '-0.5px', marginBottom: '8px' }}>
-            Xin chào, Chủ Trọ! 👋
+            {t('landlord.hello_landlord')}
           </div>
           <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.75)' }}>
-            Quản lý {thongKeData.tongSoPhong || 0} phòng · {thongKeData.soPhongDaThue || 0} đang cho thuê
+            {t('landlord.manage_rooms_summary', { total: thongKeData.tongSoPhong || 0, rented: thongKeData.soPhongDaThue || 0 })}
           </div>
         </div>
       </div>
@@ -123,9 +139,9 @@ export default function DashboardTab({ thongKeData }) {
                 <div
                   className={`l-chart-col__bar ${isCurrent ? 'l-chart-col__bar--current' : 'l-chart-col__bar--past'}`}
                   style={{ height: `${Math.max(height, 4)}%` }}
-                  title={`Tháng ${d.thang}: ${d.doanhThu?.toLocaleString()}₫`}
+                  title={`${getFullMonth(d.thang)}: ${d.doanhThu?.toLocaleString()}₫`}
                 />
-                <div className="l-chart-col__label-bot">T{d.thang}</div>
+                <div className="l-chart-col__label-bot">{getShortMonth(d.thang)}</div>
               </div>
             );
           })}
