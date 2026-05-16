@@ -12,10 +12,9 @@ Auth & Security     ████████████ 100%  ✅
 Core CRUD           ████████████ 100%  ✅
 Chat Realtime       ████████████ 100%  ✅
 Hồ sơ & Khiếu nại  ████████████ 100%  ✅
-UI/UX               ████████████ 100%  ✅
-Điện nước (BE)      █████████░░░  80%  🔄
-Điện nước (FE)      ░░░░░░░░░░░░   0%  🚧
-Dashboard           ░░░░░░░░░░░░   0%  ⏭️
+UI/UX & i18n        ████████████ 100%  ✅
+Điện nước & HĐ      ████████████ 100%  ✅
+Dashboard           ████████████ 100%  ✅
 Notification        ░░░░░░░░░░░░   0%  ⏭️
 ```
 
@@ -57,26 +56,27 @@ Notification        ░░░░░░░░░░░░   0%  ⏭️
 - [x] Gửi khiếu nại từ mọi role
 - [x] Admin xem và đánh dấu đã xử lý
 
-### ✅ UI/UX Nâng cấp (100%)
+### ✅ UI/UX & Quốc tế hóa (i18n) (100%)
 - [x] Design system thống nhất (style object, design tokens)
 - [x] Lazy loading pages
 - [x] Responsive layout
 - [x] ChatBox redesign (avatar, bubble styles)
-- [x] Modal chi tiết phòng
+- [x] Modal chi tiết phòng & Hợp đồng đầy đủ chữ ký
+- [x] Đa ngôn ngữ (i18next) - Viết/Anh toàn hệ thống
 - [x] Empty states, loading states
 
-### 🔄 Điện nước & Hóa đơn (40%)
+### ✅ Điện nước & Hóa đơn (100%)
 - [x] Entity: `ChiSoDienNuoc`, `HoaDon`
 - [x] Service: tính tiền tự động, tạo hóa đơn
 - [x] API endpoints: `POST /dien-nuoc/chot-so`, `GET /hoa-don/me`
-- [ ] **FE: Form nhập chỉ số cho Landlord** ← việc tiếp theo
-- [ ] **FE: Trang xem hóa đơn cho Tenant** ← việc tiếp theo
-- [ ] Test end-to-end flow
+- [x] FE: Form nhập chỉ số, Cập nhật & Xuất hóa đơn cho Landlord
+- [x] FE: Trang xem hóa đơn & Thanh toán QR cho Tenant
+- [x] Test end-to-end flow hoàn tất
 
-### ⏭️ Dashboard Thống kê (0%)
-- [ ] API thống kê doanh thu theo tháng/năm
-- [ ] Biểu đồ cột Recharts (Admin + Landlord)
-- [ ] Tỉ lệ phòng trống/đã thuê
+### ✅ Dashboard Thống kê (100%)
+- [x] API thống kê doanh thu theo tháng/năm
+- [x] Biểu đồ cột Thống kê biến động (Landlord Dashboard)
+- [x] Tỉ lệ phòng trống/đã thuê, Công nợ chưa thu
 
 ### ⏭️ Push Notification (0%)
 - [ ] Thiết kế luồng: Server push → client
@@ -89,7 +89,8 @@ Notification        ░░░░░░░░░░░░   0%  ⏭️
 
 | # | Mức | Mô tả | Nguyên nhân nghi ngờ |
 |---|---|---|---|
-| 1 | 🔴 | Token mất sau reload F5 | Interceptor chạy trước fetchMe hoàn thành |
-| 2 | 🟡 | Còn hardcode enum tiếng Việt | Chưa audit toàn bộ components cũ |
-| 3 | 🟡 | ID Chat/Điện nước dùng Integer | Có thể overflow khi data lớn |
-| 4 | 🟢 | Dùng `alert()` thô | Chưa tích hợp toast library |
+| 1 | 🟢 | Token mất sau reload F5 | Fixed (Interceptor + Loading Auth) |
+| 2 | 🟢 | Còn hardcode enum tiếng Việt | Fixed (Audit i18n toàn hệ thống) |
+| 3 | 🟢 | ID Chat/Điện nước dùng Integer | Fixed (Đã migrate sang Long) |
+| 4 | 🟢 | Tin nhắn lặp khi gửi | Fixed (De-duplication logic) |
+| 5 | 🟡 | Dùng `alert()` thô | (Sắp tới: Toast Library) |

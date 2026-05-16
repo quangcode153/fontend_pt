@@ -48,9 +48,17 @@ export default function InvoiceTab({ hoaDons, onCapNhatSo }) {
 
                 {/* Chi tiết */}
                 <div className="l-info-row">
+                  <span className="l-info-row__label">{t('landlord.room_fee_label')}</span>
+                  <span className="l-info-row__value">{hd.tienPhong?.toLocaleString()} {t('landlord.currency')}</span>
+                </div>
+                <div className="l-info-row">
+                  <span className="l-info-row__label">{t('landlord.utility_label')}</span>
+                  <span className="l-info-row__value">{hd.tienDien?.toLocaleString()} {t('landlord.currency')} / {hd.tienNuoc?.toLocaleString()} {t('landlord.currency')}</span>
+                </div>
+                <div className="l-info-row">
                   <span className="l-info-row__label">{t('landlord.total_amount')}</span>
-                  <span className="l-info-row__value" style={{ color: 'var(--accent)', fontSize: '15px' }}>
-                    {hd.tongTien?.toLocaleString()} ₫
+                  <span className="l-info-row__value" style={{ color: 'var(--accent)', fontSize: '15px', fontWeight: 'bold' }}>
+                    {hd.tongTien?.toLocaleString()} {t('landlord.currency')}
                   </span>
                 </div>
                 <div className="l-info-row" style={{ borderBottom: 'none' }}>

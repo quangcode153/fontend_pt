@@ -4,6 +4,37 @@
 
 ---
 
+## [2026-05-16] - Hoàn thiện Hệ thống: i18n & Hợp đồng Điện tử
+
+### Tính năng mới (Feature)
+- **Internationalization (i18n):** Triển khai đa ngôn ngữ toàn diện (Tiếng Việt & Tiếng Anh) cho toàn bộ hệ thống (Landing Page, Dashboard, Chat, Billing).
+- **Hợp đồng Điện tử:** Khách thuê hiện đã có thể xem trực tiếp nội dung hợp đồng và thực hiện ký tên điện tử ngay trên giao diện `TenantPage`.
+- **Giao diện (UI):** Thiết kế lại trang chủ (`HomePage`) và trang đăng nhập (`Login`) theo phong cách hiện đại, chuyên nghiệp.
+- **Admin:** Bổ sung tính năng quản lý danh sách phòng theo từng chủ trọ và xử lý khiới nại tập trung.
+
+### Sửa lỗi & Tối ưu (Fixes & Optimization)
+- **ChatBox:** Sửa triệt để lỗi lặp tin nhắn (duplicate messages) bằng cơ chế lọc ID và đối chiếu nội dung thực tế.
+- **Auth:** Khắc phục lỗi hiển thị nhầm vai trò (Role) trong Header sau khi đăng ký thành công.
+- **Tài liệu:** Cập nhật toàn bộ `docs/` gồm: Architecture, Integration, Decisions và tạo bản tổng kết `project_summary.md`.
+
+---
+
+## [2026-05-14] - Bổ sung thông tin phòng trọ và API tìm kiếm
+
+### Tính năng mới (Feature)
+- **Backend (Entity):** Thêm các trường dữ liệu mới cho `PhongTro` gồm `giaDien`, `giaNuoc`, `diaChi`, `dienTich`, `hinhAnh` nhằm hỗ trợ quản lý phòng chi tiết hơn.
+- **Backend (API):** Bổ sung API `GET /api/phong-tro/search` dùng `@Query` (JPQL) để tìm kiếm và lọc phòng trọ linh hoạt theo `tenPhong`, `giaToiThieu`, `giaToiDa`, và `trangThai`.
+
+---
+
+## [2026-05-14] - Fix Bugs Đăng ký & Hóa đơn
+
+### Sửa lỗi (Hotfix)
+- **Backend (Auth):** Bổ sung trường `role` bị thiếu và sửa hàm `getRole()` trong `AuthRequestDTO.java` để fix lỗi tài khoản chủ trọ đăng ký luôn bị ép thành quyền `ROLE_USER`.
+- **Backend (Controller):** Bổ sung phương thức `xoaHoaDon(@PathVariable Long id)` còn thiếu trong `HoaDonController` (đã có ở Service nhưng quên expose API ra) giúp fix lỗi biên dịch trong Unit Test và hoàn thiện chức năng xóa hóa đơn bị sai.
+
+---
+
 ## [2026-05-03] - Tính năng Cốt lõi: Điện Nước & Hóa Đơn
 
 ### Tính năng mới (Feature)

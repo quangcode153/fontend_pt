@@ -4,6 +4,7 @@ import api from '../../api';
 import ChatBox from '../../components/ChatBox';
 import KhieuNaiForm from '../../components/KhieuNaiForm';
 import HoSoForm from '../../components/HoSoForm';
+import ContractModal from '../../components/ContractModal';
 import useAdminContact from '../../hooks/useAdminContact';
 import './TenantPage.css';
 
@@ -81,9 +82,10 @@ const S = {
   },
 };
 
-export default function TenantPage({ currentUser, hopDongCuaToi }) {
+export default function TenantPage({ currentUser, hopDongCuaToi, onBrowseRooms }) {
   const { t } = useTranslation();
-  if (currentUser?.role !== ROLES.USER) {
+  const userRole = (currentUser?.role || '').startsWith('ROLE_') ? currentUser.role : `ROLE_${currentUser.role}`;
+  if (userRole !== ROLES.USER) {
     return (
       <div style={{ padding: '40px', textAlign: 'center', color: 'var(--danger)', fontWeight: 600 }}>
         {t('tenant.access_denied')}
@@ -99,6 +101,8 @@ export default function TenantPage({ currentUser, hopDongCuaToi }) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [loadingTab, setLoadingTab] = useState(false);
   const [landlordBank, setLandlordBank] = useState(null);
+  const [showContract, setShowContract] = useState(false);
+  const [hoSoMe, setHoSoMe] = useState(null);
 
   const fetchHoaDon = () => {
     setLoadingTab(true);
@@ -106,6 +110,23 @@ export default function TenantPage({ currentUser, hopDongCuaToi }) {
       .then(res => setDsHoaDon(res.data || []))
       .catch(err => console.error(t('tenant.error_fetch_invoice'), err))
       .finally(() => setLoadingTab(false));
+  };
+
+  const handleHuyHopDong = async () => {
+    const message = t('tenant.confirm_cancel_contract') || "Bạn có chắc chắn muốn hủy hợp đồng ngay lập tức? Tiền cọc sẽ bị khấu trừ theo quy định.";
+    if (!window.confirm(message)) return;
+
+    setIsProcessing(true);
+    try {
+      await api.put(`/hop-dong/${hopDongCuaToi.id}/khach-huy`);
+      alert(t('tenant.cancel_success') || "Hợp đồng đã được hủy thành công!");
+      window.location.reload();
+    } catch (err) {
+      const errMsg = err.response?.data?.message || err.message || "Lỗi không xác định";
+      alert(t('common.error') + ": " + errMsg);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const { admin: adminContact, loading: loadingAdmin, error: adminError } = useAdminContact();
@@ -136,8 +157,11 @@ export default function TenantPage({ currentUser, hopDongCuaToi }) {
             });
           }
         })
-        .catch(err => console.error('Error fetching landlord bank info:', err));
+        .catch(err => console.error(t('tenant.error_fetch_bank'), err));
     }
+    api.get('/khach-hang/ho-so/me')
+      .then(res => setHoSoMe(res.data))
+      .catch(err => console.error('Lỗi tải hồ sơ cá nhân:', err));
   }, [hopDongCuaToi]);
 
   const handleThanhToan = async () => {
@@ -145,8 +169,8 @@ export default function TenantPage({ currentUser, hopDongCuaToi }) {
     setIsProcessing(true);
     try {
       await api.post(`/hoa-don/${payingHD.id}/thanh-toan`);
-      alert(t('tenant.payment_success'));
       setPayingHD(null);
+      alert(t('tenant.payment_success'));
       fetchHoaDon();
     } catch (err) {
       console.error(err);
@@ -158,8 +182,8 @@ export default function TenantPage({ currentUser, hopDongCuaToi }) {
 
   const TABS = [
     { key: 'THONG_TIN', label: t('tenant.tab_contract') },
-    { key: 'HO_SO',     label: t('tenant.tab_profile') },
-    { key: 'HOA_DON',   label: t('tenant.tab_invoice') },
+    { key: 'HO_SO', label: t('tenant.tab_profile') },
+    { key: 'HOA_DON', label: t('tenant.tab_invoice') },
     { key: 'THONG_BAO', label: t('tenant.tab_notice') },
   ];
 
@@ -174,13 +198,13 @@ export default function TenantPage({ currentUser, hopDongCuaToi }) {
     </div>
   );
 
-  const fmt = (v) => v != null ? Number(v).toLocaleString('vi-VN') : '0';
+  const fmt = (v) => v != null ? Number(v).toLocaleString(t('landlord.date_locale') || 'vi-VN') : '0';
 
   const getVietQRUrl = (amount, month, year) => {
     const bankId = landlordBank?.tenNganHang?.toLowerCase() || 'mb';
     const accNum = landlordBank?.soTaiKhoan || '0000000000';
-    const accName = landlordBank?.chuTaiKhoan || 'CHU TRO';
-    const desc = `Thanh toan tien phong thang ${month} nam ${year}`;
+    const accName = landlordBank?.chuTaiKhoan || 'LANDLORD';
+    const desc = t('tenant.qr_desc', { month, year });
     return `https://img.vietqr.io/image/${bankId}-${accNum}-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(desc)}&accountName=${encodeURIComponent(accName)}`;
   };
 
@@ -196,6 +220,13 @@ export default function TenantPage({ currentUser, hopDongCuaToi }) {
               {t.label}
             </button>
           ))}
+          <div style={{ width: '1px', background: 'var(--border)', margin: '4px 8px' }} />
+          <button 
+            style={{ ...S.navBtn(false), color: 'var(--accent)', fontWeight: 600 }} 
+            onClick={onBrowseRooms}
+          >
+            {t('tenant.browse_more_rooms')}
+          </button>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -234,7 +265,11 @@ export default function TenantPage({ currentUser, hopDongCuaToi }) {
                   </div>
                   <div style={{ background: 'var(--bg)', borderRadius: 'var(--radius-md)', padding: '14px', border: '1px solid var(--border-light)' }}>
                     <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>{t('tenant.status')}</div>
-                    <div style={{ marginTop: '2px' }}><span style={S.tag('green')}>{t('tenant.status_active')}</span></div>
+                    <div style={{ marginTop: '2px' }}>
+                      <span style={S.tag('green')}>
+                        {t('tenant.status_active')}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
@@ -244,7 +279,7 @@ export default function TenantPage({ currentUser, hopDongCuaToi }) {
                 }}>
                   <div style={S.infoRow}>
                     <span style={{ color: 'var(--text-muted)' }}>{t('tenant.rent_price')}</span>
-                    <span style={{ fontWeight: 600, color: 'var(--accent)' }}>{hopDongCuaToi.phongTro?.giaPhong?.toLocaleString()} {t('landlord.currency')}/tháng</span>
+                    <span style={{ fontWeight: 600, color: 'var(--accent)' }}>{hopDongCuaToi.phongTro?.giaPhong?.toLocaleString()} {t('landlord.currency')}/{t('landlord.month').toLowerCase()}</span>
                   </div>
                   <div style={S.infoRow}>
                     <span style={{ color: 'var(--text-muted)' }}>{t('tenant.representative')}</span>
@@ -256,9 +291,22 @@ export default function TenantPage({ currentUser, hopDongCuaToi }) {
                   </div>
                 </div>
 
-                <button style={S.btnPrimary} onClick={() => setChatTarget({ id: hopDongCuaToi.phongTro?.chuTroId, username: t('tenant.landlord') })}>
-                  {t('tenant.contact_landlord')}
-                </button>
+                <div style={{ display: 'flex', gap: '10px', marginTop: '16px', flexWrap: 'wrap' }}>
+                  <button style={S.btnPrimary} onClick={() => setChatTarget({ id: hopDongCuaToi.phongTro?.chuTroId, username: t('tenant.landlord') })}>
+                    {t('tenant.contact_landlord')}
+                  </button>
+                  <button style={S.btn} onClick={() => setShowContract(true)}>
+                    📜 {t('tenant.btn_view_contract')}
+                  </button>
+                  
+                  <button 
+                    style={{ ...S.btn, borderColor: 'var(--danger)', color: 'var(--danger)', marginLeft: 'auto' }} 
+                    onClick={handleHuyHopDong}
+                    disabled={isProcessing}
+                  >
+                    {t('tenant.cancel_contract_now')}
+                  </button>
+                </div>
               </>
             )}
           </div>
@@ -384,7 +432,7 @@ export default function TenantPage({ currentUser, hopDongCuaToi }) {
                       {tb.noiDung}
                     </div>
                     <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '10px' }}>
-                      {tb.ngayDang ? new Date(tb.ngayDang).toLocaleString('vi-VN') : t('tenant.recently')}
+                      {tb.ngayDang ? new Date(tb.ngayDang).toLocaleString(t('landlord.date_locale') || 'vi-VN') : t('tenant.recently')}
                     </div>
                   </div>
                 ))}
@@ -409,10 +457,10 @@ export default function TenantPage({ currentUser, hopDongCuaToi }) {
             </div>
 
             <div style={{ background: '#fff', padding: '16px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)', marginBottom: '16px', display: 'inline-block' }}>
-              <img 
-                src={getVietQRUrl(payingHD.tongTien, payingHD.thang, payingHD.nam)} 
-                alt="VietQR" 
-                style={{ width: '100%', maxWidth: '240px', height: 'auto', display: 'block', margin: '0 auto' }} 
+              <img
+                src={getVietQRUrl(payingHD.tongTien, payingHD.thang, payingHD.nam)}
+                alt="VietQR"
+                style={{ width: '100%', maxWidth: '240px', height: 'auto', display: 'block', margin: '0 auto' }}
               />
               <div style={{ marginTop: '12px', fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>{t('tenant.qr_scan_instruction')}</div>
               <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{t('tenant.qr_scan_note')}</div>
@@ -439,6 +487,18 @@ export default function TenantPage({ currentUser, hopDongCuaToi }) {
           </div>
         </div>
       )}
+
+      <ContractModal
+        isOpen={showContract}
+        onClose={() => setShowContract(false)}
+        phong={hopDongCuaToi?.phongTro}
+        chuTroInfo={hopDongCuaToi?.phongTro?.chuTro || { hoTen: t('tenant.landlord') }}
+        khachThueInfo={hoSoMe || currentUser}
+        onConfirm={null}
+        confirmText={t('tenant.contract_active')}
+        isProcessing={false}
+        role="TENANT"
+      />
     </div>
   );
 }

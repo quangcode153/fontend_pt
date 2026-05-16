@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from './hooks/useAuth';
 import { useState, useEffect, useRef } from 'react';
 import api from './api';
@@ -14,7 +15,9 @@ import TenantPage from './pages/Tenant/TenantPage';
 import ChatBox from './components/ChatBox';
 import { ROLES } from './constants';
 
-function LoadingScreen({ message = 'Đang tải...' }) {
+function LoadingScreen({ message }) {
+  const { t } = useTranslation();
+  const loadingMsg = message || t('app.loading');
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
@@ -25,12 +28,13 @@ function LoadingScreen({ message = 'Đang tải...' }) {
         borderTopColor: 'var(--accent)', borderRadius: '50%',
         animation: 'spin 0.6s linear infinite', marginBottom: '16px',
       }} />
-      <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{message}</div>
+      <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{loadingMsg}</div>
     </div>
   );
 }
 
 function WaitingScreen({ hopDong, onOpenChat }) {
+  const { t } = useTranslation();
   return (
     <div style={{
       maxWidth: '440px', margin: '60px auto',
@@ -45,13 +49,13 @@ function WaitingScreen({ hopDong, onOpenChat }) {
         display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px',
       }}>⏳</div>
       <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px' }}>
-        Yêu cầu đang chờ duyệt
+        {t('guest.pending_request')}
       </div>
       <div style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
-        Phòng: <strong>{hopDong.phongTro?.tenPhong}</strong>
+        {t('guest.room')} <strong>{hopDong.phongTro?.tenPhong}</strong>
       </div>
       <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '28px' }}>
-        Chủ trọ sẽ phản hồi sớm nhất có thể.
+        {t('guest.host_reply_soon')}
       </div>
       <button
         onClick={onOpenChat}
@@ -61,13 +65,14 @@ function WaitingScreen({ hopDong, onOpenChat }) {
           fontSize: '13px', fontWeight: 600, transition: 'opacity var(--transition)',
         }}
       >
-        💬 Nhắn tin chủ trọ
+        💬 {t('guest.btn_chat')}
       </button>
     </div>
   );
 }
 
 function AppContent() {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const [hopDongCuaToi, setHopDongCuaToi] = useState(null);
   const [dangKiemTra, setDangKiemTra] = useState(false);
@@ -86,12 +91,12 @@ function AppContent() {
       const res = await api.get(`/hop-dong/khach/${user.id}`);
       if (isMounted.current) {
         const hd = (res.data || []).find(
-          h => h.trangThai === 'DA_DUYET' || h.trangThai === 'CHO_DUYET'
+          h => h.trangThai === 'DA_DUYET' || h.trangThai === 'CHO_DUYET' || h.trangThai === 'YEU_CAU_HUY'
         );
         setHopDongCuaToi(hd || null);
       }
     } catch (err) {
-      console.error('Lỗi kiểm tra hợp đồng:', err);
+      console.error(t('app.error_check_contract'), err);
     } finally {
       if (!isBackground && isMounted.current) setDangKiemTra(false);
     }
@@ -106,19 +111,21 @@ function AppContent() {
 
   const handleOpenChat = () => {
     const chuTroId = hopDongCuaToi?.phongTro?.chuTroId ?? hopDongCuaToi?.phongTro?.chuTro?.id;
-    if (!chuTroId) { alert('Không tìm thấy thông tin chủ trọ!'); return; }
-    setChatTarget({ id: chuTroId, username: `Chủ trọ phòng ${hopDongCuaToi.phongTro?.tenPhong}` });
+    if (!chuTroId) { alert(t('app.error_no_landlord')); return; }
+    setChatTarget({ id: chuTroId, username: t('app.landlord_of_room', { room: hopDongCuaToi.phongTro?.tenPhong }) });
   };
+
+  const [tenantView, setTenantView] = useState('DASHBOARD'); // 'DASHBOARD' or 'MARKET'
 
   const rawRole = user?.role || '';
   const normalizedRole = rawRole.startsWith('ROLE_') ? rawRole : `ROLE_${rawRole}`;
 
   const renderContent = () => {
-    if (normalizedRole === ROLES.ADMIN)    return <AdminPage currentUser={user} />;
+    if (normalizedRole === ROLES.ADMIN) return <AdminPage currentUser={user} />;
     if (normalizedRole === ROLES.LANDLORD) return <LandlordPage currentUser={user} />;
 
     if (normalizedRole === ROLES.USER) {
-      if (dangKiemTra) {
+      if (dangKiemTra && !hopDongCuaToi) {
         return (
           <div style={{ textAlign: 'center', padding: '60px', animation: 'fadeIn 0.3s ease' }}>
             <div style={{
@@ -126,12 +133,35 @@ function AppContent() {
               borderTopColor: 'var(--accent)', borderRadius: '50%',
               animation: 'spin 0.6s linear infinite', margin: '0 auto 12px',
             }} />
-            <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Đang đồng bộ dữ liệu...</div>
+            <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{t('app.syncing_data')}</div>
           </div>
         );
       }
-      if (hopDongCuaToi?.trangThai === 'DA_DUYET')  return <TenantPage currentUser={user} hopDongCuaToi={hopDongCuaToi} />;
-      if (hopDongCuaToi?.trangThai === 'CHO_DUYET') return <WaitingScreen hopDong={hopDongCuaToi} onOpenChat={handleOpenChat} />;
+
+      const tt = hopDongCuaToi?.trangThai;
+      if (tt === 'DA_DUYET') {
+        if (tenantView === 'MARKET') {
+          return (
+            <div style={{ animation: 'fadeIn 0.3s ease' }}>
+              <div style={{ marginBottom: '20px' }}>
+                <button 
+                  onClick={() => setTenantView('DASHBOARD')}
+                  style={{
+                    padding: '8px 16px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)',
+                    background: 'var(--surface)', color: 'var(--text-primary)', cursor: 'pointer',
+                    fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px'
+                  }}
+                >
+                  {t('tenant.back_to_dashboard')}
+                </button>
+              </div>
+              <GuestPage currentUser={user} onRentSuccess={() => { setTenantView('DASHBOARD'); kiemTraHopDong(false); }} />
+            </div>
+          );
+        }
+        return <TenantPage currentUser={user} hopDongCuaToi={hopDongCuaToi} onBrowseRooms={() => setTenantView('MARKET')} />;
+      }
+      if (tt === 'CHO_DUYET') return <WaitingScreen hopDong={hopDongCuaToi} onOpenChat={handleOpenChat} />;
       return <GuestPage currentUser={user} onRentSuccess={() => kiemTraHopDong(false)} />;
     }
 
@@ -142,7 +172,7 @@ function AppContent() {
         borderRadius: 'var(--radius-lg)', color: 'var(--danger)', fontWeight: 600,
         maxWidth: '480px', margin: '60px auto',
       }}>
-        Hệ thống không nhận diện được quyền truy cập của bạn ({rawRole}).
+        {t('app.access_error', { role: rawRole })}
       </div>
     );
   };
@@ -164,7 +194,7 @@ function AppContent() {
             borderTopColor: 'var(--accent)', borderRadius: '50%',
             animation: 'spin 0.6s linear infinite',
           }} />
-          Đang đồng bộ...
+          {t('app.syncing')}
         </div>
       )}
       {renderContent()}

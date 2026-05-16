@@ -15,6 +15,13 @@ export default function RoomTab({
   tenPhong, setTenPhong,
   giaPhong, setGiaPhong,
   trangThai, setTrangThai,
+  giaDien, setGiaDien,
+  giaNuoc, setGiaNuoc,
+  tienCoc, setTienCoc,
+  diaChi, setDiaChi,
+  dienTich, setDienTich,
+  hinhAnh, setHinhAnh,
+  moTa, setMoTa,
   isSubmitting,
   onThemPhong,
   onXoaPhong,
@@ -30,6 +37,46 @@ export default function RoomTab({
 
   const tagLabel = (tt) => {
     return t(`landlord.room_status_${tt}`);
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 800;
+          const MAX_HEIGHT = 800;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Nén ảnh (chất lượng 0.7)
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+          setHinhAnh(dataUrl);
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   return (
@@ -75,14 +122,44 @@ export default function RoomTab({
               <option value={ROOM_STATUS.MAINTENANCE}>{t('landlord.room_status_BAO_TRI')}</option>
             </select>
           </div>
-          <button
-            type="submit"
-            className="l-btn l-btn--primary"
-            disabled={isSubmitting}
-            style={{ whiteSpace: 'nowrap', alignSelf: 'flex-end' }}
-          >
-            {isSubmitting ? t('landlord.btn_saving') : `💾 ${t('landlord.btn_save_room')}`}
-          </button>
+          <div className="l-add-room-form__field" style={{ flex: 1 }}>
+            <label className="l-form-label">{t('landlord.electric_price')}</label>
+            <input className="l-form-input" type="number" value={giaDien} onChange={e => setGiaDien(e.target.value)} placeholder="3500" disabled={isSubmitting} />
+          </div>
+          <div className="l-add-room-form__field" style={{ flex: 1 }}>
+            <label className="l-form-label">{t('landlord.water_price')}</label>
+            <input className="l-form-input" type="number" value={giaNuoc} onChange={e => setGiaNuoc(e.target.value)} placeholder="100000" disabled={isSubmitting} />
+          </div>
+          <div className="l-add-room-form__field" style={{ flex: 1 }}>
+            <label className="l-form-label">{t('landlord.deposit')}</label>
+            <input className="l-form-input" type="number" value={tienCoc} onChange={e => setTienCoc(e.target.value)} placeholder="1000000" disabled={isSubmitting} />
+          </div>
+          <div className="l-add-room-form__field" style={{ flex: 1 }}>
+            <label className="l-form-label">{t('landlord.area')} (m²)</label>
+            <input className="l-form-input" type="number" value={dienTich} onChange={e => setDienTich(e.target.value)} placeholder="20" disabled={isSubmitting} />
+          </div>
+          <div className="l-add-room-form__field" style={{ flex: 2 }}>
+            <label className="l-form-label">{t('landlord.address')}</label>
+            <input className="l-form-input" type="text" value={diaChi} onChange={e => setDiaChi(e.target.value)} placeholder={t('landlord.placeholder_address')} disabled={isSubmitting} />
+          </div>
+          <div className="l-add-room-form__field" style={{ flex: 2 }}>
+            <label className="l-form-label">{t('landlord.image')}</label>
+            <input className="l-form-input" type="file" accept="image/*" onChange={handleImageChange} disabled={isSubmitting} />
+          </div>
+          <div className="l-add-room-form__field" style={{ flexBasis: '100%' }}>
+            <label className="l-form-label">{t('landlord.more_description')}</label>
+            <textarea className="l-form-input" value={moTa} onChange={e => setMoTa(e.target.value)} placeholder={t('landlord.placeholder_room_desc')} rows={3} disabled={isSubmitting} style={{ resize: 'vertical' }} />
+          </div>
+          <div style={{ width: '100%', display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
+            <button
+              type="submit"
+              className="l-btn l-btn--primary"
+              disabled={isSubmitting}
+              style={{ whiteSpace: 'nowrap' }}
+            >
+              {isSubmitting ? t('landlord.btn_saving') : `💾 ${t('landlord.btn_save_room')}`}
+            </button>
+          </div>
         </form>
       </div>
 
@@ -108,7 +185,7 @@ export default function RoomTab({
               >
                 {/* Ảnh placeholder cho phòng */}
                 <div style={{ height: '120px', overflow: 'hidden', borderRadius: 'var(--radius-md) var(--radius-md) 0 0', margin: '-20px -20px 16px -20px', position: 'relative' }}>
-                  <img src={roomPlaceholderImg} alt="Room" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={phong.hinhAnh || roomPlaceholderImg} alt="Room" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   <div style={{ position: 'absolute', top: '10px', right: '10px' }}>
                     <span className={`l-tag l-tag--${tagColor(phong.trangThai)}`}>
                       {tagLabel(phong.trangThai)}
@@ -120,7 +197,7 @@ export default function RoomTab({
                 <button
                   className="l-room-card__delete-btn"
                   onClick={() => onXoaPhong(phong.id, phong.tenPhong)}
-                  title="Xoá phòng"
+                  title={t('landlord.delete_room')}
                 >
                   ✕
                 </button>
@@ -130,7 +207,7 @@ export default function RoomTab({
                 <div className="l-info-row">
                   <span className="l-info-row__label">{t('landlord.rent_price')}:</span>
                   <span className="l-info-row__value" style={{ color: 'var(--accent)' }}>
-                    {phong.giaPhong?.toLocaleString()} ₫
+                    {phong.giaPhong?.toLocaleString()} {t('landlord.currency')}
                   </span>
                 </div>
 

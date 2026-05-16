@@ -45,7 +45,21 @@ function QuanLyNguoiDung() {
     }
   };
 
-    const usersHienThi = danhSachUser.filter(user => {
+    const handleDeleteUser = async (user) => {
+    const confirmMsg = t('admin_users.confirm_delete') || "Bạn có chắc chắn muốn xóa vĩnh viễn tài khoản";
+    if (!window.confirm(`${confirmMsg} ${user.username}?`)) return;
+
+    try {
+      await api.delete(`/tai-khoan/admin/${user.id}`);
+      alert(t('admin_users.success_delete') || "Đã xóa tài khoản thành công!");
+      setDanhSachUser(prev => prev.filter(u => u.id !== user.id));
+    } catch (err) {
+      const errorMsg = t('admin_users.error_delete') || "Lỗi khi xóa tài khoản: ";
+      alert(errorMsg + (err.response?.data?.message || ""));
+    }
+  };
+
+  const usersHienThi = danhSachUser.filter(user => {
     if (tabHienTai === 'ALL') return true;
     return user.role === tabHienTai;
   });
@@ -132,21 +146,38 @@ function QuanLyNguoiDung() {
                 </td>
                 <td style={{ padding: '12px' }}>
                   {user.role !== 'ROLE_ADMIN' && (
-                                        <button 
-                      onClick={() => handleToggleLock(user)}
-                      style={{ 
-                        padding: '6px 12px', 
-                        backgroundColor: user.locked ? '#2ecc71' : '#e74c3c', 
-                        color: 'white', 
-                        border: 'none', 
-                        borderRadius: '4px', 
-                        cursor: 'pointer', 
-                        fontSize: '13px', 
-                        fontWeight: 'bold',
-                        transition: 'background-color 0.2s'
-                      }}>
-                      {user.locked ? t('admin_users.btn_unlock') : t('admin_users.btn_lock')}
-                    </button>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button 
+                        onClick={() => handleToggleLock(user)}
+                        style={{ 
+                          padding: '6px 12px', 
+                          backgroundColor: user.locked ? '#2ecc71' : '#e67e22', 
+                          color: 'white', 
+                          border: 'none', 
+                          borderRadius: '4px', 
+                          cursor: 'pointer', 
+                          fontSize: '13px', 
+                          fontWeight: 'bold',
+                          transition: 'background-color 0.2s'
+                        }}>
+                        {user.locked ? t('admin_users.btn_unlock') : t('admin_users.btn_lock')}
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteUser(user)}
+                        style={{ 
+                          padding: '6px 12px', 
+                          backgroundColor: '#e74c3c', 
+                          color: 'white', 
+                          border: 'none', 
+                          borderRadius: '4px', 
+                          cursor: 'pointer', 
+                          fontSize: '13px', 
+                          fontWeight: 'bold',
+                          transition: 'background-color 0.2s'
+                        }}>
+                        🗑️ {t('admin_users.btn_delete') || 'Xóa'}
+                      </button>
+                    </div>
                   )}
                 </td>
               </tr>

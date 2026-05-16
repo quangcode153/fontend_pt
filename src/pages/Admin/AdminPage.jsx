@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import ChatBox from '../../components/ChatBox';
 import QuanLyNguoiDung from '../../components/QuanLyNguoiDung';
+import DashboardTab from '../Landlord/components/DashboardTab';
+import ConfirmModal from '../../components/ConfirmModal';
 import './AdminPage.css';
 
 const ROLES = { ADMIN: 'ROLE_ADMIN' };
@@ -77,24 +79,30 @@ const S = {
   },
 };
 
-const Spinner = ({ text = 'Đang tải...' }) => (
-  <div style={{ textAlign: 'center', padding: '40px', animation: 'fadeIn 0.3s ease' }}>
-    <div style={{
-      width: '24px', height: '24px', border: '3px solid var(--border)',
-      borderTopColor: 'var(--accent)', borderRadius: '50%',
-      animation: 'spin 0.6s linear infinite', margin: '0 auto 12px',
-    }} />
-    <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{text}</div>
-  </div>
-);
+const Spinner = ({ text }) => {
+  const { t } = useTranslation();
+  const loadingMsg = text || t('common.loading');
+  return (
+    <div style={{ textAlign: 'center', padding: '40px', animation: 'fadeIn 0.3s ease' }}>
+      <div style={{
+        width: '24px', height: '24px', border: '3px solid var(--border)',
+        borderTopColor: 'var(--accent)', borderRadius: '50%',
+        animation: 'spin 0.6s linear infinite', margin: '0 auto 12px',
+      }} />
+      <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{loadingMsg}</div>
+    </div>
+  );
+};
 
 export default function AdminPage({ currentUser }) {
   const { t } = useTranslation();
-  if (currentUser?.role !== ROLES.ADMIN) {
+  const userRole = (currentUser?.role || '').startsWith('ROLE_') ? currentUser.role : `ROLE_${currentUser.role}`;
+  if (userRole !== ROLES.ADMIN) {
     return <div style={{ padding: '40px', textAlign: 'center', color: 'var(--danger)', fontWeight: 600 }}>{t('admin.access_denied')}</div>;
   }
 
   const [adminTab, setAdminTab] = useState('USERS');
+  const [thongKeData, setThongKeData] = useState(null);
   const [chuTros, setChuTros] = useState([]);
   const [tuKhoa, setTuKhoa] = useState('');
   const [chuTroDangChon, setChuTroDangChon] = useState(null);
@@ -103,30 +111,41 @@ export default function AdminPage({ currentUser }) {
   const [chatTarget, setChatTarget] = useState(null);
   const [loadingInit, setLoadingInit] = useState(true);
   const [loadingRooms, setLoadingRooms] = useState(false);
+  const [confirmState, setConfirmState] = useState({ isOpen: false, type: 'info', title: '', message: '', onConfirm: null });
 
   useEffect(() => { fetchInitialData(); }, []);
 
   const fetchInitialData = async () => {
     setLoadingInit(true);
     try {
-      const [chuTroRes, khieuNaiRes] = await Promise.all([
-        api.get('/tai-khoan/chu-tro'), api.get('/khieu-nai')
+      const [chuTroRes, khieuNaiRes, thongKeRes] = await Promise.all([
+        api.get('/tai-khoan/chu-tro'),
+        api.get('/khieu-nai'),
+        api.get('/thong-ke/admin')
       ]);
-      setChuTros(chuTroRes.data || []);
       setKhieuNais(khieuNaiRes.data || []);
+      setThongKeData(thongKeRes.data || null);
     } catch (err) {
-      alert(t('admin.error_init'));
+      setConfirmState({ isOpen: true, type: 'danger', title: t('common.error'), message: t('admin.error_init'), onConfirm: null });
     } finally { setLoadingInit(false); }
   };
 
   const handleXuLyKhieuNai = async (id) => {
-    if (!window.confirm(t('admin.confirm_resolve'))) return;
-    try {
-      await api.put(`/khieu-nai/${id}/xu-ly`);
-      setKhieuNais(prev => prev.map(kn => kn.id === id ? { ...kn, trangThai: 'DA_GIAI_QUYET' } : kn));
-    } catch (err) {
-      alert(t('admin.error_general') + (err.response?.data?.message || ""));
-    }
+    setConfirmState({
+      isOpen: true,
+      type: 'success',
+      title: t('common.confirm'),
+      message: t('admin.confirm_resolve'),
+      onConfirm: async () => {
+        setConfirmState(prev => ({ ...prev, isOpen: false }));
+        try {
+          await api.put(`/khieu-nai/${id}/xu-ly`);
+          setKhieuNais(prev => prev.map(kn => kn.id === id ? { ...kn, trangThai: 'DA_GIAI_QUYET' } : kn));
+        } catch (err) {
+          setConfirmState({ isOpen: true, type: 'danger', title: t('common.error'), message: t('admin.error_general') + (err.response?.data?.message || ""), onConfirm: null });
+        }
+      }
+    });
   };
 
   const handleChonChuTro = async (ct) => {
@@ -135,7 +154,9 @@ export default function AdminPage({ currentUser }) {
     try {
       const res = await api.get(`/phong-tro/chu-tro/${ct.id}`);
       setPhongTros(res.data || []);
-    } catch (err) { alert(t('admin.error_load_rooms')); }
+    } catch (err) {
+      setConfirmState({ isOpen: true, type: 'danger', title: t('common.error'), message: t('admin.error_load_rooms'), onConfirm: null });
+    }
     finally { setLoadingRooms(false); }
   };
 
@@ -151,6 +172,7 @@ export default function AdminPage({ currentUser }) {
     <div style={{ fontFamily: 'var(--font)' }}>
       <div style={S.navBar}>
         <button style={S.navItem(adminTab === 'USERS')} onClick={() => setAdminTab('USERS')}>{t('admin.tab_users')}</button>
+        <button style={S.navItem(adminTab === 'BAO_CAO')} onClick={() => setAdminTab('BAO_CAO')}>📊 {t('landlord.tab_report')}</button>
         <button style={S.navItem(adminTab === 'PHONG')} onClick={() => { setAdminTab('PHONG'); setChuTroDangChon(null); }}>{t('admin.tab_rooms')}</button>
         <button style={S.navItem(adminTab === 'KHIEU_NAI')} onClick={() => setAdminTab('KHIEU_NAI')}>
           {t('admin.tab_complaints')}
@@ -168,6 +190,8 @@ export default function AdminPage({ currentUser }) {
       {loadingInit ? <Spinner text={t('admin.init_loading')} /> : (
         <>
           {adminTab === 'USERS' && <QuanLyNguoiDung />}
+
+          {adminTab === 'BAO_CAO' && <DashboardTab thongKeData={thongKeData} isAdmin={true} />}
 
           {adminTab === 'PHONG' && (
             !chuTroDangChon ? (
@@ -217,7 +241,10 @@ export default function AdminPage({ currentUser }) {
                   <button
                     style={{ ...S.btnPrimary, opacity: chuTroDangChon.locked ? 0.4 : 1, cursor: chuTroDangChon.locked ? 'not-allowed' : 'pointer' }}
                     onClick={() => {
-                      if (chuTroDangChon.locked) { alert(t('admin.account_locked')); return; }
+                      if (chuTroDangChon.locked) {
+                        setConfirmState({ isOpen: true, type: 'danger', title: t('common.error'), message: t('admin.account_locked'), onConfirm: null });
+                        return;
+                      }
                       setChatTarget(chuTroDangChon);
                     }}
                   >{t('admin.btn_chat')}</button>
@@ -236,7 +263,7 @@ export default function AdminPage({ currentUser }) {
                           <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>{phong.tenPhong}</div>
                           <span style={S.tag(tagColorPhong(phong.trangThai))}>{t('admin.room_status_' + phong.trangThai) || phong.trangThai}</span>
                         </div>
-                        <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{t('admin.price')}: <strong style={{ color: 'var(--accent)' }}>{phong.giaPhong?.toLocaleString()} đ</strong></div>
+                        <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{t('admin.price')}: <strong style={{ color: 'var(--accent)' }}>{phong.giaPhong?.toLocaleString()} {t('landlord.currency')}</strong></div>
                       </div>
                     ))}
                   </div>
@@ -284,7 +311,10 @@ export default function AdminPage({ currentUser }) {
                           <button
                             style={{ ...S.btn, opacity: kn.nguoiGui?.locked ? 0.4 : 1, cursor: kn.nguoiGui?.locked ? 'not-allowed' : 'pointer' }}
                             onClick={() => {
-                              if (kn.nguoiGui?.locked) { alert(t('admin.account_locked')); return; }
+                              if (kn.nguoiGui?.locked) {
+                                setConfirmState({ isOpen: true, type: 'danger', title: t('common.error'), message: t('admin.account_locked'), onConfirm: null });
+                                return;
+                              }
                               setChatTarget({ id: kn.nguoiGui?.id, username: kn.nguoiGui?.username });
                             }}
                           >{t('admin.btn_contact')}</button>
@@ -303,6 +333,11 @@ export default function AdminPage({ currentUser }) {
       )}
 
       {chatTarget && <ChatBox currentUser={currentUser} targetUser={chatTarget} isOpen={true} onClose={() => setChatTarget(null)} />}
+
+      <ConfirmModal
+        {...confirmState}
+        onClose={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 }

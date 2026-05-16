@@ -9,6 +9,8 @@ import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import ChatBox from '../../components/ChatBox';
 import HoSoForm from '../../components/HoSoForm';
+import ContractModal from '../../components/ContractModal';
+import ConfirmModal from '../../components/ConfirmModal';
 import useAdminContact from '../../hooks/useAdminContact';
 
 /* --- Component con theo từng Tab --- */
@@ -20,20 +22,29 @@ import UtilityTab from './components/UtilityTab';
 import NoticeTab from './components/NoticeTab';
 import RoomDetailModal from './components/RoomDetailModal';
 import UtilityModal from './components/UtilityModal';
+import TenantListTab from './components/TenantListTab';
 
 import './LandlordPage.css';
 
 /* --- Hằng số --- */
 const ROLES = { LANDLORD: 'ROLE_LANDLORD' };
 const ROOM_STATUS = { EMPTY: 'TRONG', RENTED: 'DA_THUE', MAINTENANCE: 'BAO_TRI' };
-const CONTRACT_STATUS = { PENDING: 'CHO_DUYET', APPROVED: 'DA_DUYET', REJECTED: 'TU_CHOI' };
+const CONTRACT_STATUS = {
+  PENDING: 'CHO_DUYET',
+  APPROVED: 'DA_DUYET',
+  REJECTED: 'TU_CHOI',
+  CANCELLING: 'YEU_CAU_HUY',
+  CANCELLED: 'HUY'
+};
 
 /* --- Spinner dùng nội bộ --- */
-function Spinner({ text = 'Đang tải...' }) {
+function Spinner({ text }) {
+  const { t } = useTranslation();
+  const loadingText = text || t('landlord.loading');
   return (
     <div className="l-spinner">
       <div className="l-spinner__circle" />
-      <div className="l-spinner__text">{text}</div>
+      <div className="l-spinner__text">{loadingText}</div>
     </div>
   );
 }
@@ -45,7 +56,8 @@ function LandlordPage({ currentUser }) {
   const { t } = useTranslation();
 
   /* Kiểm tra quyền truy cập */
-  if (currentUser?.role !== ROLES.LANDLORD) {
+  const userRole = (currentUser?.role || '').startsWith('ROLE_') ? currentUser.role : `ROLE_${currentUser.role}`;
+  if (userRole !== ROLES.LANDLORD) {
     return (
       <div style={{ padding: '40px', textAlign: 'center', color: 'var(--danger)', fontWeight: 600 }}>
         {t('landlord.access_denied')}
@@ -62,6 +74,7 @@ function LandlordPage({ currentUser }) {
   const [hoaDons, setHoaDons] = useState([]);
   const [thongBaos, setThongBaos] = useState([]);
   const [thongKeData, setThongKeData] = useState(null);
+  const [landlordProfile, setLandlordProfile] = useState(null);
 
   /* Loading states */
   const [loading, setLoading] = useState(true);
@@ -73,11 +86,20 @@ function LandlordPage({ currentUser }) {
   const [hoSoKhachThue, setHoSoKhachThue] = useState(null);
   const [dienNuocForm, setDienNuocForm] = useState(null);   // Modal điện nước
   const [lichSuChiSo, setLichSuChiSo] = useState([]);
+  const [previewContract, setPreviewContract] = useState(null); // Modal hợp đồng
+  const [confirmState, setConfirmState] = useState({ isOpen: false, type: 'info', title: '', message: '', onConfirm: null });
 
   /* Form thêm phòng */
   const [tenPhong, setTenPhong] = useState('');
   const [giaPhong, setGiaPhong] = useState('');
   const [trangThai, setTrangThai] = useState(ROOM_STATUS.EMPTY);
+  const [giaDien, setGiaDien] = useState('');
+  const [giaNuoc, setGiaNuoc] = useState('');
+  const [tienCoc, setTienCoc] = useState('');
+  const [diaChi, setDiaChi] = useState('');
+  const [dienTich, setDienTich] = useState('');
+  const [hinhAnh, setHinhAnh] = useState('');
+  const [moTa, setMoTa] = useState('');
 
   /* Form thông báo */
   const [tieuDeTB, setTieuDeTB] = useState('');
@@ -101,16 +123,18 @@ function LandlordPage({ currentUser }) {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [phongRes, hdRes, invRes, tkRes] = await Promise.all([
+      const [phongRes, hdRes, invRes, tkRes, profRes] = await Promise.all([
         api.get(`/phong-tro/chu-tro/${currentUser.id}`),
         api.get(`/hop-dong/chu-tro/${currentUser.id}`),
         api.get(`/hoa-don/chu-tro/${currentUser.id}`),
         api.get(`/thong-ke/chu-tro/${currentUser.id}`),
+        api.get('/khach-hang/ho-so/me'),
       ]);
       setPhongTros(phongRes.data || []);
       setHopDongs(hdRes.data || []);
       setHoaDons(invRes.data || []);
       setThongKeData(tkRes.data || null);
+      setLandlordProfile(profRes.data || null);
     } catch (err) {
       console.error(err);
       // alert(t('landlord.error_fetch'));
@@ -150,17 +174,45 @@ function LandlordPage({ currentUser }) {
         tenPhong,
         giaPhong: parseFloat(giaPhong),
         trangThai,
-        chuTroId: currentUser.id
+        chuTroId: currentUser.id,
+        giaDien: giaDien ? parseFloat(giaDien) : null,
+        giaNuoc: giaNuoc ? parseFloat(giaNuoc) : null,
+        tienCoc: tienCoc ? parseFloat(tienCoc) : null,
+        diaChi,
+        dienTich: dienTich ? parseFloat(dienTich) : null,
+        hinhAnh,
+        moTa
       });
 
-      alert(t('landlord.success_add_room'));
-      setTenPhong('');
-      setGiaPhong('');
-      setTrangThai(ROOM_STATUS.EMPTY);
-      fetchData(); // Cập nhật lại danh sách từ server
+      setConfirmState({
+        isOpen: true,
+        type: 'success',
+        title: t('common.success'),
+        message: t('landlord.success_add_room'),
+        onConfirm: () => {
+          setTenPhong('');
+          setGiaPhong('');
+          setTrangThai(ROOM_STATUS.EMPTY);
+          setGiaDien('');
+          setGiaNuoc('');
+          setTienCoc('');
+          setDiaChi('');
+          setDienTich('');
+          setHinhAnh('');
+          setMoTa('');
+          fetchData();
+        }
+      });
     } catch (err) {
       console.error(err);
-      alert(t('landlord.error_add_room'));
+      const msg = err.response?.data?.message || t('landlord.error_add_room');
+      setConfirmState({
+        isOpen: true,
+        type: 'danger',
+        title: t('common.error'),
+        message: msg,
+        onConfirm: null
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -168,30 +220,59 @@ function LandlordPage({ currentUser }) {
 
   /** Xoá phòng (với Optimistic UI) */
   const handleXoaPhong = async (id, ten) => {
-    if (!window.confirm(t('landlord.confirm_delete_room', { ten }))) return;
-    const prevData = [...phongTros];
-    setPhongTros(prev => prev.filter(p => p.id !== id));
-    try {
-      await api.delete(`/phong-tro/${id}`);
-    } catch {
-      alert(t('landlord.error_delete_room'));
-      setPhongTros(prevData);
-    }
+    setConfirmState({
+      isOpen: true,
+      type: 'danger',
+      title: t('common.confirm'),
+      message: t('landlord.confirm_delete_room', { ten }),
+      onConfirm: async () => {
+        setConfirmState(prev => ({ ...prev, isOpen: false }));
+        const prevData = [...phongTros];
+        setPhongTros(prev => prev.filter(p => p.id !== id));
+        try {
+          await api.delete(`/phong-tro/${id}`);
+        } catch {
+          setConfirmState({
+            isOpen: true,
+            type: 'danger',
+            title: t('common.error'),
+            message: t('landlord.error_delete_room'),
+            onConfirm: null
+          });
+          setPhongTros(prevData);
+        }
+      }
+    });
   };
 
   /** Đổi trạng thái phòng */
   const handleDoiTrangThaiPhong = async (phongId, trangThaiMoi) => {
     const statusText = t(`landlord.room_status_${trangThaiMoi}`);
-    if (!window.confirm(t('landlord.confirm_change_status', { trangThaiMoi: statusText }))) return;
-    try {
-      await api.put(`/phong-tro/${phongId}/trang-thai`, null, {
-        params: { trangThai: trangThaiMoi },
-      });
-      setPhongChiTiet(null);
-      fetchData();
-    } catch {
-      alert(t('landlord.error_update'));
-    }
+
+    setConfirmState({
+      isOpen: true,
+      type: 'warning',
+      title: t('common.confirm'),
+      message: t('landlord.confirm_change_status', { trangThaiMoi: statusText }),
+      onConfirm: async () => {
+        setConfirmState(prev => ({ ...prev, isOpen: false }));
+        try {
+          await api.put(`/phong-tro/${phongId}/trang-thai`, null, {
+            params: { trangThai: trangThaiMoi },
+          });
+          setPhongChiTiet(null);
+          fetchData();
+        } catch {
+          setConfirmState({
+            isOpen: true,
+            type: 'danger',
+            title: t('common.error'),
+            message: t('landlord.error_update'),
+            onConfirm: null
+          });
+        }
+      }
+    });
   };
 
   /** Xem chi tiết phòng (mở modal) */
@@ -219,18 +300,84 @@ function LandlordPage({ currentUser }) {
     }
   };
 
-  /** Duyệt / Từ chối hợp đồng */
-  const handleDuyetHopDong = async (hopDongId, trangThaiMoi) => {
-    const statusText = t(`landlord.contract_status_${trangThaiMoi}`);
-    if (!window.confirm(t('landlord.confirm_contract', { trangThaiMoi: statusText }))) return;
+  /** Xem hợp đồng từ tab Yêu cầu */
+  const handleXemHopDong = async (hd) => {
     try {
-      await api.put(`/hop-dong/${hopDongId}/trang-thai`, null, {
-        params: { trangThai: trangThaiMoi },
-      });
-      fetchData();
+      const res = await api.get(`/khach-hang/chi-tiet/${hd.khachHang.id}`);
+      setPreviewContract({ ...hd, hoSoKhachHang: res.data });
     } catch {
-      alert(t('landlord.error_approve_contract'));
+      alert(t('landlord.error_load_profile'));
     }
+  };
+
+  /** Duyệt hợp đồng từ Modal */
+  const handleDuyetTuModal = async () => {
+    if (!previewContract) return;
+    setIsSubmitting(true);
+    try {
+      await api.put(`/hop-dong/${previewContract.id}/trang-thai`, null, {
+        params: { trangThai: CONTRACT_STATUS.APPROVED },
+      });
+      setConfirmState({
+        isOpen: true,
+        type: 'success',
+        title: t('common.success'),
+        message: t('landlord.success_update'),
+        onConfirm: () => fetchData()
+      });
+    } catch {
+      setConfirmState({
+        isOpen: true,
+        type: 'danger',
+        title: t('common.error'),
+        message: t('landlord.error_approve_contract'),
+        onConfirm: null
+      });
+    } finally {
+      setIsSubmitting(false);
+      setPreviewContract(null);
+    }
+  };
+
+  const handleDuyetHopDong = async (hopDongId, trangThaiMoi) => {
+    // Tìm hợp đồng hiện tại để lấy thông tin trạng thái cũ
+    const hd = hopDongs.find(h => h.id === hopDongId);
+    const statusText = t(`landlord.contract_status_${trangThaiMoi}`);
+    
+    let message = t('landlord.confirm_contract', { trangThaiMoi: statusText });
+
+    // Logic đặc biệt cho phần Hủy hợp đồng
+    if (hd?.trangThai === CONTRACT_STATUS.CANCELLING) {
+      if (trangThaiMoi === CONTRACT_STATUS.APPROVED) {
+        message = "Bạn có chắc chắn muốn TỪ CHỐI yêu cầu hủy và tiếp tục duy trì hợp đồng này không?";
+      } else if (trangThaiMoi === CONTRACT_STATUS.CANCELLED) {
+        message = "Xác nhận ĐỒNG Ý hủy hợp đồng này và giải phóng phòng trống?";
+      }
+    }
+
+    setConfirmState({
+      isOpen: true,
+      type: (trangThaiMoi === CONTRACT_STATUS.REJECTED || trangThaiMoi === CONTRACT_STATUS.CANCELLED) ? 'danger' : 'info',
+      title: t('common.confirm') || 'Xác nhận',
+      message,
+      onConfirm: async () => {
+        setConfirmState(prev => ({ ...prev, isOpen: false }));
+        try {
+          await api.put(`/hop-dong/${hopDongId}/trang-thai`, null, {
+            params: { trangThai: trangThaiMoi },
+          });
+          fetchData();
+        } catch {
+          setConfirmState({
+            isOpen: true,
+            type: 'danger',
+            title: t('common.error'),
+            message: t('landlord.error_approve_contract'),
+            onConfirm: null
+          });
+        }
+      }
+    });
   };
 
   /** Mở modal chốt chỉ số điện nước (tạo mới) */
@@ -290,17 +437,34 @@ function LandlordPage({ currentUser }) {
 
       if (dienNuocForm.isUpdate) {
         await api.put(`/dien-nuoc/cap-nhat/${dienNuocForm.hoaDonId}`, payload);
-        alert(t('landlord.success_update_bill'));
+        setConfirmState({
+          isOpen: true,
+          type: 'success',
+          title: t('common.success'),
+          message: t('landlord.success_update_bill'),
+          onConfirm: () => fetchData()
+        });
       } else {
         await api.post('/dien-nuoc/chot-so', payload);
-        alert(t('landlord.success_create_bill'));
+        setConfirmState({
+          isOpen: true,
+          type: 'success',
+          title: t('common.success'),
+          message: t('landlord.success_create_bill'),
+          onConfirm: () => fetchData()
+        });
       }
 
       setDienNuocForm(null);
-      fetchData();
     } catch (err) {
       const msg = err.response?.data?.thongBao || err.response?.data?.message;
-      alert(msg || t('landlord.error_save_bill'));
+      setConfirmState({
+        isOpen: true,
+        type: 'danger',
+        title: t('common.error'),
+        message: msg || t('landlord.error_save_bill'),
+        onConfirm: null
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -327,7 +491,9 @@ function LandlordPage({ currentUser }) {
   };
 
   /* ===== COMPUTED ===== */
-  const pendingCount = hopDongs.filter(hd => hd.trangThai === CONTRACT_STATUS.PENDING).length;
+  const pendingCount = hopDongs.filter(
+    hd => hd.trangThai === CONTRACT_STATUS.PENDING || hd.trangThai === CONTRACT_STATUS.CANCELLING
+  ).length;
 
   /* ===== TABS CONFIG ===== */
   const TABS = [
@@ -337,6 +503,7 @@ function LandlordPage({ currentUser }) {
     { key: 'DIEN_NUOC', label: t('landlord.tab_bill'), icon: '⚡', onClick: fetchData },
     { key: 'HOA_DON', label: t('landlord.tab_invoice'), icon: '🧾', onClick: fetchData },
     { key: 'THONG_BAO', label: t('landlord.tab_notice'), icon: '📣', onClick: fetchThongBao },
+    { key: 'LIEN_HE', label: t('landlord.tab_contact'), icon: '💬', onClick: fetchData },
     { key: 'HO_SO', label: t('landlord.tab_profile'), icon: '👤' },
   ];
 
@@ -392,6 +559,13 @@ function LandlordPage({ currentUser }) {
           tenPhong={tenPhong} setTenPhong={setTenPhong}
           giaPhong={giaPhong} setGiaPhong={setGiaPhong}
           trangThai={trangThai} setTrangThai={setTrangThai}
+          giaDien={giaDien} setGiaDien={setGiaDien}
+          giaNuoc={giaNuoc} setGiaNuoc={setGiaNuoc}
+          tienCoc={tienCoc} setTienCoc={setTienCoc}
+          diaChi={diaChi} setDiaChi={setDiaChi}
+          dienTich={dienTich} setDienTich={setDienTich}
+          hinhAnh={hinhAnh} setHinhAnh={setHinhAnh}
+          moTa={moTa} setMoTa={setMoTa}
           isSubmitting={isSubmitting}
           onThemPhong={handleThemPhong}
           onXoaPhong={handleXoaPhong}
@@ -403,6 +577,7 @@ function LandlordPage({ currentUser }) {
         <ContractTab
           hopDongs={hopDongs}
           onDuyetHopDong={handleDuyetHopDong}
+          onXemHopDong={handleXemHopDong}
           onSetChatTarget={setChatTarget}
           onXemHoSo={handleXemHoSoKhach}
           onRefresh={fetchData}
@@ -430,6 +605,13 @@ function LandlordPage({ currentUser }) {
           noiDungTB={noiDungTB} setNoiDungTB={setNoiDungTB}
           isSubmitting={isSubmitting}
           onDangThongBao={handleDangThongBao}
+        />
+      )}
+
+      {!loading && landlordTab === 'LIEN_HE' && (
+        <TenantListTab
+          hopDongs={hopDongs}
+          onSetChatTarget={setChatTarget}
         />
       )}
 
@@ -467,6 +649,23 @@ function LandlordPage({ currentUser }) {
           onClose={() => setChatTarget(null)}
         />
       )}
+
+      <ContractModal
+        isOpen={!!previewContract}
+        onClose={() => setPreviewContract(null)}
+        phong={previewContract?.phongTro}
+        chuTroInfo={landlordProfile || { hoTen: currentUser.username }}
+        khachThueInfo={previewContract?.hoSoKhachHang}
+        onConfirm={previewContract?.trangThai === 'CHO_DUYET' ? handleDuyetTuModal : null}
+        confirmText={t('guest.approve_contract')}
+        isProcessing={isSubmitting}
+        role="LANDLORD"
+      />
+
+      <ConfirmModal
+        {...confirmState}
+        onClose={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 }

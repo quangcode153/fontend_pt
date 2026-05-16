@@ -97,3 +97,16 @@
 - 10s là trade-off chấp nhận được (UX tốt, không tốn quá nhiều request)
 
 **Hướng nâng cấp:** Thay bằng WebSocket push notification khi implement module Notification.
+
+---
+
+## 9. Đa ngôn ngữ (Internationalization - i18n)
+
+**Quyết định:** Sử dụng thư viện `react-i18next` với cấu trúc file JSON (`vi/translation.json`, `en/translation.json`).
+
+**Lý do:**
+- Hỗ trợ đổi ngôn ngữ "nóng" (không cần load lại trang).
+- Dễ dàng quản lý toàn bộ nội dung văn bản tập trung tại một nơi.
+- Hỗ trợ tốt cho việc format số (tiền tệ), ngày tháng và các đơn vị đặc thù (kWh, m3).
+
+**Quy tắc:** Tuyệt đối không hardcode text tiếng Việt vào JSX. Mọi nội dung hiển thị phải đi qua hàm `t()`.

@@ -33,10 +33,24 @@ function ChatBox({ currentUser, targetUser, isOpen, onClose }) {
         setIsConnected(true);
         client.subscribe(`/topic/chat/${currentUser.id}`, (msg) => {
           const newMsg = JSON.parse(msg.body);
+          // Kiểm tra xem tin nhắn này có thuộc về hội thoại hiện tại không
           if (newMsg.nguoiGuiId === targetUser.id || newMsg.nguoiNhanId === targetUser.id) {
             setMessages(prev => {
-              const isDuplicate = prev.some(m => m.id === newMsg.id || (m.noiDung === newMsg.noiDung && m.thoiGian === newMsg.thoiGian));
-              if (isDuplicate) return prev;
+              // 1. Nếu đã có tin nhắn với ID này rồi thì bỏ qua
+              if (prev.some(m => m.id === newMsg.id)) return prev;
+
+              // 2. Nếu tin nhắn này là tin nhắn do chính mình gửi (nguoiGuiId === currentUser.id)
+              // và đang có tin nhắn optimistic chờ sẵn, thì thay thế nó
+              if (newMsg.nguoiGuiId === currentUser.id) {
+                const optIndex = prev.findIndex(m => m.isOptimistic && m.noiDung === newMsg.noiDung);
+                if (optIndex !== -1) {
+                  const updated = [...prev];
+                  updated[optIndex] = newMsg; // Thay bằng tin nhắn thật từ server (có ID)
+                  return updated;
+                }
+              }
+
+              // 3. Nếu là tin nhắn từ người khác gửi đến, hoặc không tìm thấy tin optimistic khớp
               return [...prev, newMsg];
             });
           }

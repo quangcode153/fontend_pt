@@ -24,9 +24,9 @@ api.interceptors.request.use((config) => {
 
 **Hướng fix:** Đảm bảo `isLoadingAuth === false` trước khi render bất kỳ component nào gọi API. Hiện tại `ProtectedRoute` đã có gate này — kiểm tra xem có component nào gọi API ngoài luồng không.
 
-- [ ] Thêm log vào Interceptor
-- [ ] Xác nhận `ProtectedRoute` đang block đúng
-- [ ] Test lại sau reload
+- [x] Thêm log vào Interceptor
+- [x] Xác nhận `ProtectedRoute` đang block đúng
+- [x] Test lại sau reload (F5) - OK
 
 ---
 
@@ -53,14 +53,16 @@ api.interceptors.request.use((config) => {
 - [ ] Thay toàn bộ `alert()` / `window.confirm()` trong tất cả pages và components
 
 ### 4. Dashboard Thống kê
-- [ ] **BE:** API `GET /thong-ke/doanh-thu?thang=5&nam=2025&landlordId=1`
-- [ ] **FE:** Component biểu đồ cột (recharts) tổng thu theo tháng
-- [ ] **FE:** Thẻ thống kê nhanh: tổng phòng, phòng trống, phòng đang thuê
-- [ ] Hiển thị ở AdminPage (toàn hệ thống) và LandlordPage (theo khu trọ)
+- [x] **BE:** API `GET /thong-ke/doanh-thu`
+- [x] **FE:** Component biểu đồ cột (Thống kê biến động doanh thu)
+- [x] **FE:** Thẻ thống kê nhanh: tổng phòng, phòng trống, phòng đang thuê
+- [x] Hiển thị ở LandlordPage
 
-### 5. Audit Enum Hardcode
-- [ ] Tìm kiếm toàn bộ `'Trống'`, `'Đã thuê'`, `'CHỜ_DUYỆT'`... trong FE
-- [ ] Thay bằng `ROOM_STATUS.EMPTY`, `CONTRACT_STATUS.PENDING`... từ `constants.js`
+### 5. Audit Enum Hardcode & i18n
+- [x] Tìm kiếm toàn bộ `'Trống'`, `'Đã thuê'`, `'CHỜ_DUYỆT'`...
+- [x] Thay bằng `ROOM_STATUS.EMPTY`, `CONTRACT_STATUS.PENDING`...
+- [x] Triển khai Đa ngôn ngữ (i18next) toàn diện hệ thống (VI/EN)
+- [x] Hợp đồng điện tử: hỗ trợ chữ ký 2 bên và xem lại HĐ đã ký
 
 ---
 
@@ -78,8 +80,9 @@ api.interceptors.request.use((config) => {
 - [ ] FE: Dropdown danh sách thông báo chưa đọc
 
 ### 8. Bảng tin (Thông báo từ Chủ trọ)
-- [ ] LandlordPage: Form đăng thông báo mới
-- [ ] TenantPage tab "Bảng tin": hiển thị thông báo từ chủ trọ của mình
+- [x] LandlordPage: Form đăng thông báo mới
+- [x] TenantPage tab "Bảng tin": hiển thị thông báo từ chủ trọ của mình
+- [x] Tích hợp i18n cho Bảng tin
 
 ---
 

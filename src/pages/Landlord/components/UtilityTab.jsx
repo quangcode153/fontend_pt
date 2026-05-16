@@ -42,7 +42,7 @@ export default function UtilityTab({ hopDongs, onMoChotSo }) {
                   </div>
                 </div>
                 <span className="l-tag l-tag--blue">
-                  {hd.phongTro?.giaPhong?.toLocaleString()} ₫
+                   {hd.phongTro?.giaPhong?.toLocaleString()} {t('landlord.currency')}
                 </span>
               </div>
 

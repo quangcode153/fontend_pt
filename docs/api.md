@@ -37,12 +37,56 @@
 
 | Method | Endpoint | Auth | Mô tả |
 |---|---|---|---|
-| GET | `/phong-tro/chu-tro/{id}` | ❌ | Danh sách phòng theo chủ trọ |
 | POST | `/phong-tro` | ✅ Landlord | Thêm phòng mới |
+| PUT | `/phong-tro/{id}` | ✅ Landlord | Sửa thông tin phòng |
 | PUT | `/phong-tro/{id}/trang-thai` | ✅ Landlord | Đổi trạng thái phòng |
 | DELETE | `/phong-tro/{id}` | ✅ Landlord | Xóa phòng (cascade) |
+| GET | `/phong-tro/search` | ❌ | API Tìm kiếm & Lọc phòng trọ cho trang chủ |
+| GET | `/phong-tro/chu-tro/{id}` | ❌ | Danh sách phòng theo chủ trọ |
 
-**Trạng thái hợp lệ:** `Trống` · `Đã thuê` · `Đang bảo trì`
+### 💡 Hướng dẫn Frontend ghép API `/phong-tro/search` (Tìm kiếm & Lọc)
+
+API này dùng để thiết kế **Thanh tìm kiếm (Search Bar)** và **Bộ lọc (Filter)** bên trái/trên cùng của màn hình danh sách phòng.
+
+**1. Cấu trúc gọi API (Tham số Query - truyền trên thanh URL):**
+Tất cả các tham số đều là **Tùy chọn (Optional)**. Frontend có thể gửi 1 tham số, nhiều tham số hoặc không gửi gì cả.
+- `?tenPhong=abc`: Khi user nhập từ khóa vào ô input tìm kiếm.
+- `?giaToiThieu=1000000&giaToiDa=3000000`: Khi user kéo thanh slider giá, hoặc nhập min/max giá (VND).
+- `?trangThai=TRONG`: Khi user tích vào checkbox trạng thái (Gửi string `"TRONG"`, `"DA_THUE"`, `"DANG_BAO_TRI"`).
+
+*Ví dụ Axios:*
+```javascript
+const response = await axios.get('/api/phong-tro/search', {
+  params: {
+    tenPhong: searchKeyword, // vd: "Cao Cấp"
+    giaToiThieu: minPrice,   // vd: 2000000
+    giaToiDa: maxPrice       // vd: 5000000
+  }
+});
+```
+
+### 💡 Cấu trúc Dữ liệu JSON Trả về / Gửi đi (Dành cho thiết kế UI/Form)
+
+Khi GET danh sách, hoặc khi POST/PUT để tạo/sửa phòng, Frontend sẽ làm việc với Object JSON sau. 
+*(UI Note: Cần thiết kế Form thêm phòng có các Input tương ứng).*
+
+```json
+{
+  "id": 1,
+  "tenPhong": "Phòng Trọ Cao Cấp Số 1",   // UI: Input text (Bắt buộc)
+  "giaPhong": 2500000,                    // UI: Input number, hiển thị VND (Bắt buộc)
+  "giaDien": 3500,                        // UI: Input number, VND/Kwh
+  "giaNuoc": 25000,                       // UI: Input number, VND/Khối
+  "diaChi": "123 Nguyễn Trãi, Q5",        // UI: Input text/textarea
+  "dienTich": 25.5,                       // UI: Input number (m2)
+  "hinhAnh": "https://img.com/a.jpg",     // UI: Nút Upload ảnh hoặc Input URL
+  "moTa": "Có gác lửng, ban công...",     // UI: Textarea
+  "trangThai": "TRONG",                   // UI: Select Box (TRONG, DA_THUE, DANG_BAO_TRI)
+  "chuTroId": 3                           // (Backend tự lấy từ token, Form không cần gửi)
+}
+```
+
+> ⚙️ **Auto logic Backend:** Khi HĐ được duyệt (`DA_DUYET`) → phòng tự chuyển thành `Đã thuê`. Khi HĐ kết thúc → phòng tự về `Trống`.
 
 > ⚙️ **Auto logic:** Khi HĐ được duyệt (`DA_DUYET`) → phòng tự chuyển thành `Đã thuê`. Khi HĐ kết thúc → phòng tự về `Trống`.
 

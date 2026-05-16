@@ -4,6 +4,8 @@ import api from '../../api';
 import ChatBox from '../../components/ChatBox';
 import KhieuNaiForm from '../../components/KhieuNaiForm';
 import HoSoForm from '../../components/HoSoForm';
+import ContractModal from '../../components/ContractModal';
+import ConfirmModal from '../../components/ConfirmModal';
 import useAdminContact from '../../hooks/useAdminContact';
 import './GuestPage.css';
 
@@ -76,16 +78,16 @@ const S = {
   },
 };
 
-const Spinner = ({ text = 'Đang tải...' }) => (
-  <div style={{ textAlign: 'center', padding: '40px', animation: 'fadeIn 0.3s ease' }}>
-    <div style={{
-      width: '24px', height: '24px', border: '3px solid var(--border)',
-      borderTopColor: 'var(--accent)', borderRadius: '50%',
-      animation: 'spin 0.6s linear infinite', margin: '0 auto 12px',
-    }} />
-    <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{text}</div>
-  </div>
-);
+const Spinner = ({ text }) => {
+  const { t } = useTranslation();
+  const loadingText = text || t('landlord.loading');
+  return (
+    <div className="l-spinner">
+      <div className="l-spinner__circle" />
+      <div className="l-spinner__text">{loadingText}</div>
+    </div>
+  );
+};
 
 function GuestPage({ currentUser, onRentSuccess }) {
   const { t } = useTranslation();
@@ -103,6 +105,8 @@ function GuestPage({ currentUser, onRentSuccess }) {
   const [phongDangCho, setPhongDangCho] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [previewContract, setPreviewContract] = useState(null);
+  const [confirmState, setConfirmState] = useState({ isOpen: false, type: 'info', title: '', message: '', onConfirm: null });
 
   const { admin: adminContact, loading: loadingAdmin, error: adminError } = useAdminContact();
   const latestClickId = useRef(null);
@@ -113,7 +117,9 @@ function GuestPage({ currentUser, onRentSuccess }) {
       try {
         const res = await api.get('/tai-khoan/chu-tro');
         setChuTros(res.data || []);
-      } catch (err) { alert(t('guest.error_system')); }
+      } catch (err) {
+        setConfirmState({ isOpen: true, type: 'danger', title: t('common.error'), message: t('guest.error_system'), onConfirm: null });
+      }
       finally { setLoading(false); }
     };
     fetchDanhSachChuTro();
@@ -134,14 +140,15 @@ function GuestPage({ currentUser, onRentSuccess }) {
       setPhongTros(phongRes.data || []);
       setHoSoChuTro(chiTietRes.data || null);
     } catch (err) {
-      if (latestClickId.current === ct.id) alert(t('guest.error_room_info'));
+      if (latestClickId.current === ct.id) {
+        setConfirmState({ isOpen: true, type: 'danger', title: t('common.error'), message: t('guest.error_room_info'), onConfirm: null });
+      }
     } finally {
       if (latestClickId.current === ct.id) setLoading(false);
     }
   };
 
-  const handleDangKyThue = async (phong) => {
-    setIsSubmitting(true);
+  const openContractPreview = async (phong) => {
     try {
       let hoSo;
       try {
@@ -156,24 +163,40 @@ function GuestPage({ currentUser, onRentSuccess }) {
         throw err;
       }
       if (!validateHoSo(hoSo)) {
-        alert(t('guest.profile_incomplete'));
-        setActiveTab('HO_SO');
+        setConfirmState({
+          isOpen: true, type: 'warning', title: t('common.confirm'),
+          message: t('guest.profile_incomplete'),
+          onConfirm: () => setActiveTab('HO_SO')
+        });
         return;
       }
-      if (window.confirm(`${t('guest.confirm_rent')} ${phong.tenPhong}?`)) {
-        await api.post('/hop-dong', {
-          phongTroId: phong.id,
-          ngayBatDau: new Date().toISOString().split('T')[0],
-          tienCoc: 0,
-        });
-        setPhongDangCho({ ...phong, chuTroId: chuTroDangChon.id });
-        alert(t('guest.rent_success'));
-        if (onRentSuccess) onRentSuccess();
-      }
+      setPreviewContract({ ...phong, hoSoKhachHang: hoSo });
     } catch (err) {
-      alert(t('guest.error') + (err.response?.data?.message || err.message));
+      setConfirmState({ isOpen: true, type: 'danger', title: t('common.error'), message: t('guest.error') + (err.response?.data?.message || err.message), onConfirm: null });
+    }
+  };
+
+  const handleDangKyThue = async () => {
+    const phong = previewContract;
+    if (!phong) return;
+    setIsSubmitting(true);
+    try {
+      await api.post('/hop-dong', {
+        phongTroId: phong.id,
+        ngayBatDau: new Date().toISOString().split('T')[0],
+        tienCoc: phong.tienCoc || 0,
+      });
+      setPhongDangCho({ ...phong, chuTroId: chuTroDangChon.id });
+      setConfirmState({
+        isOpen: true, type: 'success', title: t('common.success'),
+        message: t('guest.rent_success'),
+        onConfirm: () => onRentSuccess?.()
+      });
+    } catch (err) {
+      setConfirmState({ isOpen: true, type: 'danger', title: t('common.error'), message: t('guest.error') + (err.response?.data?.message || err.message), onConfirm: null });
     } finally {
       setIsSubmitting(false);
+      setPreviewContract(null);
     }
   };
 
@@ -313,21 +336,65 @@ function GuestPage({ currentUser, onRentSuccess }) {
                         borderTop: `3px solid ${phong.trangThai === ROOM_STATUS.EMPTY ? 'var(--success)' : 'var(--danger)'}`,
                         borderRadius: `0 0 var(--radius-lg) var(--radius-lg)`,
                         animation: `fadeIn 0.3s ease ${i * 0.05}s both`,
+                        display: 'flex', flexDirection: 'column'
                       }}>
+                        {phong.hinhAnh && (
+                          <div style={{ width: '100%', height: '160px', overflow: 'hidden', borderRadius: 'var(--radius-md)', marginBottom: '14px' }}>
+                            <img src={phong.hinhAnh} alt="Room" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          </div>
+                        )}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                          <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>{phong.tenPhong}</div>
+                          <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)' }}>{phong.tenPhong}</div>
                           <span style={S.tag(phong.trangThai === ROOM_STATUS.EMPTY ? 'green' : 'red')}>
                             {phong.trangThai === ROOM_STATUS.EMPTY ? t('guest.status_empty') : phong.trangThai === ROOM_STATUS.RENTED ? t('guest.status_rented') : t('guest.status_maintenance')}
                           </span>
                         </div>
-                        <div style={S.infoRow}>
-                          <span style={{ color: 'var(--text-muted)' }}>{t('guest.rent_price')}</span>
-                          <span style={{ fontWeight: 600, color: 'var(--accent)' }}>{phong.giaPhong?.toLocaleString()} {t('guest.currency_month')}</span>
+
+                        <div style={{ flex: 1 }}>
+                          <div style={S.infoRow}>
+                            <span style={{ color: 'var(--text-muted)' }}>{t('guest.rent_price')}</span>
+                            <span style={{ fontWeight: 700, color: 'var(--accent)', fontSize: '14px' }}>{phong.giaPhong?.toLocaleString()} {t('guest.currency_month')}</span>
+                          </div>
+                          {phong.dienTich && (
+                            <div style={S.infoRow}>
+                              <span style={{ color: 'var(--text-muted)' }}>{t('guest.area')}</span>
+                              <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{phong.dienTich} m²</span>
+                            </div>
+                          )}
+                          {phong.tienCoc != null && (
+                            <div style={S.infoRow}>
+                              <span style={{ color: 'var(--text-muted)' }}>{t('guest.deposit')}</span>
+                              <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{phong.tienCoc?.toLocaleString()} {t('landlord.currency')}</span>
+                            </div>
+                          )}
+                          {(phong.giaDien != null || phong.giaNuoc != null) && (
+                            <div style={S.infoRow}>
+                              <span style={{ color: 'var(--text-muted)' }}>{t('guest.utility')}</span>
+                              <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>
+                                {phong.giaDien ? `${phong.giaDien.toLocaleString()} ${t('landlord.currency')}` : '—'} / {phong.giaNuoc ? `${phong.giaNuoc.toLocaleString()} ${t('landlord.currency')}` : '—'}
+                              </span>
+                            </div>
+                          )}
+                          {phong.diaChi && (
+                            <div style={{ ...S.infoRow, alignItems: 'flex-start', flexDirection: 'column', gap: '6px', borderBottom: 'none' }}>
+                              <span style={{ color: 'var(--text-muted)' }}>{t('guest.address')}</span>
+                              <span style={{ fontWeight: 500, color: 'var(--text-primary)', lineHeight: 1.5 }}>📍 {phong.diaChi}</span>
+                            </div>
+                          )}
+                          {phong.moTa && (
+                            <div style={{ marginTop: '10px', padding: '12px', background: 'var(--bg)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)' }}>
+                              <div style={{ color: 'var(--text-muted)', fontSize: '12px', marginBottom: '6px', fontWeight: 600 }}>{t('guest.description')}</div>
+                              <div style={{ fontWeight: 400, color: 'var(--text-secondary)', fontSize: '13px', lineHeight: 1.6, whiteSpace: 'pre-line' }}>
+                                {phong.moTa}
+                              </div>
+                            </div>
+                          )}
                         </div>
+
                         {phong.trangThai === ROOM_STATUS.EMPTY && (
                           <button
-                            style={{ ...S.btnSuccess, marginTop: '14px', opacity: isSubmitting ? 0.6 : 1 }}
-                            onClick={() => handleDangKyThue(phong)}
+                            style={{ ...S.btnSuccess, marginTop: '16px', opacity: isSubmitting ? 0.6 : 1 }}
+                            onClick={() => openContractPreview(phong)}
                             disabled={isSubmitting}
                           >
                             {isSubmitting ? t('guest.btn_processing') : t('guest.btn_rent')}
@@ -344,6 +411,23 @@ function GuestPage({ currentUser, onRentSuccess }) {
       )}
 
       {chatTarget && <ChatBox currentUser={currentUser} targetUser={chatTarget} isOpen={true} onClose={() => setChatTarget(null)} />}
+
+      <ContractModal
+        isOpen={!!previewContract}
+        onClose={() => setPreviewContract(null)}
+        phong={previewContract}
+        chuTroInfo={hoSoChuTro || chuTroDangChon}
+        khachThueInfo={previewContract?.hoSoKhachHang}
+        onConfirm={handleDangKyThue}
+        confirmText={t('guest.confirm_rent_contract')}
+        isProcessing={isSubmitting}
+        role="TENANT"
+      />
+
+      <ConfirmModal
+        {...confirmState}
+        onClose={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 }

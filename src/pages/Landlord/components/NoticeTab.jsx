@@ -65,7 +65,7 @@ export default function NoticeTab({
               <div className="l-notice-item__title">{tb.tieuDe}</div>
               <div className="l-notice-item__content">{tb.noiDung}</div>
               <div className="l-notice-item__date">
-                🕐 {tb.ngayDang ? new Date(tb.ngayDang).toLocaleString('vi-VN') : t('landlord.recently')}
+                🕐 {tb.ngayDang ? new Date(tb.ngayDang).toLocaleString(t('landlord.date_locale') || 'vi-VN') : t('landlord.recently')}
               </div>
             </div>
           ))}

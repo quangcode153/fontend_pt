@@ -153,7 +153,7 @@ export default function UtilityModal({
             >
               {isSubmitting
                 ? t('landlord.btn_saving_bill')
-                : (dienNuocForm.isUpdate ? '💾 Cập nhật & Xuất hóa đơn' : '💾 ' + t('landlord.btn_save_export_bill'))}
+                : (dienNuocForm.isUpdate ? '💾 ' + t('landlord.btn_update_export') : '💾 ' + t('landlord.btn_save_export_bill'))}
             </button>
           </div>
         </form>
