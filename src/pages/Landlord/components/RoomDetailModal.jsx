@@ -33,8 +33,26 @@ export default function RoomDetailModal({
         {/* Body */}
         <div className="l-modal__body">
           {phong.hinhAnh && (
-            <div style={{ marginBottom: '20px', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
-              <img src={phong.hinhAnh} alt="Room" style={{ width: '100%', maxHeight: '200px', objectFit: 'cover' }} />
+            <div style={{ marginBottom: '20px' }}>
+              {phong.hinhAnh.includes('|||') ? (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '8px' }}>
+                  {phong.hinhAnh.split('|||').map((imgSrc, idx) => (
+                    <div key={idx} style={{ borderRadius: 'var(--radius-md)', overflow: 'hidden', height: '80px', border: '1px solid var(--border-light)' }}>
+                      <img 
+                        src={imgSrc} 
+                        alt={`Room ${idx + 1}`} 
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer' }} 
+                        onClick={() => window.open(imgSrc, '_blank')}
+                        title={t('common.click_to_view') || "Click to view full image"}
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
+                  <img src={phong.hinhAnh} alt="Room" style={{ width: '100%', maxHeight: '200px', objectFit: 'cover' }} />
+                </div>
+              )}
             </div>
           )}
           {/* Thông tin cơ bản */}

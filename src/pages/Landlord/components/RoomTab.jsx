@@ -39,43 +39,54 @@ export default function RoomTab({
     return t(`landlord.room_status_${tt}`);
   };
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = (event) => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 800;
-          const MAX_HEIGHT = 800;
-          let width = img.width;
-          let height = img.height;
+  const handleImageChange = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
 
-          if (width > height) {
-            if (width > MAX_WIDTH) {
-              height *= MAX_WIDTH / width;
-              width = MAX_WIDTH;
-            }
-          } else {
-            if (height > MAX_HEIGHT) {
-              width *= MAX_HEIGHT / height;
-              height = MAX_HEIGHT;
-            }
-          }
+    try {
+      const base64Promises = files.map((file) => {
+        return new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = (event) => {
+            const img = new Image();
+            img.onload = () => {
+              const canvas = document.createElement('canvas');
+              const MAX_WIDTH = 800;
+              const MAX_HEIGHT = 800;
+              let width = img.width;
+              let height = img.height;
 
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, width, height);
+              if (width > height) {
+                if (width > MAX_WIDTH) {
+                  height *= MAX_WIDTH / width;
+                  width = MAX_WIDTH;
+                }
+              } else {
+                if (height > MAX_HEIGHT) {
+                  width *= MAX_HEIGHT / height;
+                  height = MAX_HEIGHT;
+                }
+              }
 
-          // Nén ảnh (chất lượng 0.7)
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-          setHinhAnh(dataUrl);
-        };
-        img.src = event.target.result;
-      };
-      reader.readAsDataURL(file);
+              canvas.width = width;
+              canvas.height = height;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, width, height);
+
+              // Nén ảnh (chất lượng 0.7)
+              const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+              resolve(dataUrl);
+            };
+            img.src = event.target.result;
+          };
+          reader.readAsDataURL(file);
+        });
+      });
+
+      const base64Results = await Promise.all(base64Promises);
+      setHinhAnh(base64Results.join('|||'));
+    } catch (err) {
+      console.error("Lỗi upload ảnh:", err);
     }
   };
 
@@ -143,8 +154,8 @@ export default function RoomTab({
             <input className="l-form-input" type="text" value={diaChi} onChange={e => setDiaChi(e.target.value)} placeholder={t('landlord.placeholder_address')} disabled={isSubmitting} />
           </div>
           <div className="l-add-room-form__field" style={{ flex: 2 }}>
-            <label className="l-form-label">{t('landlord.image')}</label>
-            <input className="l-form-input" type="file" accept="image/*" onChange={handleImageChange} disabled={isSubmitting} />
+            <label className="l-form-label">{t('landlord.image')} ({t('common.multiple') || 'nhiều ảnh'})</label>
+            <input className="l-form-input" type="file" accept="image/*" multiple onChange={handleImageChange} disabled={isSubmitting} />
           </div>
           <div className="l-add-room-form__field" style={{ flexBasis: '100%' }}>
             <label className="l-form-label">{t('landlord.more_description')}</label>
@@ -185,7 +196,7 @@ export default function RoomTab({
               >
                 {/* Ảnh placeholder cho phòng */}
                 <div style={{ height: '120px', overflow: 'hidden', borderRadius: 'var(--radius-md) var(--radius-md) 0 0', margin: '-20px -20px 16px -20px', position: 'relative' }}>
-                  <img src={phong.hinhAnh || roomPlaceholderImg} alt="Room" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={phong.hinhAnh ? (phong.hinhAnh.includes('|||') ? phong.hinhAnh.split('|||')[0] : phong.hinhAnh) : roomPlaceholderImg} alt="Room" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   <div style={{ position: 'absolute', top: '10px', right: '10px' }}>
                     <span className={`l-tag l-tag--${tagColor(phong.trangThai)}`}>
                       {tagLabel(phong.trangThai)}

@@ -478,7 +478,7 @@ function GuestPage({ currentUser, onRentSuccess }) {
                     }}>
                       {phong.hinhAnh && (
                         <div style={{ width: '100%', height: '160px', overflow: 'hidden', borderRadius: 'var(--radius-md)', marginBottom: '14px' }}>
-                          <img src={phong.hinhAnh} alt="Room" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <img src={phong.hinhAnh.includes('|||') ? phong.hinhAnh.split('|||')[0] : phong.hinhAnh} alt="Room" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         </div>
                       )}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
@@ -645,7 +645,7 @@ function GuestPage({ currentUser, onRentSuccess }) {
                       }}>
                         {phong.hinhAnh && (
                           <div style={{ width: '100%', height: '160px', overflow: 'hidden', borderRadius: 'var(--radius-md)', marginBottom: '14px' }}>
-                            <img src={phong.hinhAnh} alt="Room" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            <img src={phong.hinhAnh.includes('|||') ? phong.hinhAnh.split('|||')[0] : phong.hinhAnh} alt="Room" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                           </div>
                         )}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
