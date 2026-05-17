@@ -21,10 +21,12 @@ function Header({ user, onLogout }) {
     localStorage.setItem('i18nextLng', newLang);
   };
 
+  const firstLetter = (user?.username || 'G').charAt(0).toUpperCase();
+
   return (
     <header className="header">
       {/* Brand & Logo */}
-      <div className="header__brand">
+      <div className="header__brand" style={{ cursor: 'pointer' }} onClick={() => window.location.reload()}>
         <span className="header__logo">🏠</span>
         <span className="header__title">
           {t('header.app_name')}
@@ -36,30 +38,33 @@ function Header({ user, onLogout }) {
         {/* Language Switcher */}
         <button
           onClick={toggleLanguage}
-          className="btn btn--outline"
-          style={{ padding: '6px 12px', fontSize: '12px' }}
+          className="btn btn--outline header__btn-lang"
           title={i18n.language === 'vi' ? 'Switch to English' : 'Đổi sang Tiếng Việt'}
         >
           {i18n.language === 'vi' ? '🇺🇸 EN' : '🇻🇳 VI'}
         </button>
 
-        {/* User Information */}
-        <div className="header__user-info">
-          <div className="header__username">
-            {user?.username || 'Guest'}
+        {/* User Profile Info with Avatar */}
+        <div className="header__profile">
+          <div className="header__avatar">
+            {firstLetter}
           </div>
-          <div className="header__role">
-            {roleMap[role] || role}
+          <div className="header__user-info">
+            <div className="header__username">
+              {user?.username || 'Guest'}
+            </div>
+            <div className="header__role">
+              {roleMap[role] || role}
+            </div>
           </div>
         </div>
 
         {/* Logout Button */}
         <button
           onClick={onLogout}
-          className="btn btn--outline"
-          style={{ padding: '8px 14px', fontSize: '12px' }}
+          className="btn btn--outline header__btn-logout"
         >
-          {t('header.logout')}
+          🚪 {t('header.logout') || 'Đăng xuất'}
         </button>
       </div>
     </header>

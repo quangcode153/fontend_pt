@@ -199,6 +199,18 @@ function AppContent() {
       )}
       {renderContent()}
       <ChatBox currentUser={user} targetUser={chatTarget} isOpen={!!chatTarget} onClose={() => setChatTarget(null)} />
+      <footer className="app-footer">
+        <div className="app-footer__content">
+          <span className="app-footer__copy">
+            {t('home.footer_copy') || '© 2026 Smart Room Rental.'}
+          </span>
+          <div className="app-footer__badges">
+            <span className="app-footer__badge">🛡️ {t('common.secure_session') || 'Session Secure'}</span>
+            <span className="app-footer__badge">⚡ React 18</span>
+            <span className="app-footer__badge">🎨 Outfit UI</span>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
