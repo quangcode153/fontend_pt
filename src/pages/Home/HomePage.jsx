@@ -4,8 +4,14 @@ import heroImg from '../../assets/hero_apartment.png';
 import './HomePage.css';
 
 export default function HomePage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+
+  const toggleLanguage = () => {
+    const newLang = i18n.language === 'vi' ? 'en' : 'vi';
+    i18n.changeLanguage(newLang);
+    localStorage.setItem('i18nextLng', newLang);
+  };
 
   const FEATURES = [
     { icon: '🏠', color: 'purple', title: t('home.feature_rooms_title'),    desc: t('home.feature_rooms_desc') },
@@ -44,6 +50,13 @@ export default function HomePage() {
             <span className="home-nav__title">{t('home.brand')}</span>
           </div>
           <div className="home-nav__actions">
+            <button
+              onClick={toggleLanguage}
+              className="home-nav__btn-lang"
+              title={i18n.language === 'vi' ? 'Switch to English' : 'Đổi sang Tiếng Việt'}
+            >
+              {i18n.language === 'vi' ? '🇺🇸 EN' : '🇻🇳 VI'}
+            </button>
             <Link to="/login" className="home-nav__btn-login">{t('home.login')}</Link>
             <Link to="/login?mode=register&role=USER" className="home-nav__btn-register">{t('home.register_free')}</Link>
           </div>

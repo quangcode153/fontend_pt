@@ -57,6 +57,27 @@
   color: var(--text-primary);
 }
 
+.home-nav__btn-lang {
+  padding: 9px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all var(--transition);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.home-nav__btn-lang:hover {
+  background: var(--border-light);
+  color: var(--text-primary);
+}
+
 .home-nav__btn-register {
   padding: 9px 20px;
   border-radius: var(--radius-md);

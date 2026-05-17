@@ -32,5 +32,11 @@ Tài liệu này ghi lại các thay đổi quan trọng đã thực hiện trê
 - **Thay đổi**:
     - Cập nhật logic `kiemTraHopDong` để nhận diện thêm trạng thái `YEU_CAU_HUY` khi đồng bộ dữ liệu từ server.
 
+## 6. Nút chuyển đổi ngôn ngữ trên Trang chủ (HomePage)
+- **Tập tin**: `src/pages/Home/HomePage.jsx`, `src/pages/Home/HomePage.css`
+- **Thay đổi**:
+    - Thêm nút chuyển đổi ngôn ngữ Việt/Mỹ (🇺🇸 EN / 🇻🇳 VI) trên thanh điều hướng public (`home-nav`).
+    - Viết CSS tùy biến để nút chuyển ngữ hiển thị đẹp mắt, đồng bộ phong cách thiết kế với nút Đăng nhập/Đăng ký.
+
 ---
 *Ghi chú: Các thay đổi này đã được đồng bộ với logic xử lý trực tiếp tại Backend để đảm bảo tính ổn định tối đa cho hệ thống.*
