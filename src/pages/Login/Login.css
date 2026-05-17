@@ -5,6 +5,36 @@
   min-height: 100vh;
   display: flex;
   background: var(--bg);
+  position: relative;
+}
+
+.auth-lang-switcher {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  z-index: 100;
+}
+
+.auth-lang-btn {
+  padding: 8px 16px !important;
+  font-size: 13px !important;
+  border-radius: 20px !important;
+  background: var(--surface) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow-sm) !important;
+  cursor: pointer;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all var(--transition);
+}
+
+.auth-lang-btn:hover {
+  background: var(--bg) !important;
+  border-color: var(--accent) !important;
+  transform: translateY(-1px);
 }
 
 /* Left side - Image & Branding */

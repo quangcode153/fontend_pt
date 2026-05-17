@@ -89,7 +89,7 @@ const ConfirmModal = ({
         <div style={S.message}>{message}</div>
         
         <div style={S.actions}>
-          {onConfirm && (
+          {onConfirm && type !== 'success' && type !== 'info' && (
             <button style={S.btn(false, type)} onClick={onClose}>
               {cancelText || t('common.cancel')}
             </button>

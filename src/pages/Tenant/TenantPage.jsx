@@ -5,6 +5,7 @@ import ChatBox from '../../components/ChatBox';
 import KhieuNaiForm from '../../components/KhieuNaiForm';
 import HoSoForm from '../../components/HoSoForm';
 import ContractModal from '../../components/ContractModal';
+import ConfirmModal from '../../components/ConfirmModal';
 import useAdminContact from '../../hooks/useAdminContact';
 import './TenantPage.css';
 
@@ -40,6 +41,7 @@ const S = {
     const map = {
       green: { bg: 'var(--success-light)', text: 'var(--success)' },
       amber: { bg: 'var(--warning-light)', text: 'var(--warning)' },
+      orange: { bg: 'var(--warning-light)', text: 'var(--warning)' },
       red: { bg: 'var(--danger-light)', text: 'var(--danger)' },
     };
     return {
@@ -103,6 +105,13 @@ export default function TenantPage({ currentUser, hopDongCuaToi, onBrowseRooms }
   const [landlordBank, setLandlordBank] = useState(null);
   const [showContract, setShowContract] = useState(false);
   const [hoSoMe, setHoSoMe] = useState(null);
+  const [confirmState, setConfirmState] = useState({ 
+    isOpen: false, 
+    type: 'info', 
+    title: '', 
+    message: '', 
+    onConfirm: null 
+  });
 
   const fetchHoaDon = () => {
     setLoadingTab(true);
@@ -112,21 +121,29 @@ export default function TenantPage({ currentUser, hopDongCuaToi, onBrowseRooms }
       .finally(() => setLoadingTab(false));
   };
 
-  const handleHuyHopDong = async () => {
+  const handleHuyHopDong = () => {
     const message = t('tenant.confirm_cancel_contract') || "Bạn có chắc chắn muốn hủy hợp đồng ngay lập tức? Tiền cọc sẽ bị khấu trừ theo quy định.";
-    if (!window.confirm(message)) return;
-
-    setIsProcessing(true);
-    try {
-      await api.put(`/hop-dong/${hopDongCuaToi.id}/khach-huy`);
-      alert(t('tenant.cancel_success') || "Hợp đồng đã được hủy thành công!");
-      window.location.reload();
-    } catch (err) {
-      const errMsg = err.response?.data?.message || err.message || "Lỗi không xác định";
-      alert(t('common.error') + ": " + errMsg);
-    } finally {
-      setIsProcessing(false);
-    }
+    
+    setConfirmState({
+      isOpen: true,
+      type: 'danger',
+      title: t('tenant.cancel_contract_now') || 'Xác nhận hủy hợp đồng',
+      message,
+      onConfirm: async () => {
+        setConfirmState(prev => ({ ...prev, isOpen: false }));
+        setIsProcessing(true);
+        try {
+          await api.put(`/hop-dong/${hopDongCuaToi.id}/khach-huy`);
+          alert(t('tenant.cancel_success') || "Hợp đồng đã được hủy thành công!");
+          window.location.reload();
+        } catch (err) {
+          const errMsg = err.response?.data?.message || err.message || "Lỗi không xác định";
+          alert(t('common.error') + ": " + errMsg);
+        } finally {
+          setIsProcessing(false);
+        }
+      }
+    });
   };
 
   const { admin: adminContact, loading: loadingAdmin, error: adminError } = useAdminContact();
@@ -266,9 +283,15 @@ export default function TenantPage({ currentUser, hopDongCuaToi, onBrowseRooms }
                   <div style={{ background: 'var(--bg)', borderRadius: 'var(--radius-md)', padding: '14px', border: '1px solid var(--border-light)' }}>
                     <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>{t('tenant.status')}</div>
                     <div style={{ marginTop: '2px' }}>
-                      <span style={S.tag('green')}>
-                        {t('tenant.status_active')}
-                      </span>
+                      {hopDongCuaToi.trangThai === 'YEU_CAU_HUY' ? (
+                        <span style={S.tag('orange')}>
+                          {t('tenant.status_cancelling') || 'Đang yêu cầu hủy'}
+                        </span>
+                      ) : (
+                        <span style={S.tag('green')}>
+                          {t('tenant.status_active')}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -299,13 +322,24 @@ export default function TenantPage({ currentUser, hopDongCuaToi, onBrowseRooms }
                     📜 {t('tenant.btn_view_contract')}
                   </button>
                   
-                  <button 
-                    style={{ ...S.btn, borderColor: 'var(--danger)', color: 'var(--danger)', marginLeft: 'auto' }} 
-                    onClick={handleHuyHopDong}
-                    disabled={isProcessing}
-                  >
-                    {t('tenant.cancel_contract_now')}
-                  </button>
+                  {hopDongCuaToi.trangThai !== 'YEU_CAU_HUY' ? (
+                    <button 
+                      style={{ ...S.btn, borderColor: 'var(--danger)', color: 'var(--danger)', marginLeft: 'auto' }} 
+                      onClick={handleHuyHopDong}
+                      disabled={isProcessing}
+                    >
+                      {t('tenant.cancel_contract_now')}
+                    </button>
+                  ) : (
+                    <div style={{
+                      marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '6px',
+                      fontSize: '13px', color: 'var(--warning)', fontWeight: 500,
+                      background: 'var(--warning-light)', padding: '6px 12px', borderRadius: 'var(--radius-md)',
+                      border: '1px solid rgba(245, 158, 11, 0.2)'
+                    }}>
+                      ⏳ {t('tenant.status_cancelling') || 'Đang chờ duyệt hủy...'}
+                    </div>
+                  )}
                 </div>
               </>
             )}
@@ -498,6 +532,11 @@ export default function TenantPage({ currentUser, hopDongCuaToi, onBrowseRooms }
         confirmText={t('tenant.contract_active')}
         isProcessing={false}
         role="TENANT"
+      />
+
+      <ConfirmModal
+        {...confirmState}
+        onClose={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
       />
     </div>
   );

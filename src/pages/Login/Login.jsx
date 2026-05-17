@@ -8,7 +8,7 @@ import loginBg from '../../assets/login-bg.png';
 import './Login.css';
 
 export default function Login() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [isRegistering, setIsRegistering] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -73,8 +73,25 @@ export default function Login() {
     setConfirmPassword('');
   };
 
+  const toggleLanguage = () => {
+    const newLang = i18n.language === 'vi' ? 'en' : 'vi';
+    i18n.changeLanguage(newLang);
+    localStorage.setItem('i18nextLng', newLang);
+  };
+
   return (
     <div className="auth-page">
+      {/* Nút chuyển đổi ngôn ngữ góc trên bên phải */}
+      <div className="auth-lang-switcher">
+        <button
+          onClick={toggleLanguage}
+          className="btn btn--outline auth-lang-btn"
+          title={i18n.language === 'vi' ? 'Switch to English' : 'Đổi sang Tiếng Việt'}
+        >
+          {i18n.language === 'vi' ? '🇺🇸 EN' : '🇻🇳 VI'}
+        </button>
+      </div>
+
       <div className="auth-hero">
         <img src={loginBg} alt="Luxury Apartment" className="auth-hero__img" />
 

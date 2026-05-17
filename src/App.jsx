@@ -139,7 +139,7 @@ function AppContent() {
       }
 
       const tt = hopDongCuaToi?.trangThai;
-      if (tt === 'DA_DUYET') {
+      if (tt === 'DA_DUYET' || tt === 'YEU_CAU_HUY') {
         if (tenantView === 'MARKET') {
           return (
             <div style={{ animation: 'fadeIn 0.3s ease' }}>

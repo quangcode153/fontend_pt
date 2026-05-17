@@ -323,7 +323,10 @@ function LandlordPage({ currentUser }) {
         type: 'success',
         title: t('common.success'),
         message: t('landlord.success_update'),
-        onConfirm: () => fetchData()
+        onConfirm: () => {
+          setConfirmState(prev => ({ ...prev, isOpen: false }));
+          fetchData();
+        }
       });
     } catch {
       setConfirmState({
@@ -345,13 +348,27 @@ function LandlordPage({ currentUser }) {
     const statusText = t(`landlord.contract_status_${trangThaiMoi}`);
     
     let message = t('landlord.confirm_contract', { trangThaiMoi: statusText });
+    let confirmText = t('common.confirm') || 'Xác nhận';
+    let cancelText = t('common.cancel') || 'Hủy';
 
     // Logic đặc biệt cho phần Hủy hợp đồng
     if (hd?.trangThai === CONTRACT_STATUS.CANCELLING) {
       if (trangThaiMoi === CONTRACT_STATUS.APPROVED) {
         message = "Bạn có chắc chắn muốn TỪ CHỐI yêu cầu hủy và tiếp tục duy trì hợp đồng này không?";
+        confirmText = "Giữ lại HĐ";
+        cancelText = "Quay lại";
       } else if (trangThaiMoi === CONTRACT_STATUS.CANCELLED) {
         message = "Xác nhận ĐỒNG Ý hủy hợp đồng này và giải phóng phòng trống?";
+        confirmText = "Đồng ý hủy";
+        cancelText = "Quay lại";
+      }
+    } else {
+      if (trangThaiMoi === CONTRACT_STATUS.REJECTED) {
+        confirmText = "Từ chối yêu cầu";
+        cancelText = "Quay lại";
+      } else if (trangThaiMoi === CONTRACT_STATUS.APPROVED) {
+        confirmText = "Duyệt hợp đồng";
+        cancelText = "Quay lại";
       }
     }
 
@@ -360,6 +377,8 @@ function LandlordPage({ currentUser }) {
       type: (trangThaiMoi === CONTRACT_STATUS.REJECTED || trangThaiMoi === CONTRACT_STATUS.CANCELLED) ? 'danger' : 'info',
       title: t('common.confirm') || 'Xác nhận',
       message,
+      confirmText,
+      cancelText,
       onConfirm: async () => {
         setConfirmState(prev => ({ ...prev, isOpen: false }));
         try {
@@ -442,7 +461,10 @@ function LandlordPage({ currentUser }) {
           type: 'success',
           title: t('common.success'),
           message: t('landlord.success_update_bill'),
-          onConfirm: () => fetchData()
+          onConfirm: () => {
+            setConfirmState(prev => ({ ...prev, isOpen: false }));
+            fetchData();
+          }
         });
       } else {
         await api.post('/dien-nuoc/chot-so', payload);
@@ -451,7 +473,10 @@ function LandlordPage({ currentUser }) {
           type: 'success',
           title: t('common.success'),
           message: t('landlord.success_create_bill'),
-          onConfirm: () => fetchData()
+          onConfirm: () => {
+            setConfirmState(prev => ({ ...prev, isOpen: false }));
+            fetchData();
+          }
         });
       }
 

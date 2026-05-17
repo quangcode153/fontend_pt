@@ -118,13 +118,31 @@ export default function AdminPage({ currentUser }) {
   const fetchInitialData = async () => {
     setLoadingInit(true);
     try {
-      const [chuTroRes, khieuNaiRes, thongKeRes] = await Promise.all([
+      // Gọi hai API chính phục vụ các tab quản trị
+      const [chuTroRes, khieuNaiRes] = await Promise.all([
         api.get('/tai-khoan/chu-tro'),
-        api.get('/khieu-nai'),
-        api.get('/thong-ke/admin')
+        api.get('/khieu-nai')
       ]);
       setKhieuNais(khieuNaiRes.data || []);
-      setThongKeData(thongKeRes.data || null);
+
+      // Lấy dữ liệu thống kê riêng, nếu backend chưa hỗ trợ endpoint /thong-ke/admin thì tự động dùng dữ liệu mặc định bằng 0 để tránh crash toàn trang
+      try {
+        const thongKeRes = await api.get('/thong-ke/admin');
+        setThongKeData(thongKeRes.data || null);
+      } catch (tkErr) {
+        console.warn("Backend does not support /thong-ke/admin yet, using fallback values:", tkErr);
+        setThongKeData({
+          tongSoPhong: 0,
+          soPhongDaThue: 0,
+          soPhongTrong: 0,
+          soHoaDonChuaThanhToan: 0,
+          tongTienChuaThanhToan: 0,
+          tongDoanhThuThangNay: 0,
+          tongDoanhThuThangTruoc: 0,
+          tyLeTangTruong: 0,
+          bieuDoDoanhThu: []
+        });
+      }
     } catch (err) {
       setConfirmState({ isOpen: true, type: 'danger', title: t('common.error'), message: t('admin.error_init'), onConfirm: null });
     } finally { setLoadingInit(false); }
