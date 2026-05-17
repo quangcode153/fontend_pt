@@ -28,14 +28,15 @@ Số hóa toàn bộ vòng đời vận hành nhà trọ — từ khi khách tì
 |---|---|---|
 | Authentication & JWT | ✅ Hoàn thiện | Stateless, localStorage |
 | Phân quyền UI theo Role | ✅ Hoàn thiện | ProtectedRoute, role-based render |
-| CRUD Phòng trọ | ✅ Hoàn thiện | **Update:** Hỗ trợ tải ảnh từ máy (Base64), chặn xóa khi có khách |
-| Quản lý Hợp đồng | ✅ Hoàn thiện | Tạo mới, gia hạn, thanh lý, tiền cọc, xuất PDF |
+| CRUD Phòng trọ | ✅ Hoàn thiện | Hỗ trợ tải ảnh từ máy (Base64), chặn xóa khi có khách |
+| Tìm kiếm phòng trọ | ✅ Hoàn thiện | **Update:** Lọc theo địa chỉ, khoảng giá (Min - Max), khoảng diện tích (Min - Max), và sắp xếp thông minh đồng bộ Backend |
+| Quản lý Hợp đồng | ✅ Hoàn thiện | Tạo mới, gia hạn, thanh lý, tiền cọc, xuất PDF, quy trình duyệt/hủy hợp đồng |
 | Chat Realtime | ✅ Hoàn thiện | WebSocket STOMP + Optimistic UI |
 | Hồ sơ cá nhân | ✅ Hoàn thiện | Validate CCCD + SĐT trước khi thuê |
 | Khiếu nại | ✅ Hoàn thiện | Gửi → Admin xử lý → Đánh dấu hoàn thành |
 | Quản lý người dùng | ✅ Hoàn thiện | Admin khóa/mở khóa tài khoản |
-| Nâng cấp UI | ✅ Hoàn thiện | Design system thống nhất, lazy loading |
-| Dashboard thống kê | ✅ Hoàn thiện | Biểu đồ doanh thu + Xuất Excel |
+| Nâng cấp UI & UX | ✅ Hoàn thiện | **Update:** Tích hợp nút chuyển ngôn ngữ ngoài Login/Register, nâng cấp ConfirmModal chống nhầm lẫn hành vi, tự đóng modal thành công |
+| Dashboard thống kê | ✅ Hoàn thiện | Biểu đồ doanh thu + Xuất Excel, an toàn lỗi 404 admin |
 | Điện nước & Hóa đơn | ✅ Hoàn thiện | Đã khớp dữ liệu chốt số và in hóa đơn |
 | Xuất Hợp đồng (PDF) | ✅ Hoàn thiện | Template chuẩn theo văn bản pháp lý |
 | Push Notification | ⏭️ Kế hoạch | Thông báo realtime khi có sự kiện |
