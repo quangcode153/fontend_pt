@@ -206,7 +206,7 @@ export default function RoomTab({
                 {/* Ảnh placeholder cho phòng */}
                 <div style={{ height: '120px', overflow: 'hidden', borderRadius: 'var(--radius-md) var(--radius-md) 0 0', margin: '-20px -20px 16px -20px', position: 'relative' }}>
                   <img src={phong.hinhAnh ? (phong.hinhAnh.includes('|||') ? phong.hinhAnh.split('|||')[0] : phong.hinhAnh) : roomPlaceholderImg} alt="Room" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  <div style={{ position: 'absolute', top: '10px', right: '10px' }}>
+                  <div style={{ position: 'absolute', top: '10px', left: '10px' }}>
                     <span className={`l-tag l-tag--${tagColor(phong.trangThai)}`}>
                       {tagLabel(phong.trangThai)}
                     </span>

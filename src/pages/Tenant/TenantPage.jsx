@@ -17,13 +17,7 @@ const S = {
     padding: '3px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)',
     width: 'fit-content',
   },
-  navBtn: (active) => ({
-    padding: '8px 18px', borderRadius: 'var(--radius-sm)', border: 'none', cursor: 'pointer',
-    fontSize: '13px', fontWeight: 500, transition: 'all var(--transition)',
-    background: active ? 'var(--surface)' : 'transparent',
-    color: active ? 'var(--text-primary)' : 'var(--text-muted)',
-    boxShadow: active ? 'var(--shadow-xs)' : 'none',
-  }),
+
   card: {
     background: 'var(--surface)', borderRadius: 'var(--radius-xl)',
     border: '1px solid var(--border)', padding: '24px',
@@ -112,6 +106,180 @@ export default function TenantPage({ currentUser, hopDongCuaToi, onBrowseRooms }
     message: '', 
     onConfirm: null 
   });
+
+  const handleInHoaDon = (hd) => {
+    const printWindow = window.open('', '_blank', 'width=800,height=900');
+    if (!printWindow) {
+      alert('Vui lòng cho phép trình duyệt mở popup để in hóa đơn!');
+      return;
+    }
+    
+    const daTT = hd.trangThai === 'DA_THANH_TOAN';
+    const currency = t('landlord.currency') || 'đ';
+    const totalText = t('tenant.total') || 'Tổng thanh toán';
+    
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Hóa đơn phòng ${hd.phongTro?.tenPhong || ''}</title>
+          <style>
+            body {
+              font-family: 'Inter', system-ui, -apple-system, sans-serif;
+              color: #1e293b;
+              padding: 40px;
+              line-height: 1.5;
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 40px;
+              border-bottom: 2px dashed #cbd5e1;
+              padding-bottom: 20px;
+            }
+            .title {
+              font-size: 24px;
+              font-weight: bold;
+              text-transform: uppercase;
+              letter-spacing: 0.05em;
+              margin: 0;
+            }
+            .subtitle {
+              font-size: 14px;
+              color: #64748b;
+              margin-top: 5px;
+            }
+            .info-grid {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 15px;
+              margin-bottom: 30px;
+            }
+            .info-item span {
+              font-weight: bold;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-bottom: 40px;
+            }
+            th, td {
+              padding: 12px 15px;
+              text-align: left;
+              border-bottom: 1px solid #e2e8f0;
+            }
+            th {
+              background-color: #f8fafc;
+              font-weight: 600;
+              color: #475569;
+            }
+            .text-right {
+              text-align: right;
+            }
+            .total-row {
+              font-size: 18px;
+              font-weight: bold;
+              background-color: #f1f5f9;
+            }
+            .status {
+              display: inline-block;
+              padding: 6px 12px;
+              border-radius: 9999px;
+              font-size: 12px;
+              font-weight: bold;
+              margin-top: 10px;
+            }
+            .status--paid {
+              background-color: #dcfce7;
+              color: #15803d;
+            }
+            .status--unpaid {
+              background-color: #fef3c7;
+              color: #b45309;
+            }
+            .footer {
+              text-align: center;
+              margin-top: 60px;
+              font-size: 12px;
+              color: #94a3b8;
+              border-top: 1px dashed #cbd5e1;
+              padding-top: 20px;
+            }
+            @media print {
+              body {
+                padding: 0;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="title">HÓA ĐƠN TIỀN PHÒNG</div>
+            <div class="subtitle">Tháng ${hd.thang}/${hd.nam}</div>
+            <div class="status ${daTT ? 'status--paid' : 'status--unpaid'}">
+              ${daTT ? 'ĐÃ THANH TOÁN / PAID' : 'CHƯA THANH TOÁN / UNPAID'}
+            </div>
+          </div>
+          
+          <div class="info-grid">
+            <div class="info-item"><span>Phòng / Room:</span> ${hd.phongTro?.tenPhong || '—'}</div>
+            <div class="info-item"><span>Khách thuê / Tenant:</span> ${hd.khachHang?.khachHang?.hoTen || hd.khachHang?.username || '—'}</div>
+            <div class="info-item"><span>Mã hóa đơn / Invoice ID:</span> #${hd.id}</div>
+            <div class="info-item"><span>Ngày tạo / Created Date:</span> ${new Date().toLocaleDateString('vi-VN')}</div>
+          </div>
+          
+          <table>
+            <thead>
+              <tr>
+                <th>Khoản mục / Description</th>
+                <th class="text-right">Thành tiền / Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Tiền phòng / Room Rent</td>
+                <td class="text-right">${hd.tienPhong?.toLocaleString()} ${currency}</td>
+              </tr>
+              <tr>
+                <td>Tiền điện / Electricity</td>
+                <td class="text-right">${hd.tienDien?.toLocaleString()} ${currency}</td>
+              </tr>
+              <tr>
+                <td>Tiền nước / Water</td>
+                <td class="text-right">${hd.tienNuoc?.toLocaleString()} ${currency}</td>
+              </tr>
+              <tr class="total-row">
+                <td>${totalText} / Total</td>
+                <td class="text-right">${hd.tongTien?.toLocaleString()} ${currency}</td>
+              </tr>
+            </tbody>
+          </table>
+          
+          <div style="display: flex; justify-content: space-between; margin-top: 80px;">
+            <div style="text-align: center; width: 45%;">
+              <p style="margin-bottom: 60px;"><strong>Người lập hóa đơn</strong><br/>(Ký, ghi rõ họ tên)</p>
+              <p style="color: #cbd5e1;">................................................</p>
+            </div>
+            <div style="text-align: center; width: 45%;">
+              <p style="margin-bottom: 60px;"><strong>Khách thuê phòng</strong><br/>(Ký, ghi rõ họ tên)</p>
+              <p style="color: #cbd5e1;">................................................</p>
+            </div>
+          </div>
+          
+          <div class="footer">
+            <p>Cảm ơn quý khách đã tin tưởng và sử dụng dịch vụ của Smart Room Rental!</p>
+            <p>© 2026 Smart Room Rental.</p>
+          </div>
+          
+          <script>
+            window.onload = function() {
+              window.print();
+              setTimeout(function() { window.close(); }, 500);
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
 
   const fetchHoaDon = () => {
     setLoadingTab(true);
@@ -233,13 +401,14 @@ export default function TenantPage({ currentUser, hopDongCuaToi, onBrowseRooms }
       }}>
         <div style={S.navBar}>
           {TABS.map(t => (
-            <button key={t.key} style={S.navBtn(cuDanTab === t.key)} onClick={() => setCuDanTab(t.key)}>
+            <button key={t.key} className={`tenant-nav-btn ${cuDanTab === t.key ? 'tenant-nav-btn--active' : ''}`} onClick={() => setCuDanTab(t.key)}>
               {t.label}
             </button>
           ))}
           <div style={{ width: '1px', background: 'var(--border)', margin: '4px 8px' }} />
           <button 
-            style={{ ...S.navBtn(false), color: 'var(--accent)', fontWeight: 600 }} 
+            className="tenant-nav-btn"
+            style={{ color: 'var(--accent)', fontWeight: 600 }} 
             onClick={onBrowseRooms}
           >
             {t('tenant.browse_more_rooms')}
@@ -417,19 +586,34 @@ export default function TenantPage({ currentUser, hopDongCuaToi, onBrowseRooms }
                           <span style={{ fontWeight: 700, color: '#FDE68A', fontSize: '16px' }}>{fmt(hd.tongTien)} {t('landlord.currency')}</span>
                         </div>
 
-                        {!daTT && (
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
                           <button
                             style={{
-                              width: '100%', marginTop: '12px', padding: '11px',
-                              borderRadius: 'var(--radius-md)', border: 'none', cursor: 'pointer',
-                              background: 'var(--success)', color: '#fff',
-                              fontSize: '13px', fontWeight: 600, transition: 'opacity var(--transition)',
+                              flex: 1, padding: '10px',
+                              borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', cursor: 'pointer',
+                              background: 'var(--surface)', color: 'var(--text-secondary)',
+                              fontSize: '13px', fontWeight: 600, transition: 'all var(--transition)',
                             }}
-                            onClick={() => setPayingHD(hd)}
+                            className="btn"
+                            onClick={() => handleInHoaDon(hd)}
                           >
-                            {t('tenant.btn_pay')}
+                            🖨️ {t('landlord.btn_print') || 'In hóa đơn'}
                           </button>
-                        )}
+                          {!daTT && (
+                            <button
+                              style={{
+                                flex: 1, padding: '10px',
+                                borderRadius: 'var(--radius-md)', border: 'none', cursor: 'pointer',
+                                background: 'var(--success)', color: '#fff',
+                                fontSize: '13px', fontWeight: 600, transition: 'opacity var(--transition)',
+                              }}
+                              className="btn btn--primary"
+                              onClick={() => setPayingHD(hd)}
+                            >
+                              {t('tenant.btn_pay')}
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );

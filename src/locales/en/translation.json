@@ -507,5 +507,26 @@
     "cancel_success": "Cancellation request sent successfully! Please wait for landlord approval.",
     "status_cancelling": "Pending Cancellation",
     "back_to_dashboard": "🏠 Back to Dashboard"
+  },
+  "footer": {
+    "desc_home": "Next-generation smart room rental management platform. Save time, optimize revenue, and enhance professional rental experience.",
+    "desc_app": "Premium room rental management system, optimizing operational workflows and interactions between landlords and tenants.",
+    "col_features": "Core Features",
+    "col_care": "Customer Care",
+    "col_contact": "Contact Info",
+    "col_vip": "VIP Support 24/7",
+    "col_status": "Connection Status",
+    "feature_rooms": "Room Management",
+    "feature_contract": "Electronic Contract",
+    "feature_utility": "Utility Recording",
+    "feature_stats": "Stats & Reports",
+    "care_faq": "FAQ",
+    "care_guide": "User Guide",
+    "care_terms": "Terms of Service",
+    "care_privacy": "Privacy Policy",
+    "contact_address": "📍 236 Hoang Quoc Viet, Cau Giay, Hanoi",
+    "contact_hotline": "📞 Hotline: 1900 8888 (24/7 Support)",
+    "contact_hotline_fast": "📞 Hotline: 1900 8888 (Fast Support)",
+    "contact_version": "⭐ Version: v2.2.0 (Premium Gold)"
   }
 }

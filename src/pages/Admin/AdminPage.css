@@ -34,6 +34,11 @@
   color: #fff;
 }
 
+.admin-nav__item:hover:not(.admin-nav__item--active) {
+  background: var(--border-light);
+  color: var(--text-primary);
+}
+
 .admin-nav__badge {
   display: inline-flex;
   align-items: center;
@@ -61,8 +66,8 @@
 
 .admin-host-card:hover {
   border-color: var(--accent);
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-md);
+  transform: translateY(-4px);
+  box-shadow: 0 6px 16px var(--accent-glow);
 }
 
 .admin-host-card--locked {

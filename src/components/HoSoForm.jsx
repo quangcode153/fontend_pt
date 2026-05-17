@@ -85,7 +85,7 @@ function HoSoForm({ user }) {
   }
 
   return (
-    <div style={{ maxWidth: '640px', margin: '0 auto', animation: 'fadeInUp 0.3s ease' }}>
+    <div className="card" style={{ maxWidth: '640px', margin: '0 auto', animation: 'fadeInUp 0.3s ease' }}>
       <div style={{ marginBottom: '20px' }}>
         <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '4px' }}>
           {t('guest_profile.title')}

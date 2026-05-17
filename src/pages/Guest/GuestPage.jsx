@@ -20,12 +20,7 @@ const S = {
     padding: '3px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)',
     marginBottom: '20px', width: 'fit-content',
   },
-  navItem: (active) => ({
-    padding: '8px 20px', borderRadius: 'var(--radius-sm)', border: 'none', cursor: 'pointer',
-    fontSize: '13px', fontWeight: 500, transition: 'all var(--transition)',
-    background: active ? 'var(--accent)' : 'transparent',
-    color: active ? '#fff' : 'var(--text-muted)',
-  }),
+
   card: {
     background: 'var(--surface)', borderRadius: 'var(--radius-lg)',
     border: '1px solid var(--border)', padding: '20px',
@@ -145,12 +140,13 @@ function GuestPage({ currentUser, onRentSuccess }) {
     if (e) e.preventDefault();
     setSearching(true);
     try {
-      const params = {};
-      if (searchTenPhong.trim()) params.tenPhong = searchTenPhong.trim();
-      if (searchDiaChi.trim()) params.diaChi = searchDiaChi.trim();
-      if (searchGiaMin.trim()) params.giaToiThieu = Number(searchGiaMin);
-      if (searchGiaMax.trim()) params.giaToiDa = Number(searchGiaMax);
-      if (searchTrangThai && searchTrangThai !== 'ALL') params.trangThai = searchTrangThai;
+      const params = {
+        tenPhong: searchTenPhong.trim() || '',
+        diaChi: searchDiaChi.trim() || '',
+        giaToiThieu: searchGiaMin.trim() ? Number(searchGiaMin) : 0,
+        giaToiDa: searchGiaMax.trim() ? Number(searchGiaMax) : 999999999,
+        trangThai: (searchTrangThai && searchTrangThai !== 'ALL') ? searchTrangThai : ''
+      };
 
       const res = await api.get('/phong-tro/search', { params });
       setSearchResults(res.data || []);
@@ -337,8 +333,8 @@ function GuestPage({ currentUser, onRentSuccess }) {
       {/* Header Navigation tabs */}
       <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px', gap: '12px' }}>
         <div style={S.navBar}>
-          <button style={S.navItem(activeTab === 'TIM_TRO')} onClick={() => setActiveTab('TIM_TRO')}>{t('guest.tab_market')}</button>
-          <button style={S.navItem(activeTab === 'HO_SO')} onClick={() => setActiveTab('HO_SO')}>{t('guest.tab_profile')}</button>
+          <button className={`nav-btn ${activeTab === 'TIM_TRO' ? 'nav-btn--active' : ''}`} onClick={() => setActiveTab('TIM_TRO')}>{t('guest.tab_market')}</button>
+          <button className={`nav-btn ${activeTab === 'HO_SO' ? 'nav-btn--active' : ''}`} onClick={() => setActiveTab('HO_SO')}>{t('guest.tab_profile')}</button>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <KhieuNaiForm />
@@ -469,8 +465,7 @@ function GuestPage({ currentUser, onRentSuccess }) {
               ) : (
                 <div className="grid-cards">
                   {searchResults.map((phong, i) => (
-                    <div key={phong.id} style={{
-                      ...S.card,
+                    <div key={phong.id} className="card" style={{
                       borderTop: `3px solid ${phong.trangThai === ROOM_STATUS.EMPTY ? 'var(--success)' : 'var(--danger)'}`,
                       borderRadius: `0 0 var(--radius-lg) var(--radius-lg)`,
                       animation: `fadeIn 0.3s ease ${i * 0.05}s both`,
@@ -568,10 +563,8 @@ function GuestPage({ currentUser, onRentSuccess }) {
                   ) : (
                     <div className="grid-cards">
                       {chuTros.filter(ct => ct.username.toLowerCase().includes(tuKhoa.toLowerCase())).map((ct, i) => (
-                        <div key={ct.id} onClick={() => handleChonChuTro(ct)} style={{
-                          padding: '20px', background: 'var(--bg)', border: '1px solid var(--border-light)',
-                          borderRadius: 'var(--radius-md)', cursor: 'pointer', textAlign: 'center',
-                          transition: 'all var(--transition)', animation: `fadeIn 0.3s ease ${i * 0.04}s both`,
+                        <div key={ct.id} className="host-card" onClick={() => handleChonChuTro(ct)} style={{
+                          animation: `fadeIn 0.3s ease ${i * 0.04}s both`,
                         }}>
                           <div style={{
                             width: '40px', height: '40px', borderRadius: '50%', margin: '0 auto 10px',

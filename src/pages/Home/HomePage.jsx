@@ -142,10 +142,64 @@ export default function HomePage() {
         </section>
 
         <footer className="home-footer">
-          <div className="home-footer__copy">{t('home.footer_copy')}</div>
-          <div className="home-footer__links">
-            <Link to="/login" className="home-footer__link">{t('home.footer_login')}</Link>
-            <Link to="/login?mode=register" className="home-footer__link">{t('home.footer_register')}</Link>
+          <div className="home-footer__grid">
+            {/* Column 1: Brand Info */}
+            <div className="home-footer__col">
+              <div className="home-footer__brand">
+                <span className="home-footer__logo">🏠</span>
+                <span className="home-footer__title">{t('home.brand')}</span>
+              </div>
+              <p className="home-footer__desc">
+                {t('footer.desc_home')}
+              </p>
+              <div className="home-footer__socials">
+                <a href="#facebook" className="home-footer__social-btn" title="Facebook">📘</a>
+                <a href="#instagram" className="home-footer__social-btn" title="Instagram">📷</a>
+                <a href="#twitter" className="home-footer__social-btn" title="Twitter">🐦</a>
+                <a href="#linkedin" className="home-footer__social-btn" title="LinkedIn">💼</a>
+              </div>
+            </div>
+
+            {/* Column 2: Features */}
+            <div className="home-footer__col">
+              <h3 className="home-footer__col-title">{t('footer.col_features')}</h3>
+              <ul className="home-footer__list">
+                <li><a href="#features" className="home-footer__list-link">{t('footer.feature_rooms')}</a></li>
+                <li><a href="#features" className="home-footer__list-link">{t('footer.feature_contract')}</a></li>
+                <li><a href="#features" className="home-footer__list-link">{t('footer.feature_utility')}</a></li>
+                <li><a href="#features" className="home-footer__list-link">{t('footer.feature_stats')}</a></li>
+              </ul>
+            </div>
+
+            {/* Column 3: Customer Care */}
+            <div className="home-footer__col">
+              <h3 className="home-footer__col-title">{t('footer.col_care')}</h3>
+              <ul className="home-footer__list">
+                <li><a href="#faq" className="home-footer__list-link">{t('footer.care_faq')}</a></li>
+                <li><a href="#guide" className="home-footer__list-link">{t('footer.care_guide')}</a></li>
+                <li><a href="#terms" className="home-footer__list-link">{t('footer.care_terms')}</a></li>
+                <li><a href="#privacy" className="home-footer__list-link">{t('footer.care_privacy')}</a></li>
+              </ul>
+            </div>
+
+            {/* Column 4: Contact info */}
+            <div className="home-footer__col">
+              <h3 className="home-footer__col-title">{t('footer.col_contact')}</h3>
+              <ul className="home-footer__list">
+                <li className="home-footer__contact-item">{t('footer.contact_address')}</li>
+                <li className="home-footer__contact-item">{t('footer.contact_hotline')}</li>
+                <li className="home-footer__contact-item">✉️ Email: contact@smartrental.vn</li>
+                <li className="home-footer__contact-item">{t('footer.contact_version')}</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="home-footer__bottom">
+            <div className="home-footer__copy">{t('home.footer_copy') || '© 2026 Smart Room Rental.'}</div>
+            <div className="home-footer__links">
+              <Link to="/login" className="home-footer__link">{t('home.footer_login')}</Link>
+              <Link to="/login?mode=register" className="home-footer__link">{t('home.footer_register')}</Link>
+            </div>
           </div>
         </footer>
       </div>

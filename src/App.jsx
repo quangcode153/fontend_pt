@@ -200,15 +200,41 @@ function AppContent() {
       {renderContent()}
       <ChatBox currentUser={user} targetUser={chatTarget} isOpen={!!chatTarget} onClose={() => setChatTarget(null)} />
       <footer className="app-footer">
-        <div className="app-footer__content">
+        <div className="app-footer__grid">
+          {/* Column 1: Introduction */}
+          <div className="app-footer__col">
+            <div className="app-footer__title">🏠 Smart Room Rental</div>
+            <div className="app-footer__desc">
+              {t('footer.desc_app')}
+            </div>
+          </div>
+
+          {/* Column 2: VIP Support */}
+          <div className="app-footer__col">
+            <div className="app-footer__title">{t('footer.col_vip')}</div>
+            <div className="app-footer__desc">
+              {t('footer.contact_hotline_fast')}<br/>
+              ✉️ Email: vip.support@smartrental.vn
+            </div>
+          </div>
+
+          {/* Column 3: Status Badges */}
+          <div className="app-footer__col">
+            <div className="app-footer__title">{t('footer.col_status')}</div>
+            <div className="app-footer__badges" style={{ marginTop: '4px' }}>
+              <span className="app-footer__badge">🛡️ Session Secure</span>
+              <span className="app-footer__badge" style={{ backgroundColor: 'var(--success-light)', color: 'var(--success)', borderColor: '#BBF7D0' }}>🟢 API Connected</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="app-footer__bottom">
           <span className="app-footer__copy">
             {t('home.footer_copy') || '© 2026 Smart Room Rental.'}
           </span>
-          <div className="app-footer__badges">
-            <span className="app-footer__badge">🛡️ {t('common.secure_session') || 'Session Secure'}</span>
-            <span className="app-footer__badge">⚡ React 18</span>
-            <span className="app-footer__badge">🎨 Outfit UI</span>
-          </div>
+          <span className="app-footer__version" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+            Premium Dashboard v2.2.0
+          </span>
         </div>
       </footer>
     </div>

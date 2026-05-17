@@ -83,8 +83,8 @@
 
 .host-card:hover {
   border-color: var(--accent);
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-md);
+  transform: translateY(-4px);
+  box-shadow: 0 6px 16px var(--accent-glow);
 }
 
 .host-card__avatar {
@@ -156,12 +156,13 @@
   border-radius: 0 0 var(--radius-lg) var(--radius-lg);
   border: 1px solid var(--border);
   padding: 20px;
-  transition: transform var(--transition), box-shadow var(--transition);
+  transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
 }
 
 .room-card:hover {
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
+  border-color: var(--accent);
+  box-shadow: 0 6px 16px var(--accent-glow);
+  transform: translateY(-4px);
 }
 
 .room-card--empty {
@@ -220,7 +221,9 @@
 }
 
 .search-engine:hover {
-  box-shadow: var(--shadow-md);
+  transform: translateY(-4px);
+  border-color: var(--accent);
+  box-shadow: 0 6px 16px var(--accent-glow);
 }
 
 .search-engine__title {
@@ -362,6 +365,11 @@
   background: var(--surface);
   color: var(--accent);
   box-shadow: var(--shadow-sm);
+}
+
+.search-mode-btn:hover:not(.search-mode-btn--active) {
+  background: var(--accent-light);
+  color: var(--accent);
 }
 
 .room-card__host-info {

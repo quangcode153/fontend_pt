@@ -513,5 +513,26 @@
     "cancel_success": "Đã gửi yêu cầu hủy hợp đồng thành công! Vui lòng chờ chủ trọ phê duyệt.",
     "status_cancelling": "Đang chờ hủy",
     "back_to_dashboard": "🏠 Quay về trang quản lý"
+  },
+  "footer": {
+    "desc_home": "Nền tảng quản lý phòng trọ thông minh thế hệ mới. Tiết kiệm thời gian, tối ưu hóa doanh thu và nâng cao trải nghiệm thuê trọ chuyên nghiệp.",
+    "desc_app": "Hệ thống quản lý phòng trọ cao cấp, tối ưu hóa quy trình vận hành và tương tác giữa chủ trọ và khách thuê.",
+    "col_features": "Tính năng cốt lõi",
+    "col_care": "Chăm sóc khách hàng",
+    "col_contact": "Thông tin liên hệ",
+    "col_vip": "Hỗ trợ VIP 24/7",
+    "col_status": "Trạng thái kết nối",
+    "feature_rooms": "Quản lý phòng trọ",
+    "feature_contract": "Hợp đồng điện tử",
+    "feature_utility": "Ghi chỉ số điện nước",
+    "feature_stats": "Thống kê & Báo cáo",
+    "care_faq": "Câu hỏi thường gặp",
+    "care_guide": "Hướng dẫn sử dụng",
+    "care_terms": "Điều khoản dịch vụ",
+    "care_privacy": "Chính sách bảo mật",
+    "contact_address": "📍 236 Hoàng Quốc Việt, Cầu Giấy, Hà Nội",
+    "contact_hotline": "📞 Hotline: 1900 8888 (24/7 Support)",
+    "contact_hotline_fast": "📞 Hotline: 1900 8888 (Hỗ trợ nhanh)",
+    "contact_version": "⭐ Phiên bản: v2.2.0 (Premium Gold)"
   }
 }
