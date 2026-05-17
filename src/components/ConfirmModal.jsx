@@ -98,7 +98,7 @@ const ConfirmModal = ({
             style={S.btn(true, type)} 
             onClick={() => {
               if (onConfirm) onConfirm();
-              else onClose();
+              onClose();
             }}
           >
             {confirmText || (onConfirm ? t('common.confirm') : 'OK')}

@@ -2,6 +2,7 @@
  * RoomTab.jsx — Tab Quản lý Phòng Trọ
  * Component con của LandlordPage
  */
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import emptyRoomsImg from '../../../assets/empty_rooms.png';
 import roomPlaceholderImg from '../../../assets/room_placeholder.png';
@@ -28,6 +29,7 @@ export default function RoomTab({
   onXemChiTiet,
 }) {
   const { t } = useTranslation();
+  const [isCompressing, setIsCompressing] = useState(false);
 
   const tagColor = (tt) => {
     if (tt === ROOM_STATUS.EMPTY) return 'green';
@@ -43,6 +45,7 @@ export default function RoomTab({
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
 
+    setIsCompressing(true);
     try {
       const base64Promises = files.map((file) => {
         return new Promise((resolve) => {
@@ -51,8 +54,8 @@ export default function RoomTab({
             const img = new Image();
             img.onload = () => {
               const canvas = document.createElement('canvas');
-              const MAX_WIDTH = 800;
-              const MAX_HEIGHT = 800;
+              const MAX_WIDTH = 600;
+              const MAX_HEIGHT = 600;
               let width = img.width;
               let height = img.height;
 
@@ -73,8 +76,8 @@ export default function RoomTab({
               const ctx = canvas.getContext('2d');
               ctx.drawImage(img, 0, 0, width, height);
 
-              // Nén ảnh (chất lượng 0.7)
-              const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+              // Nén ảnh chất lượng nhẹ 0.5 để lưu nhiều ảnh an toàn (tránh lỗi 413 Payload Too Large)
+              const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
               resolve(dataUrl);
             };
             img.src = event.target.result;
@@ -87,6 +90,8 @@ export default function RoomTab({
       setHinhAnh(base64Results.join('|||'));
     } catch (err) {
       console.error("Lỗi upload ảnh:", err);
+    } finally {
+      setIsCompressing(false);
     }
   };
 
@@ -165,10 +170,14 @@ export default function RoomTab({
             <button
               type="submit"
               className="l-btn l-btn--primary"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isCompressing}
               style={{ whiteSpace: 'nowrap' }}
             >
-              {isSubmitting ? t('landlord.btn_saving') : `💾 ${t('landlord.btn_save_room')}`}
+              {isCompressing 
+                ? `⏳ ${t('common.loading') || 'Đang xử lý ảnh...'}` 
+                : isSubmitting 
+                  ? t('landlord.btn_saving') 
+                  : `💾 ${t('landlord.btn_save_room')}`}
             </button>
           </div>
         </form>
