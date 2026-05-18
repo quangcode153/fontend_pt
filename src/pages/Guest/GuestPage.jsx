@@ -256,14 +256,15 @@ function GuestPage({ currentUser, onRentSuccess }) {
     }
   };
 
-  const handleDangKyThue = async () => {
+  const handleDangKyThue = async (contractData) => {
     const phong = previewContract;
     if (!phong) return;
     setIsSubmitting(true);
     try {
       await api.post('/hop-dong', {
         phongTroId: phong.id,
-        ngayBatDau: new Date().toISOString().split('T')[0],
+        ngayBatDau: contractData?.ngayBatDau || new Date().toISOString().split('T')[0],
+        ngayKetThuc: contractData?.ngayKetThuc || null,
         tienCoc: phong.tienCoc || 0,
       });
 
@@ -555,14 +556,20 @@ function GuestPage({ currentUser, onRentSuccess }) {
                 <div style={S.card}>
                   <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '14px' }}>{t('guest.search_host')}</div>
                   <input type="text" placeholder={t('guest.search_placeholder')} value={tuKhoa} onChange={e => setTuKhoa(e.target.value)} style={{ ...S.input, marginBottom: '20px' }} />
-                  {chuTros.filter(ct => ct.username.toLowerCase().includes(tuKhoa.toLowerCase())).length === 0 ? (
+                  {chuTros.filter(ct => 
+                    ct.username.toLowerCase().includes(tuKhoa.toLowerCase()) || 
+                    (ct.hoTen && ct.hoTen.toLowerCase().includes(tuKhoa.toLowerCase()))
+                  ).length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)', fontSize: '13px' }}>
                       <div style={{ fontSize: '28px', marginBottom: '8px', opacity: 0.5 }}>🔍</div>
                       {t('guest.no_host_found')}
                     </div>
                   ) : (
                     <div className="grid-cards">
-                      {chuTros.filter(ct => ct.username.toLowerCase().includes(tuKhoa.toLowerCase())).map((ct, i) => (
+                      {chuTros.filter(ct => 
+                        ct.username.toLowerCase().includes(tuKhoa.toLowerCase()) || 
+                        (ct.hoTen && ct.hoTen.toLowerCase().includes(tuKhoa.toLowerCase()))
+                      ).map((ct, i) => (
                         <div key={ct.id} className="host-card" onClick={() => handleChonChuTro(ct)} style={{
                           animation: `fadeIn 0.3s ease ${i * 0.04}s both`,
                         }}>
@@ -572,9 +579,11 @@ function GuestPage({ currentUser, onRentSuccess }) {
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             fontWeight: 700, fontSize: '16px',
                           }}>
-                            {ct.username.charAt(0).toUpperCase()}
+                            {(ct.hoTen || ct.username).charAt(0).toUpperCase()}
                           </div>
-                          <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>{t('guest.host_name')} {ct.username}</div>
+                          <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                            {ct.hoTen ? `${ct.hoTen} (${ct.username})` : `${t('guest.host_name')} ${ct.username}`}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -591,7 +600,9 @@ function GuestPage({ currentUser, onRentSuccess }) {
                 <button style={S.btn} onClick={() => setChuTroDangChon(null)}>{t('guest.btn_back')}</button>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>
-                    {t('guest.host_label')} <span style={{ color: 'var(--success)' }}>{chuTroDangChon.username}</span>
+                    {t('guest.host_label')} <span style={{ color: 'var(--success)' }}>
+                      {chuTroDangChon.hoTen ? `${chuTroDangChon.hoTen} (${chuTroDangChon.username})` : chuTroDangChon.username}
+                    </span>
                   </div>
                   <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
                     {loading ? t('guest.loading') : `${phongTros.filter(p => p.trangThai === ROOM_STATUS.EMPTY).length} ${t('guest.empty_rooms_count')}`}

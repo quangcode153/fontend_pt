@@ -716,6 +716,7 @@ export default function TenantPage({ currentUser, hopDongCuaToi, onBrowseRooms }
         confirmText={t('tenant.contract_active')}
         isProcessing={false}
         role="TENANT"
+        hopDong={hopDongCuaToi}
       />
 
       <ConfirmModal

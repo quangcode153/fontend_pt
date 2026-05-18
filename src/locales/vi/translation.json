@@ -87,6 +87,7 @@
     "logout": "Đăng xuất"
   },
   "admin": {
+    "app_name": "Tổng Quan Hệ Thống",
     "access_denied": "Truy cập bị từ chối.",
     "tab_users": "Người dùng",
     "tab_rooms": "Khu trọ",

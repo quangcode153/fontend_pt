@@ -87,6 +87,7 @@
     "logout": "Logout"
   },
   "admin": {
+    "app_name": "System Overview",
     "access_denied": "Access Denied.",
     "tab_users": "Users",
     "tab_rooms": "Rooms",

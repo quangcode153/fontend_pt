@@ -311,12 +311,15 @@ function LandlordPage({ currentUser }) {
   };
 
   /** Duyệt hợp đồng từ Modal */
-  const handleDuyetTuModal = async () => {
+  const handleDuyetTuModal = async (contractData) => {
     if (!previewContract) return;
     setIsSubmitting(true);
     try {
       await api.put(`/hop-dong/${previewContract.id}/trang-thai`, null, {
-        params: { trangThai: CONTRACT_STATUS.APPROVED },
+        params: { 
+          trangThai: CONTRACT_STATUS.APPROVED,
+          ngayKetThuc: contractData?.ngayKetThuc || null
+        },
       });
       setConfirmState({
         isOpen: true,
@@ -685,6 +688,7 @@ function LandlordPage({ currentUser }) {
         confirmText={t('guest.approve_contract')}
         isProcessing={isSubmitting}
         role="LANDLORD"
+        hopDong={previewContract}
       />
 
       <ConfirmModal

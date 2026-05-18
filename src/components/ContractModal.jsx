@@ -19,10 +19,13 @@ export default function ContractModal({
   confirmText = "",
   isProcessing = false,
   role = 'TENANT',
+  hopDong,
 }) {
   const { t } = useTranslation();
   const [kyTenA, setKyTenA] = useState('');
   const [kyTenB, setKyTenB] = useState('');
+  const [ngayBatDau, setNgayBatDau] = useState('');
+  const [ngayKetThuc, setNgayKetThuc] = useState('');
   const printRef = useRef();
 
   const handlePrint = () => {
@@ -48,8 +51,17 @@ export default function ContractModal({
           setKyTenB(tenantName);
         }
       }
+
+      // Khởi tạo ngày bắt đầu và kết thúc
+      if (hopDong) {
+        setNgayBatDau(hopDong.ngayBatDau || '');
+        setNgayKetThuc(hopDong.ngayKetThuc || '');
+      } else {
+        setNgayBatDau(new Date().toISOString().split('T')[0]);
+        setNgayKetThuc('');
+      }
     }
-  }, [isOpen, chuTroInfo, khachThueInfo, role, onConfirm]);
+  }, [isOpen, chuTroInfo, khachThueInfo, role, onConfirm, hopDong]);
 
   if (!isOpen) return null;
 
@@ -124,7 +136,41 @@ export default function ContractModal({
           <div>- {t('contract.deposit')} <strong style={{ color: '#D97706' }}>{phong?.tienCoc?.toLocaleString() || 0} {t('landlord.unit_vnd') || 'VND'}</strong></div>
           <div>- {t('contract.electric_price')} {phong?.giaDien ? `${phong.giaDien.toLocaleString()} ${t('landlord.unit_kwh')}` : dots}</div>
           <div>- {t('contract.water_price')} {phong?.giaNuoc ? `${phong.giaNuoc.toLocaleString()} ${t('landlord.unit_m3')}` : dots}</div>
-          <div>- {t('contract.payment_period')}</div>
+          
+          {/* Thời hạn hợp đồng - Nhập liệu/Hiển thị động */}
+          <div style={{ marginTop: '12px', padding: '14px', background: '#F8FAFC', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+            <span style={{ fontWeight: 'bold', display: 'block', marginBottom: '8px', color: '#1E293B', fontSize: '13px' }}>📅 Thời hạn hợp đồng thuê trọ:</span>
+            {onConfirm ? (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ fontSize: '11px', color: '#4b5563', display: 'block', marginBottom: '4px' }}>Ngày bắt đầu:</label>
+                  <input
+                    type="date"
+                    value={ngayBatDau}
+                    onChange={e => isBEditable && setNgayBatDau(e.target.value)}
+                    disabled={!isBEditable}
+                    style={isBEditable ? inputActive : inputLocked}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '11px', color: '#4b5563', display: 'block', marginBottom: '4px' }}>Ngày kết thúc:</label>
+                  <input
+                    type="date"
+                    value={ngayKetThuc}
+                    onChange={e => (isBEditable || isAEditable) && setNgayKetThuc(e.target.value)}
+                    disabled={!(isBEditable || isAEditable)}
+                    style={(isBEditable || isAEditable) ? inputActive : inputLocked}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '13px' }}>
+                <div><strong>Ngày bắt đầu:</strong> {ngayBatDau || '—'}</div>
+                <div><strong>Ngày kết thúc:</strong> {ngayKetThuc || 'Hợp đồng vô thời hạn'}</div>
+                <div style={{ gridColumn: '1 / -1', marginTop: '6px', fontSize: '11px', color: '#059669', fontWeight: 600 }}>🔒 Hạn hợp đồng đã được khóa sau khi hai bên ký kết thành công.</div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Điều 3 */}
@@ -250,7 +296,7 @@ export default function ContractModal({
           </button>
           {onConfirm && (
             <button
-              onClick={onConfirm}
+              onClick={() => onConfirm({ ngayBatDau, ngayKetThuc, kyTenA, kyTenB })}
               disabled={isProcessing || !canConfirm}
               style={{
                 padding: '10px 22px', border: 'none', borderRadius: '8px',

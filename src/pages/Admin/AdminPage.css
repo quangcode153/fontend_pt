@@ -172,3 +172,16 @@
     padding: 8px 12px;
   }
 }
+
+/* --- Thẻ phòng trọ trong Admin panel --- */
+.admin-room-card {
+  cursor: pointer;
+  transition: all var(--transition) !important;
+}
+
+.admin-room-card:hover {
+  border-color: var(--accent) !important;
+  transform: translateY(-4px);
+  box-shadow: 0 6px 16px var(--accent-glow) !important;
+}
+
