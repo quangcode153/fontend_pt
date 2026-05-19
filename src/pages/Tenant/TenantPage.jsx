@@ -78,7 +78,7 @@ const S = {
   },
 };
 
-export default function TenantPage({ currentUser, hopDongCuaToi, onBrowseRooms }) {
+export default function TenantPage({ currentUser, hopDongCuaToi, onBrowseRooms, unreadSenderIds = [], setUnreadSenderIds, onSetChatTarget }) {
   const { t } = useTranslation();
   const userRole = (currentUser?.role || '').startsWith('ROLE_') ? currentUser.role : `ROLE_${currentUser.role}`;
   if (userRole !== ROLES.USER) {
@@ -90,7 +90,6 @@ export default function TenantPage({ currentUser, hopDongCuaToi, onBrowseRooms }
   }
 
   const [cuDanTab, setCuDanTab] = useState('THONG_TIN');
-  const [chatTarget, setChatTarget] = useState(null);
   const [dsThongBao, setDsThongBao] = useState([]);
   const [dsHoaDon, setDsHoaDon] = useState([]);
   const [payingHD, setPayingHD] = useState(null);
@@ -315,6 +314,9 @@ export default function TenantPage({ currentUser, hopDongCuaToi, onBrowseRooms }
   };
 
   const { admin: adminContact, loading: loadingAdmin, error: adminError } = useAdminContact();
+  const landlordId = hopDongCuaToi?.phongTro?.chuTroId ?? hopDongCuaToi?.phongTro?.chuTro?.id;
+  const hasUnreadLandlordMsg = landlordId && unreadSenderIds.some(id => String(id) === String(landlordId));
+  const hasAdminUnread = adminContact?.id && unreadSenderIds.some(id => String(id) === String(adminContact.id));
   const noContract = !hopDongCuaToi || Object.keys(hopDongCuaToi).length === 0;
 
   useEffect(() => {
@@ -418,11 +420,28 @@ export default function TenantPage({ currentUser, hopDongCuaToi, onBrowseRooms }
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <KhieuNaiForm />
           <button
-            style={S.btnContact(loadingAdmin || !!adminError)}
-            onClick={() => adminContact && setChatTarget(adminContact)}
+            style={{
+              ...S.btnContact(loadingAdmin || !!adminError),
+              position: 'relative',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+            onClick={() => adminContact && onSetChatTarget(adminContact)}
             disabled={loadingAdmin || !!adminError}
           >
             🎧 {loadingAdmin ? t('tenant.btn_connecting') : adminError ? t('tenant.btn_offline') : t('tenant.btn_chat_admin')}
+            {hasAdminUnread && (
+              <span style={{
+                width: '8px',
+                height: '8px',
+                backgroundColor: 'var(--danger)',
+                borderRadius: '50%',
+                display: 'inline-block',
+                boxShadow: '0 0 0 2px rgba(255, 255, 255, 0.3)',
+                animation: 'pulseDot 1.2s infinite'
+              }} />
+            )}
           </button>
         </div>
       </div>
@@ -484,8 +503,35 @@ export default function TenantPage({ currentUser, hopDongCuaToi, onBrowseRooms }
                 </div>
 
                 <div style={{ display: 'flex', gap: '10px', marginTop: '16px', flexWrap: 'wrap' }}>
-                  <button style={S.btnPrimary} onClick={() => setChatTarget({ id: hopDongCuaToi.phongTro?.chuTroId, username: t('tenant.landlord') })}>
+                  <button 
+                    style={{ 
+                      ...S.btnPrimary, 
+                      position: 'relative',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }} 
+                    onClick={() => onSetChatTarget({ id: hopDongCuaToi.phongTro?.chuTroId, username: t('tenant.landlord') })}
+                  >
+                    <style>{`
+                      @keyframes pulseDot {
+                        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+                        70% { transform: scale(1.1); box-shadow: 0 0 0 5px rgba(239, 68, 68, 0); }
+                        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+                      }
+                    `}</style>
                     {t('tenant.contact_landlord')}
+                    {hasUnreadLandlordMsg && (
+                      <span style={{
+                        width: '8px',
+                        height: '8px',
+                        backgroundColor: 'var(--danger)',
+                        borderRadius: '50%',
+                        display: 'inline-block',
+                        boxShadow: '0 0 0 2px rgba(255, 255, 255, 0.3)',
+                        animation: 'pulseDot 1.2s infinite'
+                      }} />
+                    )}
                   </button>
                   <button style={S.btn} onClick={() => setShowContract(true)}>
                     📜 {t('tenant.btn_view_contract')}
@@ -660,9 +706,7 @@ export default function TenantPage({ currentUser, hopDongCuaToi, onBrowseRooms }
         )}
       </div>
 
-      {chatTarget && (
-        <ChatBox currentUser={currentUser} targetUser={chatTarget} isOpen={true} onClose={() => setChatTarget(null)} />
-      )}
+
 
       {payingHD && (
         <div style={S.modalOverlay}>

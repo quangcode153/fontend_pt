@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 
 const CONTRACT_STATUS = { APPROVED: 'DA_DUYET' };
 
-export default function TenantListTab({ hopDongs, onSetChatTarget }) {
+export default function TenantListTab({ hopDongs, onSetChatTarget, unreadSenderIds = [] }) {
   const { t } = useTranslation();
 
   const tenants = hopDongs
@@ -33,16 +33,18 @@ export default function TenantListTab({ hopDongs, onSetChatTarget }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {tenants.map((tenant, i) => {
             const initials = tenant.hoTen.charAt(0).toUpperCase();
+            const isUnread = unreadSenderIds.some(id => String(id) === String(tenant.userId));
             return (
               <div
                 key={tenant.hopDongId}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '14px',
                   padding: '14px 16px',
-                  background: 'var(--bg)', border: '1px solid var(--border-light)',
+                  background: 'var(--bg)', border: isUnread ? '1px solid var(--danger)' : '1px solid var(--border-light)',
                   borderRadius: 'var(--radius-md)',
                   animation: `fadeIn 0.3s ease ${i * 0.04}s both`,
                   transition: 'border-color 0.2s',
+                  boxShadow: isUnread ? '0 0 12px rgba(239, 68, 68, 0.12)' : 'none',
                 }}
               >
                 {/* Avatar */}
@@ -70,10 +72,36 @@ export default function TenantListTab({ hopDongs, onSetChatTarget }) {
                 {/* Nút chat */}
                 <button
                   className="l-btn l-btn--primary"
-                  style={{ fontSize: '12px', padding: '7px 14px', flexShrink: 0 }}
+                  style={{ 
+                    fontSize: '12px', 
+                    padding: '7px 14px', 
+                    flexShrink: 0,
+                    position: 'relative',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
                   onClick={() => onSetChatTarget({ id: tenant.userId, username: tenant.hoTen })}
                 >
+                  <style>{`
+                    @keyframes pulseDot {
+                      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+                      70% { transform: scale(1.1); box-shadow: 0 0 0 5px rgba(239, 68, 68, 0); }
+                      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+                    }
+                  `}</style>
                   💬 {t('landlord.btn_message')}
+                  {isUnread && (
+                    <span style={{
+                      width: '8px',
+                      height: '8px',
+                      backgroundColor: 'var(--danger)',
+                      borderRadius: '50%',
+                      display: 'inline-block',
+                      boxShadow: '0 0 0 2px rgba(255, 255, 255, 0.3)',
+                      animation: 'pulseDot 1.2s infinite'
+                    }} />
+                  )}
                 </button>
               </div>
             );

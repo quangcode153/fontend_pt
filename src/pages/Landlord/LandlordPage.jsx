@@ -52,7 +52,7 @@ function Spinner({ text }) {
 /* =========================================
    COMPONENT CHÍNH
    ========================================= */
-function LandlordPage({ currentUser }) {
+function LandlordPage({ currentUser, unreadSenderIds = [], setUnreadSenderIds, onSetChatTarget }) {
   const { t } = useTranslation();
 
   /* Kiểm tra quyền truy cập */
@@ -81,7 +81,6 @@ function LandlordPage({ currentUser }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   /* Modal states */
-  const [chatTarget, setChatTarget] = useState(null);
   const [phongChiTiet, setPhongChiTiet] = useState(null);   // Modal chi tiết phòng
   const [hoSoKhachThue, setHoSoKhachThue] = useState(null);
   const [dienNuocForm, setDienNuocForm] = useState(null);   // Modal điện nước
@@ -115,6 +114,8 @@ function LandlordPage({ currentUser }) {
 
   /* Contact admin */
   const { admin: adminContact, loading: loadingAdmin, error: adminError } = useAdminContact();
+  const hasAdminUnread = adminContact?.id && unreadSenderIds.some(id => String(id) === String(adminContact.id));
+  const tenantUnreadCount = unreadSenderIds.filter(id => !adminContact?.id || String(id) !== String(adminContact.id)).length;
 
   /* ===== API CALLS ===== */
   useEffect(() => { fetchData(); }, []);
@@ -531,7 +532,7 @@ function LandlordPage({ currentUser }) {
     { key: 'DIEN_NUOC', label: t('landlord.tab_bill'), icon: '⚡', onClick: fetchData },
     { key: 'HOA_DON', label: t('landlord.tab_invoice'), icon: '🧾', onClick: fetchData },
     { key: 'THONG_BAO', label: t('landlord.tab_notice'), icon: '📣', onClick: fetchThongBao },
-    { key: 'LIEN_HE', label: t('landlord.tab_contact'), icon: '💬', onClick: fetchData },
+    { key: 'LIEN_HE', label: t('landlord.tab_contact'), icon: '💬', badge: tenantUnreadCount, onClick: fetchData },
     { key: 'HO_SO', label: t('landlord.tab_profile'), icon: '👤' },
   ];
 
@@ -561,14 +562,38 @@ function LandlordPage({ currentUser }) {
         {/* Nút liên hệ Admin */}
         <button
           className="landlord-contact-btn"
-          onClick={() => adminContact && setChatTarget(adminContact)}
+          style={{
+            position: 'relative',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+          onClick={() => adminContact && onSetChatTarget(adminContact)}
           disabled={loadingAdmin || !!adminError}
         >
+          <style>{`
+            @keyframes pulseDot {
+              0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+              70% { transform: scale(1.1); box-shadow: 0 0 0 5px rgba(239, 68, 68, 0); }
+              100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+            }
+          `}</style>
           🎧 {loadingAdmin
             ? t('landlord.btn_connecting')
             : adminError
               ? t('landlord.btn_offline')
               : t('landlord.btn_chat_admin')}
+          {hasAdminUnread && (
+            <span style={{
+              width: '8px',
+              height: '8px',
+              backgroundColor: 'var(--danger)',
+              borderRadius: '50%',
+              display: 'inline-block',
+              boxShadow: '0 0 0 2px rgba(255, 255, 255, 0.3)',
+              animation: 'pulseDot 1.2s infinite'
+            }} />
+          )}
         </button>
       </div>
 
@@ -606,7 +631,7 @@ function LandlordPage({ currentUser }) {
           hopDongs={hopDongs}
           onDuyetHopDong={handleDuyetHopDong}
           onXemHopDong={handleXemHopDong}
-          onSetChatTarget={setChatTarget}
+          onSetChatTarget={onSetChatTarget}
           onXemHoSo={handleXemHoSoKhach}
           onRefresh={fetchData}
         />
@@ -639,7 +664,8 @@ function LandlordPage({ currentUser }) {
       {!loading && landlordTab === 'LIEN_HE' && (
         <TenantListTab
           hopDongs={hopDongs}
-          onSetChatTarget={setChatTarget}
+          onSetChatTarget={onSetChatTarget}
+          unreadSenderIds={unreadSenderIds}
         />
       )}
 
@@ -655,7 +681,7 @@ function LandlordPage({ currentUser }) {
         hoSoKhachThue={hoSoKhachThue}
         onClose={() => setPhongChiTiet(null)}
         onDoiTrangThai={handleDoiTrangThaiPhong}
-        onSetChatTarget={setChatTarget}
+        onSetChatTarget={onSetChatTarget}
       />
 
       <UtilityModal
@@ -668,15 +694,7 @@ function LandlordPage({ currentUser }) {
         onClose={() => setDienNuocForm(null)}
       />
 
-      {/* === ChatBox === */}
-      {chatTarget && (
-        <ChatBox
-          currentUser={currentUser}
-          targetUser={chatTarget}
-          isOpen={true}
-          onClose={() => setChatTarget(null)}
-        />
-      )}
+
 
       <ContractModal
         isOpen={!!previewContract}

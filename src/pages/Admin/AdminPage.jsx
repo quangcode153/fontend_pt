@@ -94,7 +94,7 @@ const Spinner = ({ text }) => {
   );
 };
 
-export default function AdminPage({ currentUser }) {
+export default function AdminPage({ currentUser, unreadSenderIds = [], setUnreadSenderIds, onSetChatTarget }) {
   const { t } = useTranslation();
   const userRole = (currentUser?.role || '').startsWith('ROLE_') ? currentUser.role : `ROLE_${currentUser.role}`;
   if (userRole !== ROLES.ADMIN) {
@@ -111,7 +111,6 @@ export default function AdminPage({ currentUser }) {
   const [hopDongs, setHopDongs] = useState([]);
   const [hoaDons, setHoaDons] = useState([]);
   const [khieuNais, setKhieuNais] = useState([]);
-  const [chatTarget, setChatTarget] = useState(null);
   const [loadingInit, setLoadingInit] = useState(true);
   const [loadingRooms, setLoadingRooms] = useState(false);
   const [confirmState, setConfirmState] = useState({ isOpen: false, type: 'info', title: '', message: '', onConfirm: null });
@@ -321,26 +320,52 @@ export default function AdminPage({ currentUser }) {
                     {chuTros.filter(ct =>
                       ct.username.toLowerCase().includes(tuKhoa.toLowerCase()) ||
                       (ct.hoTen && ct.hoTen.toLowerCase().includes(tuKhoa.toLowerCase()))
-                    ).map((ct, i) => (
-                      <div key={ct.id}
-                        onClick={() => { if (!ct.locked) handleChonChuTro(ct); }}
-                        style={{
-                          padding: '20px', background: 'var(--bg)', border: '1px solid var(--border-light)',
-                          borderRadius: 'var(--radius-md)', textAlign: 'center',
-                          transition: 'all var(--transition)',
-                          opacity: ct.locked ? 0.5 : 1, cursor: ct.locked ? 'not-allowed' : 'pointer',
-                          animation: `fadeIn 0.3s ease ${i * 0.04}s both`,
-                        }}>
-                        <div style={{ ...S.avatar(i), margin: '0 auto 10px', width: '44px', height: '44px', fontSize: '15px' }}>
-                          {(ct.hoTen || ct.username).charAt(0).toUpperCase()}
+                    ).map((ct, i) => {
+                      const isUnread = unreadSenderIds.some(id => String(id) === String(ct.id));
+                      return (
+                        <div key={ct.id}
+                          onClick={() => { if (!ct.locked) handleChonChuTro(ct); }}
+                          style={{
+                            position: 'relative',
+                            padding: '20px', background: 'var(--bg)', border: isUnread ? '1px solid var(--danger)' : '1px solid var(--border-light)',
+                            borderRadius: 'var(--radius-md)', textAlign: 'center',
+                            transition: 'all var(--transition)',
+                            opacity: ct.locked ? 0.5 : 1, cursor: ct.locked ? 'not-allowed' : 'pointer',
+                            animation: `fadeIn 0.3s ease ${i * 0.04}s both`,
+                            boxShadow: isUnread ? '0 0 12px rgba(239, 68, 68, 0.15)' : 'none',
+                          }}>
+                          <style>{`
+                            @keyframes pulseDot {
+                              0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+                              70% { transform: scale(1.1); box-shadow: 0 0 0 5px rgba(239, 68, 68, 0); }
+                              100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+                            }
+                          `}</style>
+                          {isUnread && (
+                            <span style={{
+                              position: 'absolute',
+                              top: '12px',
+                              right: '12px',
+                              width: '10px',
+                              height: '10px',
+                              backgroundColor: 'var(--danger)',
+                              borderRadius: '50%',
+                              display: 'inline-block',
+                              boxShadow: '0 0 0 2px rgba(255, 255, 255, 0.3)',
+                              animation: 'pulseDot 1.2s infinite'
+                            }} />
+                          )}
+                          <div style={{ ...S.avatar(i), margin: '0 auto 10px', width: '44px', height: '44px', fontSize: '15px' }}>
+                            {(ct.hoTen || ct.username).charAt(0).toUpperCase()}
+                          </div>
+                          <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                            {ct.hoTen ? `${ct.hoTen} (${ct.username})` : ct.username}
+                          </div>
+                          {ct.locked && <div style={{ fontSize: '11px', color: 'var(--danger)', fontWeight: 600, marginTop: '4px' }}>🔒 {t('admin.locked')}</div>}
+                          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '3px' }}>{t('admin.id')}: {ct.id}</div>
                         </div>
-                        <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
-                          {ct.hoTen ? `${ct.hoTen} (${ct.username})` : ct.username}
-                        </div>
-                        {ct.locked && <div style={{ fontSize: '11px', color: 'var(--danger)', fontWeight: 600, marginTop: '4px' }}>🔒 {t('admin.locked')}</div>}
-                        <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '3px' }}>{t('admin.id')}: {ct.id}</div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -357,15 +382,36 @@ export default function AdminPage({ currentUser }) {
                     <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>{phongTros.length} {t('admin.room_count')}</div>
                   </div>
                   <button
-                    style={{ ...S.btnPrimary, opacity: chuTroDangChon.locked ? 0.4 : 1, cursor: chuTroDangChon.locked ? 'not-allowed' : 'pointer' }}
+                    style={{ 
+                      ...S.btnPrimary, 
+                      opacity: chuTroDangChon.locked ? 0.4 : 1, 
+                      cursor: chuTroDangChon.locked ? 'not-allowed' : 'pointer',
+                      position: 'relative',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}
                     onClick={() => {
                       if (chuTroDangChon.locked) {
                         setConfirmState({ isOpen: true, type: 'danger', title: t('common.error'), message: t('admin.account_locked'), onConfirm: null });
                         return;
                       }
-                      setChatTarget(chuTroDangChon);
+                      onSetChatTarget(chuTroDangChon);
                     }}
-                  >{t('admin.btn_chat')}</button>
+                  >
+                    {t('admin.btn_chat')}
+                    {unreadSenderIds.some(id => String(id) === String(chuTroDangChon.id)) && (
+                      <span style={{
+                        width: '8px',
+                        height: '8px',
+                        backgroundColor: 'var(--danger)',
+                        borderRadius: '50%',
+                        display: 'inline-block',
+                        boxShadow: '0 0 0 2px rgba(255, 255, 255, 0.3)',
+                        animation: 'pulseDot 1.2s infinite'
+                      }} />
+                    )}
+                  </button>
                 </div>
 
                 {loadingRooms ? <Spinner text={t('admin.loading_rooms')} /> : (
@@ -436,15 +482,36 @@ export default function AdminPage({ currentUser }) {
                         }}>"{kn.noiDung}"</div>
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                           <button
-                            style={{ ...S.btn, opacity: kn.nguoiGui?.locked ? 0.4 : 1, cursor: kn.nguoiGui?.locked ? 'not-allowed' : 'pointer' }}
+                            style={{ 
+                              ...S.btn, 
+                              opacity: kn.nguoiGui?.locked ? 0.4 : 1, 
+                              cursor: kn.nguoiGui?.locked ? 'not-allowed' : 'pointer',
+                              position: 'relative',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '8px'
+                            }}
                             onClick={() => {
                               if (kn.nguoiGui?.locked) {
                                 setConfirmState({ isOpen: true, type: 'danger', title: t('common.error'), message: t('admin.account_locked'), onConfirm: null });
                                 return;
                               }
-                              setChatTarget({ id: kn.nguoiGui?.id, username: kn.nguoiGui?.username });
+                              onSetChatTarget({ id: kn.nguoiGui?.id, username: kn.nguoiGui?.username });
                             }}
-                          >{t('admin.btn_contact')}</button>
+                          >
+                            {t('admin.btn_contact')}
+                            {unreadSenderIds.some(id => String(id) === String(kn.nguoiGui?.id || kn.nguoiGuiId)) && (
+                              <span style={{
+                                width: '8px',
+                                height: '8px',
+                                backgroundColor: 'var(--danger)',
+                                borderRadius: '50%',
+                                display: 'inline-block',
+                                boxShadow: '0 0 0 2px rgba(255, 255, 255, 0.3)',
+                                animation: 'pulseDot 1.2s infinite'
+                              }} />
+                            )}
+                          </button>
                           {kn.trangThai === 'CHO_XU_LY' && (
                             <button style={S.btnSuccess} onClick={() => handleXuLyKhieuNai(kn.id)}>{t('admin.btn_resolved')}</button>
                           )}
@@ -459,7 +526,7 @@ export default function AdminPage({ currentUser }) {
         </>
       )}
 
-      {chatTarget && <ChatBox currentUser={currentUser} targetUser={chatTarget} isOpen={true} onClose={() => setChatTarget(null)} />}
+
 
       {phongDangXem && (
         <AdminRoomDetailModal

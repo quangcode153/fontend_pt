@@ -77,7 +77,15 @@ function AppContent() {
   const [hopDongCuaToi, setHopDongCuaToi] = useState(null);
   const [dangKiemTra, setDangKiemTra] = useState(false);
   const [chatTarget, setChatTarget] = useState(null);
+  const [unreadSenderIds, setUnreadSenderIds] = useState([]);
   const isMounted = useRef(true);
+
+  // Auto-clear unread ID when active chat target is selected
+  useEffect(() => {
+    if (chatTarget?.id) {
+      setUnreadSenderIds(prev => prev.filter(id => String(id) !== String(chatTarget.id)));
+    }
+  }, [chatTarget?.id]);
 
   useEffect(() => {
     isMounted.current = true;
@@ -121,8 +129,26 @@ function AppContent() {
   const normalizedRole = rawRole.startsWith('ROLE_') ? rawRole : `ROLE_${rawRole}`;
 
   const renderContent = () => {
-    if (normalizedRole === ROLES.ADMIN) return <AdminPage currentUser={user} />;
-    if (normalizedRole === ROLES.LANDLORD) return <LandlordPage currentUser={user} />;
+    if (normalizedRole === ROLES.ADMIN) {
+      return (
+        <AdminPage 
+          currentUser={user} 
+          unreadSenderIds={unreadSenderIds} 
+          setUnreadSenderIds={setUnreadSenderIds} 
+          onSetChatTarget={setChatTarget} 
+        />
+      );
+    }
+    if (normalizedRole === ROLES.LANDLORD) {
+      return (
+        <LandlordPage 
+          currentUser={user} 
+          unreadSenderIds={unreadSenderIds} 
+          setUnreadSenderIds={setUnreadSenderIds} 
+          onSetChatTarget={setChatTarget} 
+        />
+      );
+    }
 
     if (normalizedRole === ROLES.USER) {
       if (dangKiemTra && !hopDongCuaToi) {
@@ -159,7 +185,16 @@ function AppContent() {
             </div>
           );
         }
-        return <TenantPage currentUser={user} hopDongCuaToi={hopDongCuaToi} onBrowseRooms={() => setTenantView('MARKET')} />;
+        return (
+          <TenantPage 
+            currentUser={user} 
+            hopDongCuaToi={hopDongCuaToi} 
+            onBrowseRooms={() => setTenantView('MARKET')} 
+            unreadSenderIds={unreadSenderIds} 
+            setUnreadSenderIds={setUnreadSenderIds} 
+            onSetChatTarget={setChatTarget} 
+          />
+        );
       }
       if (tt === 'CHO_DUYET') return <WaitingScreen hopDong={hopDongCuaToi} onOpenChat={handleOpenChat} />;
       return <GuestPage currentUser={user} onRentSuccess={() => kiemTraHopDong(false)} />;
@@ -198,7 +233,15 @@ function AppContent() {
         </div>
       )}
       {renderContent()}
-      <ChatBox currentUser={user} targetUser={chatTarget} isOpen={!!chatTarget} onClose={() => setChatTarget(null)} />
+      <ChatBox 
+        currentUser={user} 
+        targetUser={chatTarget} 
+        isOpen={!!chatTarget} 
+        onClose={() => setChatTarget(null)} 
+        onOpenChat={setChatTarget} 
+        unreadSenderIds={unreadSenderIds}
+        setUnreadSenderIds={setUnreadSenderIds}
+      />
       <footer className="app-footer">
         <div className="app-footer__grid">
           {/* Column 1: Introduction */}
