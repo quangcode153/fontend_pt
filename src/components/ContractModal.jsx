@@ -139,11 +139,11 @@ export default function ContractModal({
           
           {/* Thời hạn hợp đồng - Nhập liệu/Hiển thị động */}
           <div style={{ marginTop: '12px', padding: '14px', background: '#F8FAFC', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
-            <span style={{ fontWeight: 'bold', display: 'block', marginBottom: '8px', color: '#1E293B', fontSize: '13px' }}>📅 Thời hạn hợp đồng thuê trọ:</span>
+            <span style={{ fontWeight: 'bold', display: 'block', marginBottom: '8px', color: '#1E293B', fontSize: '13px' }}>{t('contract.duration_title')}</span>
             {onConfirm ? (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
-                  <label style={{ fontSize: '11px', color: '#4b5563', display: 'block', marginBottom: '4px' }}>Ngày bắt đầu:</label>
+                  <label style={{ fontSize: '11px', color: '#4b5563', display: 'block', marginBottom: '4px' }}>{t('contract.start_date')}</label>
                   <input
                     type="date"
                     value={ngayBatDau}
@@ -153,7 +153,7 @@ export default function ContractModal({
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '11px', color: '#4b5563', display: 'block', marginBottom: '4px' }}>Ngày kết thúc:</label>
+                  <label style={{ fontSize: '11px', color: '#4b5563', display: 'block', marginBottom: '4px' }}>{t('contract.end_date')}</label>
                   <input
                     type="date"
                     value={ngayKetThuc}
@@ -165,9 +165,9 @@ export default function ContractModal({
               </div>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '13px' }}>
-                <div><strong>Ngày bắt đầu:</strong> {ngayBatDau || '—'}</div>
-                <div><strong>Ngày kết thúc:</strong> {ngayKetThuc || 'Hợp đồng vô thời hạn'}</div>
-                <div style={{ gridColumn: '1 / -1', marginTop: '6px', fontSize: '11px', color: '#059669', fontWeight: 600 }}>🔒 Hạn hợp đồng đã được khóa sau khi hai bên ký kết thành công.</div>
+                <div><strong>{t('contract.start_date')}</strong> {ngayBatDau || '—'}</div>
+                <div><strong>{t('contract.end_date')}</strong> {ngayKetThuc || t('contract.indefinite')}</div>
+                <div style={{ gridColumn: '1 / -1', marginTop: '6px', fontSize: '11px', color: '#059669', fontWeight: 600 }}>{t('contract.locked_note')}</div>
               </div>
             )}
           </div>

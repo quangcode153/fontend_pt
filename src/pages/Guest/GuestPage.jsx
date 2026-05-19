@@ -7,6 +7,7 @@ import HoSoForm from '../../components/HoSoForm';
 import ContractModal from '../../components/ContractModal';
 import ConfirmModal from '../../components/ConfirmModal';
 import useAdminContact from '../../hooks/useAdminContact';
+import ImageSlider from '../../components/ImageSlider';
 import './GuestPage.css';
 
 const ROLES = { USER: 'ROLE_USER' };
@@ -473,8 +474,8 @@ function GuestPage({ currentUser, onRentSuccess }) {
                       display: 'flex', flexDirection: 'column'
                     }}>
                       {phong.hinhAnh && (
-                        <div style={{ width: '100%', height: '160px', overflow: 'hidden', borderRadius: 'var(--radius-md)', marginBottom: '14px' }}>
-                          <img src={phong.hinhAnh.includes('|||') ? phong.hinhAnh.split('|||')[0] : phong.hinhAnh} alt="Room" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <div style={{ width: '100%', height: '160px', overflow: 'hidden', borderRadius: 'var(--radius-md)', marginBottom: '14px', position: 'relative' }}>
+                          <ImageSlider hinhAnh={phong.hinhAnh} alt={phong.tenPhong} height="100%" />
                         </div>
                       )}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
@@ -647,9 +648,9 @@ function GuestPage({ currentUser, onRentSuccess }) {
                         animation: `fadeIn 0.3s ease ${i * 0.05}s both`,
                         display: 'flex', flexDirection: 'column'
                       }}>
-                        {phong.hinhAnh && (
-                          <div style={{ width: '100%', height: '160px', overflow: 'hidden', borderRadius: 'var(--radius-md)', marginBottom: '14px' }}>
-                            <img src={phong.hinhAnh.includes('|||') ? phong.hinhAnh.split('|||')[0] : phong.hinhAnh} alt="Room" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                         {phong.hinhAnh && (
+                          <div style={{ width: '100%', height: '160px', overflow: 'hidden', borderRadius: 'var(--radius-md)', marginBottom: '14px', position: 'relative' }}>
+                            <ImageSlider hinhAnh={phong.hinhAnh} alt={phong.tenPhong} height="100%" />
                           </div>
                         )}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>

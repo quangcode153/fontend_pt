@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import emptyRoomsImg from '../../../assets/empty_rooms.png';
 import roomPlaceholderImg from '../../../assets/room_placeholder.png';
+import ImageSlider from '../../../components/ImageSlider';
 
 const ROOM_STATUS = { EMPTY: 'TRONG', RENTED: 'DA_THUE', MAINTENANCE: 'BAO_TRI' };
 const CONTRACT_STATUS = { APPROVED: 'DA_DU_YET', PENDING: 'CHO_DUYET' };
@@ -161,6 +162,34 @@ export default function RoomTab({
           <div className="l-add-room-form__field" style={{ flex: 2 }}>
             <label className="l-form-label">{t('landlord.image')} ({t('common.multiple') || 'nhiều ảnh'})</label>
             <input className="l-form-input" type="file" accept="image/*" multiple onChange={handleImageChange} disabled={isSubmitting} />
+            {hinhAnh && (
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '10px', width: '100%' }}>
+                {hinhAnh.split('|||').map((imgSrc, idx) => (
+                  <div key={idx} style={{ position: 'relative', width: '60px', height: '60px', borderRadius: '6px', overflow: 'hidden', border: '1px solid var(--border)' }}>
+                    <img src={imgSrc} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const arr = hinhAnh.split('|||');
+                        arr.splice(idx, 1);
+                        setHinhAnh(arr.join('|||'));
+                      }}
+                      style={{
+                        position: 'absolute', top: '2px', right: '2px',
+                        width: '18px', height: '18px', borderRadius: '50%',
+                        background: 'rgba(239, 68, 68, 0.85)', color: '#fff',
+                        border: 'none', fontSize: '10px', display: 'flex',
+                        alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+                        fontWeight: 'bold', zIndex: 10
+                      }}
+                      title="Xoá ảnh này"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           <div className="l-add-room-form__field" style={{ flexBasis: '100%' }}>
             <label className="l-form-label">{t('landlord.more_description')}</label>
@@ -205,8 +234,8 @@ export default function RoomTab({
               >
                 {/* Ảnh placeholder cho phòng */}
                 <div style={{ height: '120px', overflow: 'hidden', borderRadius: 'var(--radius-md) var(--radius-md) 0 0', margin: '-20px -20px 16px -20px', position: 'relative' }}>
-                  <img src={phong.hinhAnh ? (phong.hinhAnh.includes('|||') ? phong.hinhAnh.split('|||')[0] : phong.hinhAnh) : roomPlaceholderImg} alt="Room" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  <div style={{ position: 'absolute', top: '10px', left: '10px' }}>
+                  <ImageSlider hinhAnh={phong.hinhAnh} alt={phong.tenPhong} height="100%" />
+                  <div style={{ position: 'absolute', top: '10px', left: '10px', zIndex: 10 }}>
                     <span className={`l-tag l-tag--${tagColor(phong.trangThai)}`}>
                       {tagLabel(phong.trangThai)}
                     </span>

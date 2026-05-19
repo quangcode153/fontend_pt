@@ -453,7 +453,12 @@
     "warning_landlord": "Vui lòng nhập họ tên của bạn vào ô «Bên A» để duyệt hợp đồng.",
     "btn_cancel": "Hủy / Đóng",
     "btn_processing": "Đang xử lý...",
-    "dots": "..................................................."
+    "dots": "...................................................",
+    "duration_title": "📅 Thời hạn hợp đồng thuê trọ:",
+    "start_date": "Ngày bắt đầu:",
+    "end_date": "Ngày kết thúc:",
+    "indefinite": "Hợp đồng vô thời hạn",
+    "locked_note": "🔒 Hạn hợp đồng đã được khóa sau khi hai bên ký kết thành công."
   },
   "tenant": {
     "access_denied": "Không đủ quyền truy cập.",

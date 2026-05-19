@@ -447,7 +447,12 @@
     "warning_landlord": "Please enter your name in the \u00abParty A\u00bb field to approve the contract.",
     "btn_cancel": "Cancel / Close",
     "btn_processing": "Processing...",
-    "dots": "..................................................."
+    "dots": "...................................................",
+    "duration_title": "📅 Rental contract term:",
+    "start_date": "Start date:",
+    "end_date": "End date:",
+    "indefinite": "Indefinite contract term",
+    "locked_note": "🔒 Contract duration has been locked after successful bilateral signing."
   },
   "tenant": {
     "access_denied": "Access denied.",
