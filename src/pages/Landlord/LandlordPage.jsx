@@ -173,14 +173,14 @@ function LandlordPage({ currentUser, unreadSenderIds = [], setUnreadSenderIds, o
     try {
       await api.post('/phong-tro', {
         tenPhong,
-        giaPhong: parseFloat(giaPhong),
+        giaPhong: parseFloat(String(giaPhong).replace(/,/g, '')),
         trangThai,
         chuTroId: currentUser.id,
-        giaDien: giaDien ? parseFloat(giaDien) : null,
-        giaNuoc: giaNuoc ? parseFloat(giaNuoc) : null,
-        tienCoc: tienCoc ? parseFloat(tienCoc) : null,
+        giaDien: giaDien ? parseFloat(String(giaDien).replace(/,/g, '')) : null,
+        giaNuoc: giaNuoc ? parseFloat(String(giaNuoc).replace(/,/g, '')) : null,
+        tienCoc: tienCoc ? parseFloat(String(tienCoc).replace(/,/g, '')) : null,
         diaChi,
-        dienTich: dienTich ? parseFloat(dienTich) : null,
+        dienTich: dienTich ? parseFloat(String(dienTich).replace(/,/g, '')) : null,
         hinhAnh,
         moTa
       });
@@ -358,21 +358,21 @@ function LandlordPage({ currentUser, unreadSenderIds = [], setUnreadSenderIds, o
     // Logic đặc biệt cho phần Hủy hợp đồng
     if (hd?.trangThai === CONTRACT_STATUS.CANCELLING) {
       if (trangThaiMoi === CONTRACT_STATUS.APPROVED) {
-        message = "Bạn có chắc chắn muốn TỪ CHỐI yêu cầu hủy và tiếp tục duy trì hợp đồng này không?";
-        confirmText = "Giữ lại HĐ";
-        cancelText = "Quay lại";
+        message = t('landlord.confirm_keep_contract') || "Bạn có chắc chắn muốn TỪ CHỐI yêu cầu hủy và tiếp tục duy trì hợp đồng này không?";
+        confirmText = t('landlord.btn_keep_contract_short') || "Giữ lại HĐ";
+        cancelText = t('landlord.btn_back_short') || "Quay lại";
       } else if (trangThaiMoi === CONTRACT_STATUS.CANCELLED) {
-        message = "Xác nhận ĐỒNG Ý hủy hợp đồng này và giải phóng phòng trống?";
-        confirmText = "Đồng ý hủy";
-        cancelText = "Quay lại";
+        message = t('landlord.confirm_approve_cancel') || "Xác nhận ĐỒNG Ý hủy hợp đồng này và giải phóng phòng trống?";
+        confirmText = t('landlord.btn_approve_cancel_short') || "Đồng ý hủy";
+        cancelText = t('landlord.btn_back_short') || "Quay lại";
       }
     } else {
       if (trangThaiMoi === CONTRACT_STATUS.REJECTED) {
-        confirmText = "Từ chối yêu cầu";
-        cancelText = "Quay lại";
+        confirmText = t('landlord.btn_reject_req') || "Từ chối yêu cầu";
+        cancelText = t('landlord.btn_back_short') || "Quay lại";
       } else if (trangThaiMoi === CONTRACT_STATUS.APPROVED) {
-        confirmText = "Duyệt hợp đồng";
-        cancelText = "Quay lại";
+        confirmText = t('landlord.btn_approve_contract') || "Duyệt hợp đồng";
+        cancelText = t('landlord.btn_back_short') || "Quay lại";
       }
     }
 
@@ -446,16 +446,37 @@ function LandlordPage({ currentUser, unreadSenderIds = [], setUnreadSenderIds, o
   /** Submit form chốt / cập nhật điện nước */
   const handleChotDienNuoc = async (e) => {
     e.preventDefault();
+    
+    const soDienCu = parseInt(formDN.chiSoDauDien);
+    const soDienMoi = parseInt(formDN.chiSoCuoiDien);
+    const soNuocCu = parseInt(formDN.chiSoDauNuoc);
+    const soNuocMoi = parseInt(formDN.chiSoCuoiNuoc);
+
+    if (isNaN(soDienCu) || isNaN(soDienMoi) || isNaN(soNuocCu) || isNaN(soNuocMoi)) {
+      alert(t('landlord.alert_fill_utility_indexes') || "⚠️ Vui lòng nhập đầy đủ các chỉ số điện và nước!");
+      return;
+    }
+
+    if (soDienMoi < soDienCu) {
+      alert(t('landlord.alert_invalid_electric_index') || "⚠️ Chỉ số điện mới phải lớn hơn hoặc bằng chỉ số điện cũ!");
+      return;
+    }
+
+    if (soNuocMoi < soNuocCu) {
+      alert(t('landlord.alert_invalid_water_index') || "⚠️ Chỉ số nước mới phải lớn hơn hoặc bằng chỉ số nước cũ!");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const payload = {
         phongTro: { id: dienNuocForm.phongId },
         thang: parseInt(formDN.thang),
         nam: parseInt(formDN.nam),
-        soDienCu: parseInt(formDN.chiSoDauDien),
-        soDienMoi: parseInt(formDN.chiSoCuoiDien),
-        soNuocCu: parseInt(formDN.chiSoDauNuoc),
-        soNuocMoi: parseInt(formDN.chiSoCuoiNuoc),
+        soDienCu,
+        soDienMoi,
+        soNuocCu,
+        soNuocMoi,
       };
 
       if (dienNuocForm.isUpdate) {

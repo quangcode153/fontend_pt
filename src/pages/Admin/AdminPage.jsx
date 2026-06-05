@@ -305,6 +305,54 @@ export default function AdminPage({ currentUser, unreadSenderIds = [], setUnread
           {adminTab === 'PHONG' && (
             !chuTroDangChon ? (
               <div style={S.card}>
+                {thongKeData && (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+                    <div style={{
+                      padding: '16px 20px',
+                      background: 'var(--accent-light)',
+                      border: '1px solid var(--accent)',
+                      borderRadius: 'var(--radius-lg)',
+                      boxShadow: '0 2px 8px var(--accent-glow)'
+                    }}>
+                      <div style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--accent)', fontWeight: 600, letterSpacing: '0.5px' }}>
+                        🏨 {t('admin.stats_total_rooms')}
+                      </div>
+                      <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--accent)', marginTop: '6px' }}>
+                        {thongKeData.tongSoPhong} <span style={{ fontSize: '14px', fontWeight: 500 }}>{t('admin.stats_rooms_unit')}</span>
+                      </div>
+                    </div>
+
+                    <div style={{
+                      padding: '16px 20px',
+                      background: 'var(--danger-light)',
+                      border: '1px solid var(--danger)',
+                      borderRadius: 'var(--radius-lg)',
+                      boxShadow: '0 2px 8px rgba(239, 68, 68, 0.08)'
+                    }}>
+                      <div style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--danger)', fontWeight: 600, letterSpacing: '0.5px' }}>
+                        🔴 {t('admin.stats_rented_rooms')}
+                      </div>
+                      <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--danger)', marginTop: '6px' }}>
+                        {thongKeData.soPhongDaThue} <span style={{ fontSize: '14px', fontWeight: 500 }}>{t('admin.stats_rooms_unit')}</span>
+                      </div>
+                    </div>
+
+                    <div style={{
+                      padding: '16px 20px',
+                      background: 'var(--success-light)',
+                      border: '1px solid var(--success)',
+                      borderRadius: 'var(--radius-lg)',
+                      boxShadow: '0 2px 8px rgba(16, 185, 129, 0.08)'
+                    }}>
+                      <div style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--success)', fontWeight: 600, letterSpacing: '0.5px' }}>
+                        🟢 {t('admin.stats_empty_rooms')}
+                      </div>
+                      <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--success)', marginTop: '6px' }}>
+                        {thongKeData.soPhongTrong} <span style={{ fontSize: '14px', fontWeight: 500 }}>{t('admin.stats_rooms_unit')}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '16px' }}>{t('admin.search_rooms')}</div>
                 <input type="text" placeholder={t('admin.search_placeholder')} value={tuKhoa} onChange={e => setTuKhoa(e.target.value)} style={{ ...S.input, marginBottom: '20px' }} />
                 {chuTros.filter(ct =>
@@ -435,7 +483,7 @@ export default function AdminPage({ currentUser, unreadSenderIds = [], setUnread
                         </div>
                         <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '8px' }}>{t('admin.price')}: <strong style={{ color: 'var(--accent)' }}>{phong.giaPhong?.toLocaleString()} {t('landlord.currency')}</strong></div>
                         <div style={{ fontSize: '11px', color: 'var(--accent)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          🔍 Xem chi tiết phòng →
+                          {t('admin.view_room_detail') || '🔍 Xem chi tiết phòng →'}
                         </div>
                       </div>
                     ))}
@@ -626,52 +674,52 @@ const AdminRoomDetailModal = ({
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 <div style={{ padding: '12px 16px', background: 'var(--bg)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                    <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>Hợp đồng hiện tại</span>
+                    <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>{t('admin.contract_current') || 'Hợp đồng hiện tại'}</span>
                     <span style={tagStyle(activeOrPendingContract.trangThai)}>
-                      {activeOrPendingContract.trangThai === 'DA_DUYET' ? 'Đang hiệu lực' :
-                        activeOrPendingContract.trangThai === 'YEU_CAU_HUY' ? 'Chờ hủy' : 'Chờ duyệt'}
+                      {activeOrPendingContract.trangThai === 'DA_DUYET' ? t('admin.contract_active') || 'Đang hiệu lực' :
+                        activeOrPendingContract.trangThai === 'YEU_CAU_HUY' ? t('admin.contract_cancelling') || 'Chờ hủy' : t('admin.contract_pending') || 'Chờ duyệt'}
                     </span>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '13px' }}>
-                    <div><span style={{ color: 'var(--text-muted)' }}>Mã hợp đồng:</span> #{activeOrPendingContract.id}</div>
-                    <div><span style={{ color: 'var(--text-muted)' }}>Tiền cọc:</span> {activeOrPendingContract.tienCoc?.toLocaleString()} đ</div>
-                    <div><span style={{ color: 'var(--text-muted)' }}>Ngày bắt đầu:</span> {activeOrPendingContract.ngayBatDau}</div>
-                    <div><span style={{ color: 'var(--text-muted)' }}>Ngày kết thúc:</span> {activeOrPendingContract.ngayKetThuc || 'Hợp đồng vô thời hạn'}</div>
+                    <div><span style={{ color: 'var(--text-muted)' }}>{t('admin.contract_id') || 'Mã hợp đồng:'}</span> #{activeOrPendingContract.id}</div>
+                    <div><span style={{ color: 'var(--text-muted)' }}>{t('admin.contract_deposit') || 'Tiền cọc:'}</span> {activeOrPendingContract.tienCoc?.toLocaleString()} {t('landlord.currency') || 'đ'}</div>
+                    <div><span style={{ color: 'var(--text-muted)' }}>{t('admin.contract_start') || 'Ngày bắt đầu:'}</span> {activeOrPendingContract.ngayBatDau}</div>
+                    <div><span style={{ color: 'var(--text-muted)' }}>{t('admin.contract_end') || 'Ngày kết thúc:'}</span> {activeOrPendingContract.ngayKetThuc || t('admin.contract_indefinite') || 'Hợp đồng vô thời hạn'}</div>
                   </div>
                 </div>
 
                 <div style={{ padding: '16px', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)' }}>
                   <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', display: 'block', marginBottom: '12px' }}>
-                    👤 Thông tin khách thuê
+                    {t('admin.tenant_title') || '👤 Thông tin khách thuê'}
                   </span>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-light)', paddingBottom: '6px' }}>
-                      <span style={{ color: 'var(--text-muted)' }}>Họ và tên:</span>
+                      <span style={{ color: 'var(--text-muted)' }}>{t('admin.tenant_name') || 'Họ và tên:'}</span>
                       <strong style={{ color: 'var(--text-primary)' }}>
                         {activeOrPendingContract.khachHang?.khachHang?.hoTen || activeOrPendingContract.khachHang?.username}
                       </strong>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-light)', paddingBottom: '6px' }}>
-                      <span style={{ color: 'var(--text-muted)' }}>Số điện thoại:</span>
-                      <span style={{ color: 'var(--text-primary)' }}>{activeOrPendingContract.khachHang?.khachHang?.soDienThoai || 'Chưa cập nhật'}</span>
+                      <span style={{ color: 'var(--text-muted)' }}>{t('admin.tenant_phone') || 'Số điện thoại:'}</span>
+                      <span style={{ color: 'var(--text-primary)' }}>{activeOrPendingContract.khachHang?.khachHang?.soDienThoai || t('admin.not_updated') || 'Chưa cập nhật'}</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-light)', paddingBottom: '6px' }}>
-                      <span style={{ color: 'var(--text-muted)' }}>Số CCCD:</span>
-                      <span style={{ color: 'var(--text-primary)' }}>{activeOrPendingContract.khachHang?.khachHang?.soCccd || 'Chưa cập nhật'}</span>
+                      <span style={{ color: 'var(--text-muted)' }}>{t('admin.tenant_cccd') || 'Số CCCD:'}</span>
+                      <span style={{ color: 'var(--text-primary)' }}>{activeOrPendingContract.khachHang?.khachHang?.soCccd || t('admin.not_updated') || 'Chưa cập nhật'}</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-light)', paddingBottom: '6px' }}>
-                      <span style={{ color: 'var(--text-muted)' }}>Email:</span>
-                      <span style={{ color: 'var(--text-primary)' }}>{activeOrPendingContract.khachHang?.khachHang?.email || 'Chưa cập nhật'}</span>
+                      <span style={{ color: 'var(--text-muted)' }}>{t('admin.tenant_email') || 'Email:'}</span>
+                      <span style={{ color: 'var(--text-primary)' }}>{activeOrPendingContract.khachHang?.khachHang?.email || t('admin.not_updated') || 'Chưa cập nhật'}</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-light)', paddingBottom: '6px' }}>
-                      <span style={{ color: 'var(--text-muted)' }}>Địa chỉ thường trú:</span>
+                      <span style={{ color: 'var(--text-muted)' }}>{t('admin.tenant_address') || 'Địa chỉ thường trú:'}</span>
                       <span style={{ color: 'var(--text-primary)', maxWidth: '60%', textAlign: 'right' }}>
-                        {activeOrPendingContract.khachHang?.khachHang?.diaChiThuongTru || 'Chưa cập nhật'}
+                        {activeOrPendingContract.khachHang?.khachHang?.diaChiThuongTru || t('admin.not_updated') || 'Chưa cập nhật'}
                       </span>
                     </div>
                     {activeOrPendingContract.khachHang?.khachHang?.tenNganHang && (
                       <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '6px' }}>
-                        <span style={{ color: 'var(--text-muted)' }}>Tài khoản ngân hàng:</span>
+                        <span style={{ color: 'var(--text-muted)' }}>{t('admin.tenant_bank') || 'Tài khoản ngân hàng:'}</span>
                         <span style={{ color: 'var(--text-primary)', textAlign: 'right' }}>
                           {activeOrPendingContract.khachHang.khachHang.tenNganHang} - {activeOrPendingContract.khachHang.khachHang.soTaiKhoan} ({activeOrPendingContract.khachHang.khachHang.chuTaiKhoan})
                         </span>
@@ -683,23 +731,25 @@ const AdminRoomDetailModal = ({
             ) : (
               <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)' }}>
                 <span style={{ fontSize: '32px', display: 'block', marginBottom: '10px' }}>📭</span>
-                <span>Hiện chưa có hợp đồng nào đang hiệu lực cho phòng này.</span>
+                <span>{t('admin.no_active_contract') || 'Hiện chưa có hợp đồng nào đang hiệu lực cho phòng này.'}</span>
               </div>
             )}
 
             {phongHopDongs.length > 0 && (
               <div style={{ marginTop: '10px' }}>
                 <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '10px' }}>
-                  Lịch sử hợp đồng ({phongHopDongs.length})
+                  {t('admin.contract_history', { count: phongHopDongs.length }) || `Lịch sử hợp đồng (${phongHopDongs.length})`}
                 </span>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '180px', overflowY: 'auto' }}>
                   {phongHopDongs.map(hd => (
                     <div key={hd.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'var(--bg)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)', fontSize: '12px' }}>
                       <div>
-                        <strong>#{hd.id}</strong> — Khách: {hd.khachHang?.khachHang?.hoTen || hd.khachHang?.username}
-                        <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>Kỳ hạn: {hd.ngayBatDau} đến {hd.ngayKetThuc || 'Vô thời hạn'}</div>
+                        <strong>#{hd.id}</strong> — {t('admin.tenant_name').replace(':', '') || 'Khách'}: {hd.khachHang?.khachHang?.hoTen || hd.khachHang?.username}
+                        <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                          {t('admin.contract_history_term', { start: hd.ngayBatDau, end: hd.ngayKetThuc || t('admin.contract_indefinite') }) || `Kỳ hạn: ${hd.ngayBatDau} đến ${hd.ngayKetThuc || 'Vô thời hạn'}`}
+                        </div>
                       </div>
-                      <span style={tagStyle(hd.trangThai)}>{hd.trangThai}</span>
+                      <span style={tagStyle(hd.trangThai)}>{t('landlord.contract_status_' + hd.trangThai) || hd.trangThai}</span>
                     </div>
                   ))}
                 </div>
@@ -713,27 +763,27 @@ const AdminRoomDetailModal = ({
             {phongHoaDons.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)' }}>
                 <span style={{ fontSize: '32px', display: 'block', marginBottom: '10px' }}>🧾</span>
-                <span>Chưa có hóa đơn nào được xuất cho phòng này.</span>
+                <span>{t('admin.no_invoices_for_room') || 'Chưa có hóa đơn nào được xuất cho phòng này.'}</span>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '420px', overflowY: 'auto' }}>
                 {phongHoaDons.map(hd => (
                   <div key={hd.id} style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '14px', background: 'var(--bg)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', paddingBottom: '8px', borderBottom: '1px solid var(--border-light)' }}>
-                      <strong style={{ fontSize: '13px', color: 'var(--text-primary)' }}>Hóa đơn tháng {hd.thang}/{hd.nam}</strong>
+                      <strong style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{t('admin.invoice_month', { month: hd.thang, year: hd.nam }) || `Hóa đơn tháng ${hd.thang}/${hd.nam}`}</strong>
                       <span style={tagStyle(hd.trangThai)}>
-                        {hd.trangThai === 'DA_THANH_TOAN' ? 'Đã thanh toán' : 'Chưa thanh toán'}
+                        {hd.trangThai === 'DA_THANH_TOAN' ? t('admin.invoice_paid') || 'Đã thanh toán' : t('admin.invoice_unpaid') || 'Chưa thanh toán'}
                       </span>
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', fontSize: '12px', color: 'var(--text-secondary)' }}>
-                      <div>Tiền phòng: <strong>{hd.tienPhong?.toLocaleString()}đ</strong></div>
-                      <div>Tiền điện: <strong>{hd.tienDien?.toLocaleString()}đ</strong></div>
-                      <div>Tiền nước: <strong>{hd.tienNuoc?.toLocaleString()}đ</strong></div>
+                      <div>{t('admin.invoice_room_fee') || 'Tiền phòng:'} <strong>{hd.tienPhong?.toLocaleString()}{t('landlord.currency') || 'đ'}</strong></div>
+                      <div>{t('admin.invoice_electricity') || 'Tiền điện:'} <strong>{hd.tienDien?.toLocaleString()}{t('landlord.currency') || 'đ'}</strong></div>
+                      <div>{t('admin.invoice_water') || 'Tiền nước:'} <strong>{hd.tienNuoc?.toLocaleString()}{t('landlord.currency') || 'đ'}</strong></div>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px', paddingTop: '8px', borderTop: '1px dotted var(--border)' }}>
-                      <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Hóa đơn ID: #{hd.id}</span>
+                      <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{t('admin.invoice_id') || 'Hóa đơn ID:'} #{hd.id}</span>
                       <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--accent)' }}>
-                        Tổng cộng: {hd.tongTien?.toLocaleString()}đ
+                        {t('admin.invoice_total') || 'Tổng cộng:'} {hd.tongTien?.toLocaleString()}{t('landlord.currency') || 'đ'}
                       </span>
                     </div>
                   </div>
@@ -797,16 +847,16 @@ const AdminRoomDetailModal = ({
               🏠 {phong.tenPhong}
               <span style={tagColorPhong ? tagStyle(phong.trangThai) : {}}>{t('admin.room_status_' + phong.trangThai) || phong.trangThai}</span>
             </div>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>Chi tiết thông tin phòng & tài chính</div>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>{t('admin.modal_subtitle') || 'Chi tiết thông tin phòng & tài chính'}</div>
           </div>
           <button style={{ border: 'none', background: 'transparent', color: 'var(--text-muted)', fontSize: '20px', cursor: 'pointer', outline: 'none' }} onClick={onClose}>✕</button>
         </div>
 
         <div style={{ display: 'flex', borderBottom: '1px solid var(--border-light)', padding: '0 20px', background: 'var(--bg)', gap: '16px' }}>
           {[
-            ['INFO', 'ℹ️ Thông tin phòng'],
-            ['CONTRACT', '📄 Hợp đồng & Khách thuê'],
-            ['BILL_HISTORY', '🧾 Lịch sử Hóa đơn'],
+            ['INFO', t('admin.modal_tab_info') || 'ℹ️ Thông tin phòng'],
+            ['CONTRACT', t('admin.modal_tab_contract') || '📄 Hợp đồng & Khách thuê'],
+            ['BILL_HISTORY', t('admin.modal_tab_invoices') || '🧾 Lịch sử Hóa đơn'],
           ].map(([tabKey, label]) => {
             const isActive = activeModalTab === tabKey;
             return (
@@ -840,7 +890,7 @@ const AdminRoomDetailModal = ({
               fontWeight: 600, cursor: 'pointer', transition: 'all var(--transition)',
             }}
           >
-            Đóng
+            {t('admin.btn_close') || 'Đóng'}
           </button>
         </div>
       </div>

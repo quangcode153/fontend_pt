@@ -4,6 +4,18 @@ import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
 import api from '../api';
 
+const formatTime = (isoString) => {
+  if (!isoString) return '';
+  try {
+    const date = new Date(isoString);
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  } catch (e) {
+    return '';
+  }
+};
+
 function ChatBox({ currentUser, targetUser, isOpen, onClose, onOpenChat, unreadSenderIds, setUnreadSenderIds }) {
   const { t } = useTranslation();
   const [messages, setMessages] = useState([]);
@@ -312,6 +324,8 @@ function ChatBox({ currentUser, targetUser, isOpen, onClose, onOpenChat, unreadS
                   alignSelf: isMe ? 'flex-end' : 'flex-start',
                   maxWidth: '80%', opacity: msg.isOptimistic ? 0.6 : 1,
                   animation: 'fadeIn 0.15s ease',
+                  display: 'flex',
+                  flexDirection: 'column'
                 }}>
                   <div style={{
                     background: isMe ? 'var(--accent)' : 'var(--surface)',
@@ -322,6 +336,15 @@ function ChatBox({ currentUser, targetUser, isOpen, onClose, onOpenChat, unreadS
                     border: isMe ? 'none' : '1px solid var(--border)',
                   }}>
                     {msg.noiDung}
+                  </div>
+                  <div style={{
+                    fontSize: '10px',
+                    color: 'var(--text-muted)',
+                    marginTop: '2px',
+                    textAlign: isMe ? 'right' : 'left',
+                    padding: '0 4px'
+                  }}>
+                    {formatTime(msg.thoiGianGui || msg.thoiGian)}
                   </div>
                 </div>
               );

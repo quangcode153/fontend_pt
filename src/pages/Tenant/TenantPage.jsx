@@ -109,7 +109,7 @@ export default function TenantPage({ currentUser, hopDongCuaToi, onBrowseRooms, 
   const handleInHoaDon = (hd) => {
     const printWindow = window.open('', '_blank', 'width=800,height=900');
     if (!printWindow) {
-      alert('Vui lòng cho phép trình duyệt mở popup để in hóa đơn!');
+      alert(t('common.popup_blocked') || 'Vui lòng cho phép trình duyệt mở popup để in hóa đơn!');
       return;
     }
     
@@ -120,7 +120,7 @@ export default function TenantPage({ currentUser, hopDongCuaToi, onBrowseRooms, 
     printWindow.document.write(`
       <html>
         <head>
-          <title>Hóa đơn phòng ${hd.phongTro?.tenPhong || ''}</title>
+          <title>${t('tenant.invoice_title') || 'Hóa đơn'} - ${hd.phongTro?.tenPhong || ''}</title>
           <style>
             body {
               font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -211,8 +211,8 @@ export default function TenantPage({ currentUser, hopDongCuaToi, onBrowseRooms, 
         </head>
         <body>
           <div class="header">
-            <div class="title">HÓA ĐƠN TIỀN PHÒNG</div>
-            <div class="subtitle">Tháng ${hd.thang}/${hd.nam}</div>
+            <div class="title">HÓA ĐƠN TIỀN PHÒNG / RENTAL INVOICE</div>
+            <div class="subtitle">${t('landlord.month') || 'Tháng'} ${hd.thang}/${hd.nam}</div>
             <div class="status ${daTT ? 'status--paid' : 'status--unpaid'}">
               ${daTT ? 'ĐÃ THANH TOÁN / PAID' : 'CHƯA THANH TOÁN / UNPAID'}
             </div>
@@ -254,17 +254,17 @@ export default function TenantPage({ currentUser, hopDongCuaToi, onBrowseRooms, 
           
           <div style="display: flex; justify-content: space-between; margin-top: 80px;">
             <div style="text-align: center; width: 45%;">
-              <p style="margin-bottom: 60px;"><strong>Người lập hóa đơn</strong><br/>(Ký, ghi rõ họ tên)</p>
+              <p style="margin-bottom: 60px;"><strong>Người lập hóa đơn / Prepared By</strong><br/>(Ký, ghi rõ họ tên / Sign & Write Name)</p>
               <p style="color: #cbd5e1;">................................................</p>
             </div>
             <div style="text-align: center; width: 45%;">
-              <p style="margin-bottom: 60px;"><strong>Khách thuê phòng</strong><br/>(Ký, ghi rõ họ tên)</p>
+              <p style="margin-bottom: 60px;"><strong>Khách thuê phòng / Tenant</strong><br/>(Ký, ghi rõ họ tên / Sign & Write Name)</p>
               <p style="color: #cbd5e1;">................................................</p>
             </div>
           </div>
           
           <div class="footer">
-            <p>Cảm ơn quý khách đã tin tưởng và sử dụng dịch vụ của Smart Room Rental!</p>
+            <p>Cảm ơn quý khách đã tin tưởng và sử dụng dịch vụ của Smart Room Rental! / Thank you for choosing Smart Room Rental!</p>
             <p>© 2026 Smart Room Rental.</p>
           </div>
           
@@ -348,7 +348,7 @@ export default function TenantPage({ currentUser, hopDongCuaToi, onBrowseRooms, 
     }
     api.get('/khach-hang/ho-so/me')
       .then(res => setHoSoMe(res.data))
-      .catch(err => console.error('Lỗi tải hồ sơ cá nhân:', err));
+      .catch(err => console.error('Error loading profile:', err));
   }, [hopDongCuaToi]);
 
   const handleThanhToan = async () => {

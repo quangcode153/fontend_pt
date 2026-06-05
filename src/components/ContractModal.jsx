@@ -28,6 +28,101 @@ export default function ContractModal({
   const [ngayKetThuc, setNgayKetThuc] = useState('');
   const printRef = useRef();
 
+  const canvasRef = useRef(null);
+  const contextRef = useRef(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [isCanvasEmpty, setIsCanvasEmpty] = useState(true);
+
+  const isAEditable = role === 'LANDLORD' && !!onConfirm;
+  const isBEditable = role === 'TENANT' && !!onConfirm;
+
+  // Initialize canvas context
+  useEffect(() => {
+    let timer;
+    if (isOpen && (isAEditable || isBEditable)) {
+      timer = setTimeout(() => {
+        if (canvasRef.current) {
+          const canvas = canvasRef.current;
+          canvas.width = 240 * 2;
+          canvas.height = 120 * 2;
+          canvas.style.width = '240px';
+          canvas.style.height = '120px';
+
+          const context = canvas.getContext('2d');
+          context.scale(2, 2);
+          context.lineCap = 'round';
+          context.strokeStyle = '#1D4ED8'; // Blue ink
+          context.lineWidth = 2.5;
+          contextRef.current = context;
+          
+          context.clearRect(0, 0, 240, 120);
+          setIsCanvasEmpty(true);
+        }
+      }, 150);
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [isOpen, role, isAEditable, isBEditable]);
+
+  const startDrawing = ({ nativeEvent }) => {
+    let clientX, clientY;
+    if (nativeEvent.touches) {
+      clientX = nativeEvent.touches[0].clientX;
+      clientY = nativeEvent.touches[0].clientY;
+    } else {
+      clientX = nativeEvent.clientX;
+      clientY = nativeEvent.clientY;
+    }
+
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+
+    contextRef.current.beginPath();
+    contextRef.current.moveTo(x, y);
+    setIsDrawing(true);
+  };
+
+  const draw = (e) => {
+    if (!isDrawing) return;
+    e.preventDefault();
+
+    const { nativeEvent } = e;
+    let clientX, clientY;
+    if (nativeEvent.touches) {
+      clientX = nativeEvent.touches[0].clientX;
+      clientY = nativeEvent.touches[0].clientY;
+    } else {
+      clientX = nativeEvent.clientX;
+      clientY = nativeEvent.clientY;
+    }
+
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+
+    contextRef.current.lineTo(x, y);
+    contextRef.current.stroke();
+    setIsCanvasEmpty(false);
+  };
+
+  const stopDrawing = () => {
+    if (isDrawing) {
+      contextRef.current.closePath();
+      setIsDrawing(false);
+    }
+  };
+
+  const clearCanvas = () => {
+    if (canvasRef.current && contextRef.current) {
+      contextRef.current.clearRect(0, 0, 240, 120);
+      setIsCanvasEmpty(true);
+    }
+  };
+
   const handlePrint = () => {
     window.print();
   };
@@ -77,9 +172,11 @@ export default function ContractModal({
   const inputActive = { ...inputBase, background: '#fff', border: '1.5px solid #93C5FD' };
   const inputLocked = { ...inputBase, background: '#E5E7EB', color: '#6B7280', cursor: 'not-allowed' };
 
-  const isAEditable = role === 'LANDLORD' && !!onConfirm;
-  const isBEditable = role === 'TENANT' && !!onConfirm;
-  const canConfirm = kyTenA.trim().length > 0 && kyTenB.trim().length > 0;
+  const canConfirm = isAEditable 
+    ? kyTenA.trim().length > 0 && !isCanvasEmpty 
+    : isBEditable 
+      ? kyTenB.trim().length > 0 && !isCanvasEmpty
+      : kyTenA.trim().length > 0 && kyTenB.trim().length > 0;
   
   // Rút ngắn dots nếu dài quá
   const safeDots = ".....................";
@@ -199,28 +296,63 @@ export default function ContractModal({
             }}>
               <div style={{ fontWeight: 'bold', fontSize: '13px', marginBottom: '2px' }}>{t('contract.party_a_rep')}</div>
               <div style={{ fontSize: '11px', color: '#6B7280', marginBottom: '12px', fontStyle: 'italic' }}>{t('contract.party_a_desc')}</div>
-              <input
-                type="text"
-                placeholder={isAEditable ? t('contract.sign_placeholder') : ''}
-                value={kyTenA}
-                onChange={e => isAEditable && setKyTenA(e.target.value)}
-                readOnly={!isAEditable}
-                disabled={!isAEditable}
-                style={isAEditable ? inputActive : inputLocked}
-              />
-              {kyTenA.trim() && (
-                <div style={{
-                  marginTop: '14px', fontSize: '16px', fontStyle: 'italic',
-                  color: '#1D4ED8', fontFamily: 'Georgia, cursive',
-                  borderBottom: '1.5px solid #1D4ED8',
-                  paddingBottom: '4px', letterSpacing: '1px',
-                }}>{kyTenA}</div>
-              )}
-              {!isAEditable && kyTenA.trim() && (
-                <div style={{ marginTop: '6px', fontSize: '11px', color: '#059669', fontWeight: 600 }}>🔒 {t('contract.signed')}</div>
-              )}
-              {!isAEditable && !kyTenA.trim() && (
-                <div style={{ marginTop: '6px', fontSize: '11px', color: '#9CA3AF', fontStyle: 'italic' }}>{t('contract.waiting_a')}</div>
+              
+              {isAEditable ? (
+                <>
+                  <input
+                    type="text"
+                    placeholder={t('contract.sign_placeholder')}
+                    value={kyTenA}
+                    onChange={e => setKyTenA(e.target.value)}
+                    style={inputActive}
+                  />
+                  <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <div style={{ fontSize: '11px', color: '#4b5563', marginBottom: '6px' }}>Ký tên bằng chuột / Draw signature:</div>
+                    <div style={{ border: '1.5px solid #93C5FD', borderRadius: '8px', background: '#fff', width: '240px', height: '120px', cursor: 'crosshair', overflow: 'hidden' }}>
+                      <canvas
+                        ref={canvasRef}
+                        onMouseDown={startDrawing}
+                        onMouseMove={draw}
+                        onMouseUp={stopDrawing}
+                        onMouseLeave={stopDrawing}
+                        onTouchStart={startDrawing}
+                        onTouchMove={draw}
+                        onTouchEnd={stopDrawing}
+                        style={{ display: 'block' }}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={clearCanvas}
+                      style={{
+                        marginTop: '6px', padding: '2px 8px', fontSize: '11px',
+                        color: '#EF4444', border: '1px solid #FCA5A5', borderRadius: '4px',
+                        background: '#FEF2F2', cursor: 'pointer'
+                      }}
+                      className="no-print"
+                    >
+                      🔄 Xóa chữ ký / Clear
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={inputLocked}>{kyTenA || safeDots}</div>
+                  {kyTenA.trim() && (
+                    <div style={{
+                      marginTop: '14px', fontSize: '16px', fontStyle: 'italic',
+                      color: '#1D4ED8', fontFamily: 'Georgia, cursive',
+                      borderBottom: '1.5px solid #1D4ED8',
+                      paddingBottom: '4px', letterSpacing: '1px',
+                    }}>{kyTenA}</div>
+                  )}
+                  {!isAEditable && kyTenA.trim() && (
+                    <div style={{ marginTop: '6px', fontSize: '11px', color: '#059669', fontWeight: 600 }}>🔒 {t('contract.signed')}</div>
+                  )}
+                  {!isAEditable && !kyTenA.trim() && (
+                    <div style={{ marginTop: '6px', fontSize: '11px', color: '#9CA3AF', fontStyle: 'italic' }}>{t('contract.waiting_a')}</div>
+                  )}
+                </>
               )}
             </div>
 
@@ -233,28 +365,63 @@ export default function ContractModal({
             }}>
               <div style={{ fontWeight: 'bold', fontSize: '13px', marginBottom: '2px' }}>{t('contract.party_b_rep')}</div>
               <div style={{ fontSize: '11px', color: '#6B7280', marginBottom: '12px', fontStyle: 'italic' }}>{t('contract.party_b_desc')}</div>
-              <input
-                type="text"
-                placeholder={isBEditable ? t('contract.sign_placeholder') : ''}
-                value={kyTenB}
-                onChange={e => isBEditable && setKyTenB(e.target.value)}
-                readOnly={!isBEditable}
-                disabled={!isBEditable}
-                style={isBEditable ? inputActive : inputLocked}
-              />
-              {kyTenB.trim() && (
-                <div style={{
-                  marginTop: '14px', fontSize: '16px', fontStyle: 'italic',
-                  color: '#1D4ED8', fontFamily: 'Georgia, cursive',
-                  borderBottom: '1.5px solid #1D4ED8',
-                  paddingBottom: '4px', letterSpacing: '1px',
-                }}>{kyTenB}</div>
-              )}
-              {!isBEditable && kyTenB.trim() && (
-                <div style={{ marginTop: '6px', fontSize: '11px', color: '#059669', fontWeight: 600 }}>🔒 {t('contract.signed')}</div>
-              )}
-              {!isBEditable && !kyTenB.trim() && (
-                <div style={{ marginTop: '6px', fontSize: '11px', color: '#9CA3AF', fontStyle: 'italic' }}>{t('contract.waiting_b')}</div>
+              
+              {isBEditable ? (
+                <>
+                  <input
+                    type="text"
+                    placeholder={t('contract.sign_placeholder')}
+                    value={kyTenB}
+                    onChange={e => setKyTenB(e.target.value)}
+                    style={inputActive}
+                  />
+                  <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <div style={{ fontSize: '11px', color: '#4b5563', marginBottom: '6px' }}>Ký tên bằng chuột / Draw signature:</div>
+                    <div style={{ border: '1.5px solid #93C5FD', borderRadius: '8px', background: '#fff', width: '240px', height: '120px', cursor: 'crosshair', overflow: 'hidden' }}>
+                      <canvas
+                        ref={canvasRef}
+                        onMouseDown={startDrawing}
+                        onMouseMove={draw}
+                        onMouseUp={stopDrawing}
+                        onMouseLeave={stopDrawing}
+                        onTouchStart={startDrawing}
+                        onTouchMove={draw}
+                        onTouchEnd={stopDrawing}
+                        style={{ display: 'block' }}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={clearCanvas}
+                      style={{
+                        marginTop: '6px', padding: '2px 8px', fontSize: '11px',
+                        color: '#EF4444', border: '1px solid #FCA5A5', borderRadius: '4px',
+                        background: '#FEF2F2', cursor: 'pointer'
+                      }}
+                      className="no-print"
+                    >
+                      🔄 Xóa chữ ký / Clear
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={inputLocked}>{kyTenB || safeDots}</div>
+                  {kyTenB.trim() && (
+                    <div style={{
+                      marginTop: '14px', fontSize: '16px', fontStyle: 'italic',
+                      color: '#1D4ED8', fontFamily: 'Georgia, cursive',
+                      borderBottom: '1.5px solid #1D4ED8',
+                      paddingBottom: '4px', letterSpacing: '1px',
+                    }}>{kyTenB}</div>
+                  )}
+                  {!isBEditable && kyTenB.trim() && (
+                    <div style={{ marginTop: '6px', fontSize: '11px', color: '#059669', fontWeight: 600 }}>🔒 {t('contract.signed')}</div>
+                  )}
+                  {!isBEditable && !kyTenB.trim() && (
+                    <div style={{ marginTop: '6px', fontSize: '11px', color: '#9CA3AF', fontStyle: 'italic' }}>{t('contract.waiting_b')}</div>
+                  )}
+                </>
               )}
             </div>
           </div>

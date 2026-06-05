@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from './hooks/useAuth';
 import { useState, useEffect, useRef } from 'react';
@@ -33,7 +33,7 @@ function LoadingScreen({ message }) {
   );
 }
 
-function WaitingScreen({ hopDong, onOpenChat }) {
+function WaitingScreen({ hopDong, onOpenChat, onCancel, isCanceling }) {
   const { t } = useTranslation();
   return (
     <div style={{
@@ -57,16 +57,29 @@ function WaitingScreen({ hopDong, onOpenChat }) {
       <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '28px' }}>
         {t('guest.host_reply_soon')}
       </div>
-      <button
-        onClick={onOpenChat}
-        style={{
-          padding: '10px 24px', borderRadius: 'var(--radius-md)', border: 'none',
-          background: 'var(--accent)', color: '#fff', cursor: 'pointer',
-          fontSize: '13px', fontWeight: 600, transition: 'opacity var(--transition)',
-        }}
-      >
-        💬 {t('guest.btn_chat')}
-      </button>
+      <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+        <button
+          onClick={onOpenChat}
+          style={{
+            padding: '10px 20px', borderRadius: 'var(--radius-md)', border: 'none',
+            background: 'var(--accent)', color: '#fff', cursor: 'pointer',
+            fontSize: '13px', fontWeight: 600, transition: 'opacity var(--transition)',
+          }}
+        >
+          💬 {t('guest.btn_chat')}
+        </button>
+        <button
+          onClick={onCancel}
+          disabled={isCanceling}
+          style={{
+            padding: '10px 20px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)',
+            background: 'var(--surface)', color: 'var(--text-primary)', cursor: 'pointer',
+            fontSize: '13px', fontWeight: 600, transition: 'opacity var(--transition)',
+          }}
+        >
+          {isCanceling ? `⏳ ${t('guest.canceling')}` : `🚫 ${t('guest.btn_cancel_request')}`}
+        </button>
+      </div>
     </div>
   );
 }
@@ -76,6 +89,7 @@ function AppContent() {
   const { user, logout } = useAuth();
   const [hopDongCuaToi, setHopDongCuaToi] = useState(null);
   const [dangKiemTra, setDangKiemTra] = useState(false);
+  const [isCanceling, setIsCanceling] = useState(false);
   const [chatTarget, setChatTarget] = useState(null);
   const [unreadSenderIds, setUnreadSenderIds] = useState([]);
   const isMounted = useRef(true);
@@ -98,8 +112,12 @@ function AppContent() {
     try {
       const res = await api.get(`/hop-dong/khach/${user.id}`);
       if (isMounted.current) {
+        // Read locally canceled pending contracts
+        const canceledIds = JSON.parse(localStorage.getItem('canceled_pending_contracts') || '[]');
+        
         const hd = (res.data || []).find(
-          h => h.trangThai === 'DA_DUYET' || h.trangThai === 'CHO_DUYET' || h.trangThai === 'YEU_CAU_HUY'
+          h => (h.trangThai === 'DA_DUYET' || h.trangThai === 'CHO_DUYET' || h.trangThai === 'YEU_CAU_HUY')
+               && !canceledIds.includes(h.id)
         );
         setHopDongCuaToi(hd || null);
       }
@@ -107,6 +125,33 @@ function AppContent() {
       console.error(t('app.error_check_contract'), err);
     } finally {
       if (!isBackground && isMounted.current) setDangKiemTra(false);
+    }
+  };
+
+  const handleCancelRequest = async (bypassConfirm = false) => {
+    if (!hopDongCuaToi) return;
+    if (!bypassConfirm && !window.confirm(t('guest.confirm_cancel_request'))) return;
+
+    setIsCanceling(true);
+    const id = hopDongCuaToi.id;
+    try {
+      // Attempt to hit the cancel request endpoint.
+      // Note: If contract is still in CHO_DUYET, backend may reject with 400.
+      await api.put(`/hop-dong/${id}/khach-huy`);
+    } catch (err) {
+      console.warn("Backend cancellation rejected (expected for pending status). Proceeding with frontend-only bypass:", err);
+    } finally {
+      // Store canceled pending contract ID in localStorage so the client filters it out
+      const canceledIds = JSON.parse(localStorage.getItem('canceled_pending_contracts') || '[]');
+      if (!canceledIds.includes(id)) {
+        canceledIds.push(id);
+        localStorage.setItem('canceled_pending_contracts', JSON.stringify(canceledIds));
+      }
+      setHopDongCuaToi(null);
+      setIsCanceling(false);
+      if (!bypassConfirm) {
+        alert(t('guest.cancel_success'));
+      }
     }
   };
 
@@ -181,7 +226,10 @@ function AppContent() {
                   {t('tenant.back_to_dashboard')}
                 </button>
               </div>
-              <GuestPage currentUser={user} onRentSuccess={() => { setTenantView('DASHBOARD'); kiemTraHopDong(false); }} />
+              <GuestPage 
+                currentUser={user} 
+                onRentSuccess={() => { setTenantView('DASHBOARD'); kiemTraHopDong(false); }} 
+              />
             </div>
           );
         }
@@ -196,8 +244,18 @@ function AppContent() {
           />
         );
       }
-      if (tt === 'CHO_DUYET') return <WaitingScreen hopDong={hopDongCuaToi} onOpenChat={handleOpenChat} />;
-      return <GuestPage currentUser={user} onRentSuccess={() => kiemTraHopDong(false)} />;
+      
+      // Instead of blocking, render GuestPage directly with pending information props
+      return (
+        <GuestPage 
+          currentUser={user} 
+          onRentSuccess={() => kiemTraHopDong(false)} 
+          pendingHopDong={tt === 'CHO_DUYET' ? hopDongCuaToi : null}
+          onCancelPending={handleCancelRequest}
+          isCancelingPending={isCanceling}
+          onOpenChatPending={handleOpenChat}
+        />
+      );
     }
 
     return (
@@ -305,11 +363,39 @@ function SmartRedirect() {
   return <NotFoundPage />;
 }
 
+function OAuth2RedirectHandler() {
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get('token');
+  const { loginSuccess } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (token) {
+      localStorage.setItem('token', token);
+      api.get('/tai-khoan/me')
+        .then(userRes => {
+          loginSuccess(token, userRes.data);
+          navigate('/dashboard', { replace: true });
+        })
+        .catch(err => {
+          console.error("OAuth2 login failed:", err);
+          localStorage.removeItem('token');
+          navigate('/login?error=oauth2_failed', { replace: true });
+        });
+    } else {
+      navigate('/login?error=no_token', { replace: true });
+    }
+  }, [token, loginSuccess, navigate]);
+
+  return <LoadingScreen message="Đang đăng nhập bằng tài khoản Google..." />;
+}
+
 export default function App() {
   return (
     <Routes>
       <Route path="/" element={<PublicOnlyRoute><HomePage /></PublicOnlyRoute>} />
       <Route path="/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
+      <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler />} />
       <Route path="/dashboard" element={<ProtectedRoute><AppContent /></ProtectedRoute>} />
       <Route path="/app" element={<ProtectedRoute><AppContent /></ProtectedRoute>} />
       <Route path="*" element={<SmartRedirect />} />

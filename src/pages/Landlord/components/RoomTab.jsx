@@ -11,6 +11,27 @@ import ImageSlider from '../../../components/ImageSlider';
 const ROOM_STATUS = { EMPTY: 'TRONG', RENTED: 'DA_THUE', MAINTENANCE: 'BAO_TRI' };
 const CONTRACT_STATUS = { APPROVED: 'DA_DU_YET', PENDING: 'CHO_DUYET' };
 
+const toCleanDigits = (val) => {
+  if (val === null || val === undefined) return '';
+  return String(val).replace(/\D/g, '');
+};
+
+const formatThousand = (val) => {
+  const digits = toCleanDigits(val);
+  if (!digits) return '';
+  return parseInt(digits, 10).toLocaleString('en-US');
+};
+
+const toCleanFloat = (val) => {
+  if (val === null || val === undefined) return '';
+  const clean = String(val).replace(/[^0-9.]/g, '');
+  const parts = clean.split('.');
+  if (parts.length > 2) {
+    return parts[0] + '.' + parts.slice(1).join('');
+  }
+  return clean;
+};
+
 export default function RoomTab({
   phongTros,
   hopDongs,
@@ -118,9 +139,10 @@ export default function RoomTab({
             <label className="l-form-label">{t('landlord.price_vnd')}</label>
             <input
               className="l-form-input"
-              type="number"
-              value={giaPhong}
-              onChange={e => setGiaPhong(e.target.value)}
+              type="text"
+              min="0"
+              value={formatThousand(giaPhong)}
+              onChange={e => setGiaPhong(toCleanDigits(e.target.value))}
               placeholder={t('landlord.room_price_ph')}
               required
               disabled={isSubmitting}
@@ -141,19 +163,51 @@ export default function RoomTab({
           </div>
           <div className="l-add-room-form__field" style={{ flex: 1 }}>
             <label className="l-form-label">{t('landlord.electric_price')}</label>
-            <input className="l-form-input" type="number" value={giaDien} onChange={e => setGiaDien(e.target.value)} placeholder="3500" disabled={isSubmitting} />
+            <input 
+              className="l-form-input" 
+              type="text" 
+              min="0"
+              value={formatThousand(giaDien)} 
+              onChange={e => setGiaDien(toCleanDigits(e.target.value))} 
+              placeholder="3,500" 
+              disabled={isSubmitting} 
+            />
           </div>
           <div className="l-add-room-form__field" style={{ flex: 1 }}>
             <label className="l-form-label">{t('landlord.water_price')}</label>
-            <input className="l-form-input" type="number" value={giaNuoc} onChange={e => setGiaNuoc(e.target.value)} placeholder="100000" disabled={isSubmitting} />
+            <input 
+              className="l-form-input" 
+              type="text" 
+              min="0"
+              value={formatThousand(giaNuoc)} 
+              onChange={e => setGiaNuoc(toCleanDigits(e.target.value))} 
+              placeholder="100,000" 
+              disabled={isSubmitting} 
+            />
           </div>
           <div className="l-add-room-form__field" style={{ flex: 1 }}>
             <label className="l-form-label">{t('landlord.deposit')}</label>
-            <input className="l-form-input" type="number" value={tienCoc} onChange={e => setTienCoc(e.target.value)} placeholder="1000000" disabled={isSubmitting} />
+            <input 
+              className="l-form-input" 
+              type="text" 
+              min="0"
+              value={formatThousand(tienCoc)} 
+              onChange={e => setTienCoc(toCleanDigits(e.target.value))} 
+              placeholder="1,000,000" 
+              disabled={isSubmitting} 
+            />
           </div>
           <div className="l-add-room-form__field" style={{ flex: 1 }}>
             <label className="l-form-label">{t('landlord.area')} (m²)</label>
-            <input className="l-form-input" type="number" value={dienTich} onChange={e => setDienTich(e.target.value)} placeholder="20" disabled={isSubmitting} />
+            <input 
+              className="l-form-input" 
+              type="text" 
+              min="0"
+              value={dienTich} 
+              onChange={e => setDienTich(toCleanFloat(e.target.value))} 
+              placeholder="20" 
+              disabled={isSubmitting} 
+            />
           </div>
           <div className="l-add-room-form__field" style={{ flex: 2 }}>
             <label className="l-form-label">{t('landlord.address')}</label>

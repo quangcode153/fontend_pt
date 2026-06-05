@@ -85,7 +85,14 @@ const Spinner = ({ text }) => {
   );
 };
 
-function GuestPage({ currentUser, onRentSuccess }) {
+function GuestPage({ 
+  currentUser, 
+  onRentSuccess,
+  pendingHopDong,
+  onCancelPending,
+  isCancelingPending,
+  onOpenChatPending
+}) {
   const { t } = useTranslation();
   if (currentUser?.role !== ROLES.USER) {
     return <div style={{ padding: '40px', textAlign: 'center', color: 'var(--danger)' }}>{t('guest.access_denied')}</div>;
@@ -209,6 +216,29 @@ function GuestPage({ currentUser, onRentSuccess }) {
   };
 
   const openContractPreview = async (phong) => {
+    if (pendingHopDong) {
+      const confirmCancel = window.confirm(
+        t('guest.alert_cancel_existing_request', {
+          oldRoom: pendingHopDong.phongTro?.tenPhong || '',
+          newRoom: phong.tenPhong || ''
+        })
+      );
+      if (confirmCancel) {
+        setIsSubmitting(true);
+        try {
+          await onCancelPending(true); // bypass default confirmation
+        } catch (err) {
+          console.error("Lỗi tự động hủy:", err);
+          setIsSubmitting(false);
+          return;
+        } finally {
+          setIsSubmitting(false);
+        }
+      } else {
+        return;
+      }
+    }
+
     try {
       let hoSo;
       try {
@@ -332,6 +362,55 @@ function GuestPage({ currentUser, onRentSuccess }) {
 
   return (
     <div style={{ fontFamily: 'var(--font)' }}>
+      {/* Banner cho yêu cầu chờ duyệt */}
+      {pendingHopDong && (
+        <div style={{
+          background: 'var(--warning-light)',
+          border: '1px solid #FDE047',
+          borderRadius: 'var(--radius-lg)',
+          padding: '16px 20px',
+          marginBottom: '20px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '12px',
+          animation: 'fadeInDown 0.3s ease'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '20px' }}>⏳</span>
+            <div
+              style={{ fontSize: '13.5px', color: 'var(--text-primary)' }}
+              dangerouslySetInnerHTML={{
+                __html: t('guest.pending_banner_text', { room: pendingHopDong.phongTro?.tenPhong || t('guest.pending_room_fallback') })
+              }}
+            />
+          </div>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              onClick={onOpenChatPending}
+              style={{
+                padding: '8px 16px', borderRadius: 'var(--radius-md)', border: 'none',
+                background: 'var(--accent)', color: '#fff', cursor: 'pointer',
+                fontSize: '12px', fontWeight: 600, transition: 'opacity 0.2s'
+              }}
+            >
+              💬 {t('guest.btn_chat_host')}
+            </button>
+            <button
+              onClick={() => onCancelPending(false)}
+              disabled={isCancelingPending}
+              style={{
+                padding: '8px 16px', borderRadius: 'var(--radius-md)', border: '1px solid #EF4444',
+                background: 'transparent', color: '#EF4444', cursor: 'pointer',
+                fontSize: '12px', fontWeight: 600, transition: 'all 0.2s'
+              }}
+            >
+              {isCancelingPending ? t('guest.canceling') : `🚫 ${t('guest.btn_cancel_request')}`}
+            </button>
+          </div>
+        </div>
+      )}
       {/* Header Navigation tabs */}
       <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px', gap: '12px' }}>
         <div style={S.navBar}>

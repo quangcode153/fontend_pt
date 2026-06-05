@@ -67,20 +67,20 @@ export default function UtilityModal({
                 <div>
                   <label className="l-form-label">{t('landlord.old_index')}</label>
                   <input
-                    type="number"
+                    type="text"
                     className="l-form-input"
                     value={formDN.chiSoDauDien}
-                    onChange={e => setFormDN({ ...formDN, chiSoDauDien: e.target.value })}
+                    onChange={e => setFormDN({ ...formDN, chiSoDauDien: e.target.value.replace(/\D/g, '') })}
                     required
                   />
                 </div>
                 <div>
                   <label className="l-form-label">{t('landlord.new_index')}</label>
                   <input
-                    type="number"
+                    type="text"
                     className="l-form-input"
                     value={formDN.chiSoCuoiDien}
-                    onChange={e => setFormDN({ ...formDN, chiSoCuoiDien: e.target.value })}
+                    onChange={e => setFormDN({ ...formDN, chiSoCuoiDien: e.target.value.replace(/\D/g, '') })}
                     required
                   />
                 </div>
@@ -94,20 +94,20 @@ export default function UtilityModal({
                 <div>
                   <label className="l-form-label">{t('landlord.old_index')}</label>
                   <input
-                    type="number"
+                    type="text"
                     className="l-form-input"
                     value={formDN.chiSoDauNuoc}
-                    onChange={e => setFormDN({ ...formDN, chiSoDauNuoc: e.target.value })}
+                    onChange={e => setFormDN({ ...formDN, chiSoDauNuoc: e.target.value.replace(/\D/g, '') })}
                     required
                   />
                 </div>
                 <div>
                   <label className="l-form-label">{t('landlord.new_index')}</label>
                   <input
-                    type="number"
+                    type="text"
                     className="l-form-input"
                     value={formDN.chiSoCuoiNuoc}
-                    onChange={e => setFormDN({ ...formDN, chiSoCuoiNuoc: e.target.value })}
+                    onChange={e => setFormDN({ ...formDN, chiSoCuoiNuoc: e.target.value.replace(/\D/g, '') })}
                     required
                   />
                 </div>

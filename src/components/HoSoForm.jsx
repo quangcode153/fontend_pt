@@ -16,6 +16,30 @@ const labelStyle = {
   textTransform: 'uppercase', letterSpacing: '0.03em',
 };
 
+const VIETNAMESE_BANKS = [
+  { code: 'Vietcombank', name: 'Ngoại thương Việt Nam (Vietcombank)' },
+  { code: 'Techcombank', name: 'Kỹ thương Việt Nam (Techcombank)' },
+  { code: 'MB Bank', name: 'Quân đội (MB Bank)' },
+  { code: 'BIDV', name: 'Đầu tư và Phát triển Việt Nam (BIDV)' },
+  { code: 'Agribank', name: 'Nông nghiệp và Phát triển Nông thôn (Agribank)' },
+  { code: 'VietinBank', name: 'Công thương Việt Nam (VietinBank)' },
+  { code: 'Sacombank', name: 'Sài Gòn Thương Tín (Sacombank)' },
+  { code: 'ACB', name: 'Á Châu (ACB)' },
+  { code: 'TPBank', name: 'Tiên Phong (TPBank)' },
+  { code: 'VPBank', name: 'Việt Nam Thịnh Vượng (VPBank)' },
+  { code: 'VIB', name: 'Quốc tế (VIB)' },
+  { code: 'SHB', name: 'Sài Gòn - Hà Nội (SHB)' },
+  { code: 'HDBank', name: 'Phát triển TP.HCM (HDBank)' },
+];
+
+const getMaxDate18YearsAgo = () => {
+  const today = new Date();
+  const year = today.getFullYear() - 18;
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 function HoSoForm({ user }) {
   const { t } = useTranslation();
   const [hoSo, setHoSo] = useState({
@@ -30,8 +54,8 @@ function HoSoForm({ user }) {
       try {
         const res = await api.get('/khach-hang/ho-so/me');
         if (res.data) {
-          setHoSo({
-            hoTen: res.data.hoTen || user.username,
+          const backendData = {
+            hoTen: res.data.hoTen || user?.username || '',
             ngaySinh: res.data.ngaySinh || '',
             gioiTinh: res.data.gioiTinh || 'Nam',
             soCccd: res.data.soCccd || '',
@@ -41,7 +65,22 @@ function HoSoForm({ user }) {
             tenNganHang: res.data.tenNganHang || '',
             soTaiKhoan: res.data.soTaiKhoan || '',
             chuTaiKhoan: res.data.chuTaiKhoan || ''
-          });
+          };
+
+          // Check if we have a draft in sessionStorage
+          const draftStr = sessionStorage.getItem('hoso_draft');
+          if (draftStr) {
+            try {
+              const draft = JSON.parse(draftStr);
+              // Merge: prioritize draft inputs
+              setHoSo({ ...backendData, ...draft });
+            } catch (e) {
+              console.error("Lỗi parse dữ liệu nháp:", e);
+              setHoSo(backendData);
+            }
+          } else {
+            setHoSo(backendData);
+          }
         }
       } catch (err) {
         console.error(t('guest_profile.error_load'), err);
@@ -53,21 +92,26 @@ function HoSoForm({ user }) {
   }, [user]);
 
   const handleChange = (e) => {
-    setHoSo({ ...hoSo, [e.target.name]: e.target.value });
+    const updated = { ...hoSo, [e.target.name]: e.target.value };
+    setHoSo(updated);
+    // Persist changes in sessionStorage temporarily
+    sessionStorage.setItem('hoso_draft', JSON.stringify(updated));
   };
 
   const handleLuuHoSo = async (e) => {
     e.preventDefault();
     try {
       await api.put('/khach-hang/ho-so/me', hoSo);
-      alert(t('guest_profile.success_update'));
+      alert(t('guest_profile.success_update') || 'Cập nhật hồ sơ thành công!');
+      // Clear draft upon successful API save
+      sessionStorage.removeItem('hoso_draft');
     } catch (err) {
       let errorMsg = err.response?.data?.message;
       if (!errorMsg && err.response?.data) {
         const errors = err.response.data;
         errorMsg = Object.values(errors)[0];
       }
-      alert(errorMsg || t('guest_profile.error_update'));
+      alert(errorMsg || t('guest_profile.error_update') || 'Cập nhật hồ sơ thất bại!');
     }
   };
 
@@ -103,7 +147,16 @@ function HoSoForm({ user }) {
 
         <div>
           <label style={labelStyle}>{t('guest_profile.dob')}</label>
-          <input type="date" name="ngaySinh" value={hoSo.ngaySinh} onChange={handleChange} required style={inputStyle} />
+          <input
+            type="date"
+            name="ngaySinh"
+            value={hoSo.ngaySinh}
+            onChange={handleChange}
+            required
+            style={inputStyle}
+            max={getMaxDate18YearsAgo()}
+            min="1900-01-01"
+          />
         </div>
 
         <div>
@@ -134,30 +187,39 @@ function HoSoForm({ user }) {
           <textarea name="diaChiThuongTru" value={hoSo.diaChiThuongTru} onChange={handleChange} required rows="3" style={{ ...inputStyle, resize: 'vertical' }} placeholder={t('guest_profile.address_ph')} />
         </div>
 
-        {user?.role === 'ROLE_LANDLORD' && (
-          <>
-            <div style={{ gridColumn: 'span 2', marginTop: '8px', paddingTop: '16px', borderTop: '1px solid var(--border-light)' }}>
-              <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '4px' }}>
-                🏦 {t('guest_profile.bank_section_title')}
-              </div>
-              <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '12px' }}>
-                {t('guest_profile.bank_section_desc')}
-              </div>
-            </div>
-            <div>
-              <label style={labelStyle}>{t('guest_profile.bank_name')}</label>
-              <input type="text" name="tenNganHang" value={hoSo.tenNganHang} onChange={handleChange} style={inputStyle} placeholder={t('guest_profile.bank_name_ph')} />
-            </div>
-            <div>
-              <label style={labelStyle}>{t('guest_profile.bank_account')}</label>
-              <input type="text" name="soTaiKhoan" value={hoSo.soTaiKhoan} onChange={handleChange} style={inputStyle} placeholder={t('guest_profile.bank_account_ph')} />
-            </div>
-            <div style={{ gridColumn: 'span 2' }}>
-              <label style={labelStyle}>{t('guest_profile.bank_owner')}</label>
-              <input type="text" name="chuTaiKhoan" value={hoSo.chuTaiKhoan} onChange={handleChange} style={inputStyle} placeholder={t('guest_profile.bank_owner_ph')} />
-            </div>
-          </>
-        )}
+        {/* Bank Information section (rendered for both Tenant & Landlord) */}
+        <div style={{ gridColumn: 'span 2', marginTop: '8px', paddingTop: '16px', borderTop: '1px solid var(--border-light)' }}>
+          <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '4px' }}>
+            🏦 {t('guest_profile.bank_section_title') || 'Thông tin tài khoản ngân hàng'}
+          </div>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '12px' }}>
+            {t('guest_profile.bank_section_desc') || 'Cung cấp tài khoản để giao dịch thanh toán hoặc nhận tiền cọc/hoàn trả cọc.'}
+          </div>
+        </div>
+        <div>
+          <label style={labelStyle}>{t('guest_profile.bank_name') || 'Tên ngân hàng'}</label>
+          <select
+            name="tenNganHang"
+            value={hoSo.tenNganHang}
+            onChange={handleChange}
+            style={inputStyle}
+          >
+            <option value="">-- {t('guest_profile.bank_name_ph') || 'Chọn ngân hàng'} --</option>
+            {VIETNAMESE_BANKS.map(bank => (
+              <option key={bank.code} value={bank.code}>
+                {bank.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label style={labelStyle}>{t('guest_profile.bank_account') || 'Số tài khoản'}</label>
+          <input type="text" name="soTaiKhoan" value={hoSo.soTaiKhoan} onChange={handleChange} style={inputStyle} placeholder={t('guest_profile.bank_account_ph') || 'Nhập số tài khoản'} />
+        </div>
+        <div style={{ gridColumn: 'span 2' }}>
+          <label style={labelStyle}>{t('guest_profile.bank_owner') || 'Chủ tài khoản'}</label>
+          <input type="text" name="chuTaiKhoan" value={hoSo.chuTaiKhoan} onChange={handleChange} style={inputStyle} placeholder={t('guest_profile.bank_owner_ph') || 'Tên trên thẻ (không dấu)'} />
+        </div>
 
         <div style={{ gridColumn: 'span 2', textAlign: 'right', marginTop: '4px' }}>
           <button type="submit" style={{

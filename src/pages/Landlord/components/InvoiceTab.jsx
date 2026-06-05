@@ -8,10 +8,13 @@ import emptyInvoiceImg from '../../../assets/empty_invoice.png';
 export default function InvoiceTab({ hoaDons, onCapNhatSo }) {
   const { t } = useTranslation();
 
+  const unpaidInvoices = hoaDons.filter(hd => hd.trangThai === 'CHUA_THANH_TOAN');
+  const totalUnpaidAmount = unpaidInvoices.reduce((sum, hd) => sum + (hd.tongTien || 0), 0);
+
   const handleInHoaDon = (hd) => {
     const printWindow = window.open('', '_blank', 'width=800,height=900');
     if (!printWindow) {
-      alert('Vui lòng cho phép trình duyệt mở popup để in hóa đơn!');
+      alert(t('common.popup_blocked') || 'Vui lòng cho phép trình duyệt mở popup để in hóa đơn!');
       return;
     }
     
@@ -21,7 +24,7 @@ export default function InvoiceTab({ hoaDons, onCapNhatSo }) {
     printWindow.document.write(`
       <html>
         <head>
-          <title>Hóa đơn phòng ${hd.phongTro?.tenPhong || ''}</title>
+          <title>${t('tenant.invoice_title') || 'Hóa đơn'} - ${hd.phongTro?.tenPhong || ''}</title>
           <style>
             body {
               font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -112,8 +115,8 @@ export default function InvoiceTab({ hoaDons, onCapNhatSo }) {
         </head>
         <body>
           <div class="header">
-            <div class="title">HÓA ĐƠN TIỀN PHÒNG</div>
-            <div class="subtitle">Tháng ${hd.thang}/${hd.nam}</div>
+            <div class="title">HÓA ĐƠN TIỀN PHÒNG / RENTAL INVOICE</div>
+            <div class="subtitle">${t('landlord.month') || 'Tháng'} ${hd.thang}/${hd.nam}</div>
             <div class="status ${daTT ? 'status--paid' : 'status--unpaid'}">
               ${daTT ? 'ĐÃ THANH TOÁN / PAID' : 'CHƯA THANH TOÁN / UNPAID'}
             </div>
@@ -155,17 +158,17 @@ export default function InvoiceTab({ hoaDons, onCapNhatSo }) {
           
           <div style="display: flex; justify-content: space-between; margin-top: 80px;">
             <div style="text-align: center; width: 45%;">
-              <p style="margin-bottom: 60px;"><strong>Người lập hóa đơn</strong><br/>(Ký, ghi rõ họ tên)</p>
+              <p style="margin-bottom: 60px;"><strong>Người lập hóa đơn / Prepared By</strong><br/>(Ký, ghi rõ họ tên / Sign & Write Name)</p>
               <p style="color: #cbd5e1;">................................................</p>
             </div>
             <div style="text-align: center; width: 45%;">
-              <p style="margin-bottom: 60px;"><strong>Khách thuê phòng</strong><br/>(Ký, ghi rõ họ tên)</p>
+              <p style="margin-bottom: 60px;"><strong>Khách thuê phòng / Tenant</strong><br/>(Ký, ghi rõ họ tên / Sign & Write Name)</p>
               <p style="color: #cbd5e1;">................................................</p>
             </div>
           </div>
           
           <div class="footer">
-            <p>Cảm ơn quý khách đã tin tưởng và sử dụng dịch vụ của Smart Room Rental!</p>
+            <p>Cảm ơn quý khách đã tin tưởng và sử dụng dịch vụ của Smart Room Rental! / Thank you for choosing Smart Room Rental!</p>
             <p>© 2026 Smart Room Rental.</p>
           </div>
           
@@ -185,6 +188,33 @@ export default function InvoiceTab({ hoaDons, onCapNhatSo }) {
     <div className="l-card" style={{ animation: 'fadeIn 0.3s ease' }}>
       <div className="l-section-title">🧾 {t('landlord.invoice_manage_title')}</div>
 
+      {unpaidInvoices.length > 0 && (
+        <div style={{
+          background: 'var(--danger-light)',
+          border: '1px solid var(--danger)',
+          borderRadius: 'var(--radius-lg)',
+          padding: '16px 20px',
+          marginBottom: '24px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          animation: 'fadeInUp 0.3s ease',
+          boxShadow: '0 2px 8px rgba(239, 68, 68, 0.08)'
+        }}>
+          <div>
+            <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              {t('landlord.debt_warning_title', { count: unpaidInvoices.length })}
+            </div>
+            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+              {t('landlord.debt_warning_total')} <strong style={{ color: 'var(--danger)', fontSize: '14px' }}>{totalUnpaidAmount.toLocaleString()}đ</strong>
+            </div>
+          </div>
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+            {t('landlord.debt_warning_tip')}
+          </div>
+        </div>
+      )}
+
       {hoaDons.length === 0 ? (
         <div className="l-empty" style={{ padding: '48px 0' }}>
           <img src={emptyInvoiceImg} alt="No invoices" style={{ width: '160px', marginBottom: '16px', opacity: 0.8 }} />
@@ -201,7 +231,8 @@ export default function InvoiceTab({ hoaDons, onCapNhatSo }) {
                 style={{
                   animationDelay: `${i * 0.05}s`,
                   animation: 'fadeIn 0.35s ease both',
-                  borderTop: `3px solid ${daTT ? 'var(--success)' : 'var(--warning)'}`,
+                  borderTop: `3px solid ${daTT ? 'var(--success)' : 'var(--danger)'}`,
+                  boxShadow: !daTT ? '0 4px 12px rgba(239, 68, 68, 0.05)' : 'none',
                 }}
               >
                 {/* Header */}
@@ -214,8 +245,8 @@ export default function InvoiceTab({ hoaDons, onCapNhatSo }) {
                       {t('landlord.month')} {hd.thang}/{hd.nam}
                     </div>
                   </div>
-                  <span className={`l-tag l-tag--${daTT ? 'green' : 'amber'}`}>
-                    {daTT ? t('landlord.status_paid') : t('landlord.status_unpaid')}
+                  <span className={`l-tag l-tag--${daTT ? 'green' : 'red'}`}>
+                    {daTT ? t('landlord.status_paid') : `🚨 ${t('landlord.status_unpaid') || 'Chưa thanh toán'}`}
                   </span>
                 </div>
 
