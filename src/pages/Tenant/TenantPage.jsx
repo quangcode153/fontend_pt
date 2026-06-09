@@ -98,7 +98,7 @@ export default function TenantPage({ currentUser, hopDongCuaToi, onBrowseRooms, 
     );
   }
 
-  const [cuDanTab, setCuDanTab] = useState('THONG_TIN');
+  const [cuDanTab, setCuDanTab] = useState('TONG_QUAN');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [dsThongBao, setDsThongBao] = useState([]);
   const [dsHoaDon, setDsHoaDon] = useState([]);
@@ -378,6 +378,7 @@ export default function TenantPage({ currentUser, hopDongCuaToi, onBrowseRooms, 
   };
 
   const TENANT_TABS = [
+    { key: 'TONG_QUAN', label: t('tenant.tab_overview'), icon: '📊 ' },
     { key: 'THONG_TIN', label: t('tenant.tab_contract'), icon: '📄 ' },
     { key: 'HO_SO', label: t('tenant.tab_profile'), icon: '👤 ' },
     { key: 'HOA_DON', label: t('tenant.tab_invoice'), icon: '🧾 ' },
@@ -553,6 +554,180 @@ export default function TenantPage({ currentUser, hopDongCuaToi, onBrowseRooms, 
             </div>
           </div>
         </div>
+
+        {cuDanTab === 'TONG_QUAN' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', animation: 'fadeIn 0.3s ease' }}>
+            {/* Welcome banner */}
+            <div style={{
+              borderRadius: 'var(--radius-xl)',
+              padding: '28px 32px',
+              background: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 50%, #3730A3 100%)',
+              color: '#fff',
+              boxShadow: 'var(--shadow-md)',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+              <div style={{ position: 'relative', zIndex: 1 }}>
+                <h3 style={{ fontSize: '24px', fontWeight: 800, marginBottom: '6px' }}>
+                  {t('tenant.welcome_back', { name: currentUser?.hoTen || currentUser?.username })}
+                </h3>
+                <p style={{ fontSize: '13.5px', opacity: 0.9 }}>
+                  {t('tenant.today_good_day')}
+                </p>
+                {hopDongCuaToi?.phongTro && (
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.15)', padding: '6px 12px', borderRadius: '20px', marginTop: '16px', fontSize: '12px', fontWeight: 600 }}>
+                    🏠 {t('tenant.room')}: {hopDongCuaToi.phongTro.tenPhong}
+                  </div>
+                )}
+              </div>
+              <div style={{
+                position: 'absolute', right: '-20px', bottom: '-20px',
+                fontSize: '120px', opacity: 0.1, pointerEvents: 'none'
+              }}>🏠</div>
+            </div>
+
+            {/* Quick Stat Cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
+              
+              {/* Card 1: Hóa đơn chưa thanh toán */}
+              <div className="premium-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '160px' }}>
+                <div>
+                  <div style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.5px', marginBottom: '8px' }}>
+                    🧾 {t('tenant.latest_unpaid_bill')}
+                  </div>
+                  {(() => {
+                    const unpaid = dsHoaDon.find(hd => hd.trangThai === 'CHUA_THANH_TOAN');
+                    if (unpaid) {
+                      return (
+                        <>
+                          <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--danger)', marginTop: '4px' }}>
+                            {unpaid.tongTien?.toLocaleString()} {t('landlord.currency')}
+                          </div>
+                          <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                            {t('tenant.month_year', { thang: unpaid.thang, nam: unpaid.nam })}
+                          </div>
+                        </>
+                      );
+                    }
+                    return (
+                      <div style={{ fontSize: '13px', color: 'var(--success)', fontWeight: 500, marginTop: '8px' }}>
+                        {t('tenant.no_unpaid_bill')}
+                      </div>
+                    );
+                  })()}
+                </div>
+                {dsHoaDon.some(hd => hd.trangThai === 'CHUA_THANH_TOAN') && (
+                  <button
+                    className="btn btn--primary"
+                    style={{ padding: '8px 12px', fontSize: '12px', marginTop: '16px', width: 'fit-content' }}
+                    onClick={() => setCuDanTab('HOA_DON')}
+                  >
+                    💳 {t('tenant.btn_pay')}
+                  </button>
+                )}
+              </div>
+
+              {/* Card 2: Giá điện nước */}
+              <div className="premium-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '160px' }}>
+                <div>
+                  <div style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.5px', marginBottom: '8px' }}>
+                    ⚡ {t('tenant.recent_utility')}
+                  </div>
+                  {hopDongCuaToi?.phongTro ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                        <span style={{ color: 'var(--text-secondary)' }}>🔌 {t('landlord.electric_price')}</span>
+                        <strong style={{ color: 'var(--text-primary)' }}>{hopDongCuaToi.phongTro.giaDien?.toLocaleString()} {t('landlord.currency')}/kWh</strong>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                        <span style={{ color: 'var(--text-secondary)' }}>💧 {t('landlord.water_price')}</span>
+                        <strong style={{ color: 'var(--text-primary)' }}>{hopDongCuaToi.phongTro.giaNuoc?.toLocaleString()} {t('landlord.currency')}/m³</strong>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '8px' }}>
+                      {t('tenant.no_contract')}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Card 3: Thông báo từ chủ trọ */}
+              <div className="premium-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '160px' }}>
+                <div>
+                  <div style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.5px', marginBottom: '8px' }}>
+                    🔔 {t('tenant.latest_notice_from_host')}
+                  </div>
+                  {dsThongBao.length > 0 ? (
+                    <div style={{ marginTop: '8px' }}>
+                      <strong style={{ fontSize: '13.5px', color: 'var(--text-primary)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {dsThongBao[0].tieuDe}
+                      </strong>
+                      <span style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: '2px' }}>
+                        {dsThongBao[0].noiDung}
+                      </span>
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '8px' }}>
+                      {t('tenant.no_notice')}
+                    </div>
+                  )}
+                </div>
+                {dsThongBao.length > 0 && (
+                  <button
+                    className="btn btn--outline"
+                    style={{ padding: '6px 12px', fontSize: '12px', marginTop: '16px', width: 'fit-content' }}
+                    onClick={() => setCuDanTab('THONG_BAO')}
+                  >
+                    👉 {t('tenant.tab_notice')}
+                  </button>
+                )}
+              </div>
+
+            </div>
+
+            {/* Quick Actions Grid for Help/Support */}
+            <div className="premium-card">
+              <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '16px' }}>
+                🛠️ {t('tenant.quick_help_contact')}
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+                <button
+                  className="btn btn--outline"
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', justifyContent: 'center' }}
+                  onClick={() => {
+                    const landlordId = hopDongCuaToi?.phongTro?.chuTroId;
+                    if (landlordId) {
+                      onSetChatTarget({ id: landlordId, username: t('tenant.landlord') });
+                    } else {
+                      alert(t('app.error_no_landlord'));
+                    }
+                  }}
+                  disabled={!hopDongCuaToi?.phongTro}
+                >
+                  💬 {t('tenant.contact_landlord_chat')}
+                </button>
+                <button
+                  className="btn btn--outline"
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', justifyContent: 'center' }}
+                  onClick={() => adminContact && onSetChatTarget(adminContact)}
+                  disabled={loadingAdmin || !!adminError}
+                >
+                  🎧 {t('tenant.contact_admin_chat')}
+                </button>
+                <button
+                  className="btn btn--outline"
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', justifyContent: 'center' }}
+                  onClick={() => setCuDanTab('THONG_TIN')}
+                  disabled={!hopDongCuaToi}
+                >
+                  📄 {t('tenant.view_my_contract')}
+                </button>
+              </div>
+            </div>
+
+          </div>
+        )}
 
         {cuDanTab === 'HO_SO' && <div className="premium-card"><HoSoForm user={currentUser} /></div>}
 

@@ -132,21 +132,22 @@ function LandlordPage({ currentUser, unreadSenderIds = [], setUnreadSenderIds, o
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [phongRes, hdRes, invRes, tkRes, profRes] = await Promise.all([
+      const [phongRes, hdRes, invRes, tkRes, profRes, tbRes] = await Promise.all([
         api.get(`/phong-tro/chu-tro/${currentUser.id}`),
         api.get(`/hop-dong/chu-tro/${currentUser.id}`),
         api.get(`/hoa-don/chu-tro/${currentUser.id}`),
         api.get(`/thong-ke/chu-tro/${currentUser.id}`),
         api.get('/khach-hang/ho-so/me'),
+        api.get(`/thong-bao/chu-tro/${currentUser.id}`).catch(() => ({ data: [] })),
       ]);
       setPhongTros(phongRes.data || []);
       setHopDongs(hdRes.data || []);
       setHoaDons(invRes.data || []);
       setThongKeData(tkRes.data || null);
       setLandlordProfile(profRes.data || null);
+      setThongBaos(tbRes.data || []);
     } catch (err) {
       console.error(err);
-      // alert(t('landlord.error_fetch'));
     } finally {
       setLoading(false);
     }
@@ -714,7 +715,13 @@ function LandlordPage({ currentUser, unreadSenderIds = [], setUnreadSenderIds, o
 
       {/* === Nội dung từng Tab === */}
       {!loading && landlordTab === 'BAO_CAO' && (
-        <DashboardTab thongKeData={thongKeData} />
+        <DashboardTab 
+          thongKeData={thongKeData} 
+          hoaDons={hoaDons} 
+          hopDongs={hopDongs} 
+          thongBaos={thongBaos} 
+          onSetChatTarget={onSetChatTarget} 
+        />
       )}
 
       {!loading && landlordTab === 'PHONG' && (

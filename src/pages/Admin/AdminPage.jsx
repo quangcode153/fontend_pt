@@ -411,7 +411,14 @@ export default function AdminPage({ currentUser, unreadSenderIds = [], setUnread
           <>
             {adminTab === 'USERS' && <QuanLyNguoiDung />}
 
-            {adminTab === 'BAO_CAO' && <DashboardTab thongKeData={thongKeData} isAdmin={true} />}
+            {adminTab === 'BAO_CAO' && (
+              <DashboardTab 
+                thongKeData={thongKeData} 
+                isAdmin={true} 
+                chuTros={chuTros} 
+                khieuNais={khieuNais} 
+              />
+            )}
 
             {adminTab === 'PHONG' && (
               !chuTroDangChon ? (

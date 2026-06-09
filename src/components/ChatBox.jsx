@@ -150,7 +150,13 @@ function ChatBox({ currentUser, targetUser, isOpen, onClose, onOpenChat, unreadS
     api.get(`/tin-nhan/${currentUser.id}/${targetUser.id}`)
       .then(res => setMessages(res.data))
       .catch(err => console.error(t('chat.error_load'), err));
-  }, [isOpen, currentUser?.id, targetUser?.id, setUnreadSenderIds]);
+
+    if (targetUser.prefilledMessage) {
+      setInput(targetUser.prefilledMessage);
+    } else {
+      setInput('');
+    }
+  }, [isOpen, currentUser?.id, targetUser?.id, targetUser?.prefilledMessage, setUnreadSenderIds]);
 
   // Auto-dismiss toast notification after 6 seconds
   useEffect(() => {

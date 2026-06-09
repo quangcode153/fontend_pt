@@ -32,11 +32,46 @@ export default function ContractModal({
   const contextRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [isCanvasEmpty, setIsCanvasEmpty] = useState(true);
+  // Separate canvas ref used only to display a preview of Bên B's signature for the landlord
+  const canvasPreviewBRef = useRef(null);
+
+  // Helper: extract the best display name from an info object that may be
+  // a flat KhachThue ({hoTen, username}) OR a nested TaiKhoan ({username, khachHang:{hoTen}})
+  const resolveName = (info) =>
+    info?.hoTen || info?.khachHang?.hoTen || info?.khachHang?.username || info?.username || '';
+
+  // localStorage key: scoped per phong so each room's contract has its own signature storage
+  const sigKey = phong?.id ? `contract_sig_phong_${phong.id}` : null;
+
+  const saveSigToStorage = (updates) => {
+    if (!sigKey) return;
+    try {
+      const prev = JSON.parse(localStorage.getItem(sigKey) || '{}');
+      localStorage.setItem(sigKey, JSON.stringify({ ...prev, ...updates }));
+    } catch (_) {}
+  };
+
+  const loadSigFromStorage = () => {
+    if (!sigKey) return {};
+    try { return JSON.parse(localStorage.getItem(sigKey) || '{}'); } catch (_) { return {}; }
+  };
+
+  // Draw a base64 dataURL back onto the canvas element
+  const restoreCanvasFromDataURL = (dataURL) => {
+    if (!canvasRef.current || !dataURL) return;
+    const img = new Image();
+    img.onload = () => {
+      const ctx = canvasRef.current.getContext('2d');
+      ctx.drawImage(img, 0, 0, 240, 120);
+      setIsCanvasEmpty(false);
+    };
+    img.src = dataURL;
+  };
 
   const isAEditable = role === 'LANDLORD' && !!onConfirm;
   const isBEditable = role === 'TENANT' && !!onConfirm;
 
-  // Initialize canvas context
+  // Initialize canvas context, then restore saved canvas strokes from localStorage
   useEffect(() => {
     let timer;
     if (isOpen && (isAEditable || isBEditable)) {
@@ -57,6 +92,13 @@ export default function ContractModal({
           
           context.clearRect(0, 0, 240, 120);
           setIsCanvasEmpty(true);
+
+          // Restore this party's saved canvas from localStorage
+          const saved = loadSigFromStorage();
+          const savedCanvas = isAEditable ? saved.chuKyA : saved.chuKyB;
+          if (savedCanvas) {
+            restoreCanvasFromDataURL(savedCanvas);
+          }
         }
       }, 150);
     }
@@ -113,6 +155,12 @@ export default function ContractModal({
     if (isDrawing) {
       contextRef.current.closePath();
       setIsDrawing(false);
+      // Save canvas to localStorage after each stroke
+      if (canvasRef.current) {
+        const dataURL = canvasRef.current.toDataURL('image/png');
+        if (isAEditable) saveSigToStorage({ chuKyA: dataURL, kyTenA: kyTenA });
+        else if (isBEditable) saveSigToStorage({ chuKyB: dataURL, kyTenB: kyTenB });
+      }
     }
   };
 
@@ -120,6 +168,9 @@ export default function ContractModal({
     if (canvasRef.current && contextRef.current) {
       contextRef.current.clearRect(0, 0, 240, 120);
       setIsCanvasEmpty(true);
+      // Remove saved canvas from localStorage on clear
+      if (isAEditable) saveSigToStorage({ chuKyA: null, kyTenA: null });
+      else if (isBEditable) saveSigToStorage({ chuKyB: null, kyTenB: null });
     }
   };
 
@@ -129,21 +180,28 @@ export default function ContractModal({
 
   useEffect(() => {
     if (isOpen) {
-      const landlordName = chuTroInfo?.hoTen || chuTroInfo?.username || '';
-      const tenantName = khachThueInfo?.hoTen || khachThueInfo?.username || '';
+      const landlordName = resolveName(chuTroInfo);
+      const tenantName = resolveName(khachThueInfo);
 
       // Nếu không có hàm onConfirm (chỉ xem) hoặc là Landlord xem HĐ đã duyệt
       if (!onConfirm) {
         setKyTenA(landlordName);
-        setKyTenB(tenantName);
+        // For view-only, prefer stored name over profile name (preserves what was actually typed)
+        const saved = loadSigFromStorage();
+        setKyTenB(saved.kyTenB || tenantName);
+        setKyTenA(saved.kyTenA || landlordName);
       } else {
         // Chế độ đang ký
         if (role === 'TENANT') {
           setKyTenA(landlordName);
-          setKyTenB('');
+          // Restore previously typed Bên B name if any
+          const saved = loadSigFromStorage();
+          setKyTenB(saved.kyTenB || '');
         } else {
-          setKyTenA('');
-          setKyTenB(tenantName);
+          // LANDLORD signing: pre-fill Bên B with what tenant actually saved
+          const saved = loadSigFromStorage();
+          setKyTenA(saved.kyTenA || '');
+          setKyTenB(saved.kyTenB || tenantName);
         }
       }
 
@@ -206,16 +264,16 @@ export default function ContractModal({
         {/* Bên A */}
         <div style={{ marginBottom: '24px', lineHeight: '1.6', fontSize: '14px' }}>
           <div style={{ fontWeight: 'bold', borderBottom: '1px solid #eee', paddingBottom: '4px', marginBottom: '8px' }}>{t('contract.party_a')}</div>
-          <div>{t('contract.mr_ms')} <strong>{chuTroInfo?.hoTen || chuTroInfo?.username || safeDots}</strong></div>
+          <div>{t('contract.mr_ms')} <strong>{resolveName(chuTroInfo) || safeDots}</strong></div>
           <div>{t('contract.phone')} {chuTroInfo?.soDienThoai || safeDots}</div>
         </div>
 
         {/* Bên B */}
         <div style={{ marginBottom: '24px', lineHeight: '1.6', fontSize: '14px' }}>
           <div style={{ fontWeight: 'bold', borderBottom: '1px solid #eee', paddingBottom: '4px', marginBottom: '8px' }}>{t('contract.party_b')}</div>
-          <div>{t('contract.mr_ms')} <strong>{khachThueInfo?.hoTen || khachThueInfo?.username || safeDots}</strong></div>
-          <div>{t('contract.id_card')} {khachThueInfo?.soCccd || safeDots}</div>
-          <div>{t('contract.phone')} {khachThueInfo?.soDienThoai || safeDots}</div>
+          <div>{t('contract.mr_ms')} <strong>{resolveName(khachThueInfo) || safeDots}</strong></div>
+          <div>{t('contract.id_card')} {khachThueInfo?.soCccd || khachThueInfo?.khachHang?.soCccd || safeDots}</div>
+          <div>{t('contract.phone')} {khachThueInfo?.soDienThoai || khachThueInfo?.khachHang?.soDienThoai || safeDots}</div>
         </div>
 
         {/* Điều 1 */}
@@ -338,18 +396,40 @@ export default function ContractModal({
               ) : (
                 <>
                   <div style={inputLocked}>{kyTenA || safeDots}</div>
-                  {kyTenA.trim() && (
-                    <div style={{
-                      marginTop: '14px', fontSize: '16px', fontStyle: 'italic',
-                      color: '#1D4ED8', fontFamily: 'Georgia, cursive',
-                      borderBottom: '1.5px solid #1D4ED8',
-                      paddingBottom: '4px', letterSpacing: '1px',
-                    }}>{kyTenA}</div>
-                  )}
-                  {!isAEditable && kyTenA.trim() && (
-                    <div style={{ marginTop: '6px', fontSize: '11px', color: '#059669', fontWeight: 600 }}>🔒 {t('contract.signed')}</div>
-                  )}
-                  {!isAEditable && !kyTenA.trim() && (
+                  {kyTenA.trim() ? (
+                    <>
+                      <div style={{
+                        marginTop: '10px',
+                        border: '1.5px solid #93C5FD',
+                        borderRadius: '8px',
+                        background: '#F0F9FF',
+                        width: '160px',
+                        height: '70px',
+                        margin: '10px auto 0',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        overflow: 'hidden',
+                      }}>
+                        <div style={{
+                          fontSize: `${Math.max(14, Math.min(26, Math.floor(160 / (kyTenA.length * 0.7 + 1))))}px`,
+                          fontStyle: 'italic',
+                          fontFamily: 'Georgia, "Times New Roman", cursive',
+                          color: '#1D4ED8',
+                          letterSpacing: '1px',
+                          userSelect: 'none',
+                          padding: '4px 8px',
+                          textAlign: 'center',
+                          lineHeight: 1.4,
+                          borderBottom: '2px solid #1D4ED8',
+                          transform: 'rotate(-4deg)',
+                        }}>
+                          {kyTenA}
+                        </div>
+                      </div>
+                      <div style={{ marginTop: '6px', fontSize: '11px', color: '#059669', fontWeight: 600 }}>🔒 {t('contract.signed')}</div>
+                    </>
+                  ) : (
                     <div style={{ marginTop: '6px', fontSize: '11px', color: '#9CA3AF', fontStyle: 'italic' }}>{t('contract.waiting_a')}</div>
                   )}
                 </>
@@ -372,7 +452,10 @@ export default function ContractModal({
                     type="text"
                     placeholder={t('contract.sign_placeholder')}
                     value={kyTenB}
-                    onChange={e => setKyTenB(e.target.value)}
+                    onChange={e => {
+                      setKyTenB(e.target.value);
+                      saveSigToStorage({ kyTenB: e.target.value });
+                    }}
                     style={inputActive}
                   />
                   <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -407,18 +490,52 @@ export default function ContractModal({
               ) : (
                 <>
                   <div style={inputLocked}>{kyTenB || safeDots}</div>
-                  {kyTenB.trim() && (
-                    <div style={{
-                      marginTop: '14px', fontSize: '16px', fontStyle: 'italic',
-                      color: '#1D4ED8', fontFamily: 'Georgia, cursive',
-                      borderBottom: '1.5px solid #1D4ED8',
-                      paddingBottom: '4px', letterSpacing: '1px',
-                    }}>{kyTenB}</div>
-                  )}
-                  {!isBEditable && kyTenB.trim() && (
-                    <div style={{ marginTop: '6px', fontSize: '11px', color: '#059669', fontWeight: 600 }}>🔒 {t('contract.signed')}</div>
-                  )}
-                  {!isBEditable && !kyTenB.trim() && (
+                  {kyTenB.trim() ? (
+                    <>
+                      {/* Show real canvas signature from localStorage if available */}
+                      {(() => {
+                        const saved = loadSigFromStorage();
+                        return saved.chuKyB ? (
+                          <img
+                            src={saved.chuKyB}
+                            alt="signature"
+                            style={{
+                              display: 'block',
+                              margin: '10px auto 0',
+                              width: '160px',
+                              height: '70px',
+                              border: '1.5px solid #93C5FD',
+                              borderRadius: '8px',
+                              background: '#F0F9FF',
+                              objectFit: 'contain',
+                            }}
+                          />
+                        ) : (
+                          // Fallback: cursive text signature
+                          <div style={{
+                            marginTop: '10px',
+                            border: '1.5px solid #93C5FD',
+                            borderRadius: '8px',
+                            background: '#F0F9FF',
+                            width: '160px', height: '70px',
+                            margin: '10px auto 0',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          }}>
+                            <div style={{
+                              fontSize: `${Math.max(14, Math.min(26, Math.floor(160 / (kyTenB.length * 0.7 + 1))))}px`,
+                              fontStyle: 'italic',
+                              fontFamily: 'Georgia, "Times New Roman", cursive',
+                              color: '#1D4ED8', letterSpacing: '1px',
+                              userSelect: 'none', textAlign: 'center',
+                              borderBottom: '2px solid #1D4ED8',
+                              transform: 'rotate(-4deg)',
+                            }}>{kyTenB}</div>
+                          </div>
+                        );
+                      })()}
+                      <div style={{ marginTop: '6px', fontSize: '11px', color: '#059669', fontWeight: 600 }}>🔒 {t('contract.signed')}</div>
+                    </>
+                  ) : (
                     <div style={{ marginTop: '6px', fontSize: '11px', color: '#9CA3AF', fontStyle: 'italic' }}>{t('contract.waiting_b')}</div>
                   )}
                 </>
@@ -463,7 +580,15 @@ export default function ContractModal({
           </button>
           {onConfirm && (
             <button
-              onClick={() => onConfirm({ ngayBatDau, ngayKetThuc, kyTenA, kyTenB })}
+              onClick={() => {
+                // Save final canvas + name to localStorage before confirming
+                if (canvasRef.current) {
+                  const dataURL = canvasRef.current.toDataURL('image/png');
+                  if (isAEditable) saveSigToStorage({ chuKyA: dataURL, kyTenA });
+                  else if (isBEditable) saveSigToStorage({ chuKyB: dataURL, kyTenB });
+                }
+                onConfirm({ ngayBatDau, ngayKetThuc, kyTenA, kyTenB });
+              }}
               disabled={isProcessing || !canConfirm}
               style={{
                 padding: '10px 22px', border: 'none', borderRadius: '8px',
