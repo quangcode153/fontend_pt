@@ -474,7 +474,7 @@ export default function TenantPage({ currentUser, hopDongCuaToi, onBrowseRooms, 
                   onBrowseRooms();
                 }}
               >
-                🔍 {t('tenant.browse_more_rooms') || 'Tìm phòng khác'}
+                {t('tenant.browse_more_rooms') || '🔍 Tìm phòng khác'}
               </button>
             </div>
           </div>
