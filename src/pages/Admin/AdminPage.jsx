@@ -712,7 +712,7 @@ export default function AdminPage({ currentUser, unreadSenderIds = [], setUnread
                                 onSetChatTarget({ id: selectedComplaint.nguoiGui?.id, username: selectedComplaint.nguoiGui?.username });
                               }}
                             >
-                              💬 {t('admin.btn_contact')}
+                              {t('admin.btn_contact')}
                               {unreadSenderIds.some(id => String(id) === String(selectedComplaint.nguoiGui?.id || selectedComplaint.nguoiGuiId)) && (
                                 <span style={{
                                   width: '8px',
@@ -727,7 +727,7 @@ export default function AdminPage({ currentUser, unreadSenderIds = [], setUnread
                             </button>
                             {selectedComplaint.trangThai === 'CHO_XU_LY' && (
                               <button className="btn btn--primary" onClick={() => handleXuLyKhieuNai(selectedComplaint.id)}>
-                                ✔ {t('admin.btn_resolved')}
+                                {t('admin.btn_resolved')}
                               </button>
                             )}
                           </div>

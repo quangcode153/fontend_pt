@@ -101,7 +101,7 @@ export default function TenantListTab({ currentUser, hopDongs = [], onSetChatTar
           const res = await api.get(`/khach-hang/chi-tiet/${id}`);
           if (res.data) {
             updated[id] = {
-              hoTen: res.data.hoTen || res.data.username || `Khách ID ${id}`,
+              hoTen: res.data.hoTen || res.data.username || `ID ${id}`,
               sdt: res.data.soDienThoai || '',
               email: res.data.email || ''
             };
@@ -110,7 +110,7 @@ export default function TenantListTab({ currentUser, hopDongs = [], onSetChatTar
         } catch (err) {
           // Thất bại do phân quyền hoặc lỗi mạng -> dùng fallback
           updated[id] = {
-            hoTen: `Khách ID ${id}`,
+            hoTen: `ID ${id}`,
             sdt: '',
             email: ''
           };
@@ -158,7 +158,7 @@ export default function TenantListTab({ currentUser, hopDongs = [], onSetChatTar
       const profile = fetchedProfiles[id] || {};
       prospectiveTenants.push({
         userId: id,
-        hoTen: profile.hoTen || `Khách ID ${id}`,
+        hoTen: profile.hoTen || `ID ${id}`,
         username: `user_${id}`,
         sdt: profile.sdt || '',
         phongTen: '—',
@@ -176,18 +176,18 @@ export default function TenantListTab({ currentUser, hopDongs = [], onSetChatTar
   const currentDisplayList = activeSubTab === 'RENTED' ? rentedTenants : prospectiveTenants;
 
   const getStatusBadge = (status) => {
-    if (!status) return <span style={{ color: 'var(--text-muted)' }}>💬 Liên hệ</span>;
+    if (!status) return <span style={{ color: 'var(--text-muted)' }}>💬 {t('landlord.contact_label')}</span>;
     switch (status) {
       case CONTRACT_STATUS.PENDING:
-        return <span style={{ color: 'var(--warning)', background: 'var(--warning-light)', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600 }}>⏳ Chờ duyệt</span>;
+        return <span style={{ color: 'var(--warning)', background: 'var(--warning-light)', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600 }}>⏳ {t('landlord.status_pending_contract')}</span>;
       case CONTRACT_STATUS.REJECTED:
-        return <span style={{ color: 'var(--danger)', background: 'var(--danger-light)', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600 }}>❌ Đã từ chối</span>;
+        return <span style={{ color: 'var(--danger)', background: 'var(--danger-light)', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600 }}>❌ {t('landlord.status_rejected_contract')}</span>;
       case CONTRACT_STATUS.CANCELLING:
-        return <span style={{ color: 'var(--warning)', background: 'var(--warning-light)', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600 }}>⏳ Chờ hủy</span>;
+        return <span style={{ color: 'var(--warning)', background: 'var(--warning-light)', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600 }}>⏳ {t('landlord.status_cancelling_contract')}</span>;
       case CONTRACT_STATUS.CANCELLED:
-        return <span style={{ color: 'var(--text-muted)', background: 'var(--border-light)', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600 }}>🚪 Đã kết thúc</span>;
+        return <span style={{ color: 'var(--text-muted)', background: 'var(--border-light)', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600 }}>🚪 {t('landlord.status_ended_contract')}</span>;
       default:
-        return <span style={{ color: 'var(--text-muted)' }}>💬 Liên hệ</span>;
+        return <span style={{ color: 'var(--text-muted)' }}>💬 {t('landlord.contact_label')}</span>;
     }
   };
 
@@ -222,7 +222,7 @@ export default function TenantListTab({ currentUser, hopDongs = [], onSetChatTar
             gap: '8px'
           }}
         >
-          🏘️ Khách đã thuê trọ ({rentedTenants.length})
+          🏘️ {t('landlord.rented_tenants')} ({rentedTenants.length})
           {hasRentedUnread && (
             <span style={{
               width: '8px',
@@ -252,7 +252,7 @@ export default function TenantListTab({ currentUser, hopDongs = [], onSetChatTar
             gap: '8px'
           }}
         >
-          💬 Khách chưa thuê trọ ({prospectiveTenants.length})
+          💬 {t('landlord.prospective_tenants')} ({prospectiveTenants.length})
           {hasProspectiveUnread && (
             <span style={{
               width: '8px',
@@ -278,7 +278,7 @@ export default function TenantListTab({ currentUser, hopDongs = [], onSetChatTar
         <div className="l-empty">
           <div className="l-empty__icon">👤</div>
           <div className="l-empty__text">
-            {activeSubTab === 'RENTED' ? 'Không tìm thấy khách đã thuê trọ' : 'Không tìm thấy khách chưa thuê trọ'}
+            {activeSubTab === 'RENTED' ? t('landlord.no_rented_tenants') : t('landlord.no_prospective_tenants')}
           </div>
         </div>
       ) : (

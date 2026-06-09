@@ -73,7 +73,7 @@ export default function AdminContactTab({ onSetChatTarget, unreadSenderIds = [] 
       animation: 'fadeIn 0.3s ease'
     }}>
       <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <span>💬 Danh sách liên hệ hệ thống</span>
+        <span>💬 {t('admin.contact_system_list')}</span>
       </div>
 
       {/* Sub tabs switcher */}
@@ -101,7 +101,7 @@ export default function AdminContactTab({ onSetChatTarget, unreadSenderIds = [] 
             gap: '8px'
           }}
         >
-          💼 Chủ trọ ({landlords.length})
+          💼 {t('admin.contact_landlords')} ({landlords.length})
           {hasLandlordUnread && (
             <span style={{
               width: '8px',
@@ -131,7 +131,7 @@ export default function AdminContactTab({ onSetChatTarget, unreadSenderIds = [] 
             gap: '8px'
           }}
         >
-          👤 Khách thuê ({tenants.length})
+          👤 {t('admin.contact_tenants_label')} ({tenants.length})
           {hasTenantUnread && (
             <span style={{
               width: '8px',
@@ -157,7 +157,7 @@ export default function AdminContactTab({ onSetChatTarget, unreadSenderIds = [] 
       <div style={{ marginBottom: '20px' }}>
         <input
           type="text"
-          placeholder={activeSubTab === 'LANDLORD' ? "Tìm kiếm chủ trọ..." : "Tìm kiếm khách thuê..."}
+          placeholder={activeSubTab === 'LANDLORD' ? t('admin.search_landlord') : t('admin.search_tenant')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           style={{
@@ -178,7 +178,7 @@ export default function AdminContactTab({ onSetChatTarget, unreadSenderIds = [] 
       {currentList.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
           <div style={{ fontSize: '32px', marginBottom: '8px' }}>🔍</div>
-          <div>Không tìm thấy người dùng phù hợp</div>
+          <div>{t('admin.no_user_found')}</div>
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px' }}>

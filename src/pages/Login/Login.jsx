@@ -343,9 +343,9 @@ export default function Login() {
 
   return (
     <div className="auth-page">
-      <div className="auth-brand" onClick={() => navigate('/')} title="Quay về trang chủ">
+      <div className="auth-brand" onClick={() => navigate('/')} title={t('login.back_to_home') || 'Quay về trang chủ'}>
         <span className="auth-brand__logo">🏠</span>
-        <span className="auth-brand__title">Quản Lý Trọ</span>
+        <span className="auth-brand__title">{t('home.brand')}</span>
       </div>
 
       <div className="auth-lang-switcher">

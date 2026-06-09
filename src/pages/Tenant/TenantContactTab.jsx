@@ -23,10 +23,10 @@ export default function TenantContactTab({ currentUser, hopDongCuaToi, adminCont
         addedIds.add(adminId);
         list.push({
           id: adminId,
-          hoTen: adminContact?.hoTen || adminContact?.username || 'Quản trị viên (Admin)',
+          hoTen: adminContact?.hoTen || adminContact?.username || 'Admin',
           username: adminContact?.username || 'admin',
           role: 'ROLE_ADMIN',
-          tag: 'Hệ thống'
+          tagKey: 'tag_system'
         });
       }
 
@@ -36,10 +36,10 @@ export default function TenantContactTab({ currentUser, hopDongCuaToi, adminCont
         addedIds.add(landlordId);
         let landlordDetail = {
           id: landlordId,
-          hoTen: hopDongCuaToi?.phongTro?.chuTro?.hoTen || t('tenant.landlord') || 'Chủ trọ của tôi',
+          hoTen: hopDongCuaToi?.phongTro?.chuTro?.hoTen || t('tenant.landlord') || 'Landlord',
           username: hopDongCuaToi?.phongTro?.chuTro?.username || 'landlord',
           role: 'ROLE_LANDLORD',
-          tag: 'Chủ trọ hiện tại'
+          tagKey: 'tag_current_landlord'
         };
         // Thử fetch thông tin chi tiết
         try {
@@ -49,7 +49,7 @@ export default function TenantContactTab({ currentUser, hopDongCuaToi, adminCont
             landlordDetail.soDienThoai = res.data.soDienThoai;
           }
         } catch (e) {
-          console.warn("Không tải được chi tiết chủ trọ hiện tại:", e);
+          console.warn("Cannot load current landlord details:", e);
         }
         list.push(landlordDetail);
       }
@@ -79,10 +79,10 @@ export default function TenantContactTab({ currentUser, hopDongCuaToi, adminCont
             addedIds.add(id);
             let contactDetail = {
               id: id,
-              hoTen: `Chủ trọ ID ${id}`,
+              hoTen: `ID ${id}`,
               username: `host_${id}`,
               role: 'ROLE_LANDLORD',
-              tag: 'Liên hệ cũ'
+              tagKey: 'tag_old_contact'
             };
 
             // Thử fetch thông tin chi tiết
@@ -99,10 +99,10 @@ export default function TenantContactTab({ currentUser, hopDongCuaToi, adminCont
                 if (resCustomer.data) {
                   contactDetail.hoTen = resCustomer.data.hoTen || contactDetail.hoTen;
                   contactDetail.role = 'ROLE_USER';
-                  contactDetail.tag = 'Liên hệ';
+                  contactDetail.tagKey = 'tag_contact';
                 }
               } catch (innerE) {
-                console.warn(`Không tải được thông tin tài khoản ID ${id}:`, innerE);
+                console.warn(`Cannot load account info for ID ${id}:`, innerE);
               }
             }
             list.push(contactDetail);
@@ -125,7 +125,7 @@ export default function TenantContactTab({ currentUser, hopDongCuaToi, adminCont
           borderTopColor: 'var(--accent)', borderRadius: '50%',
           animation: 'spin 0.6s linear infinite', margin: '0 auto 12px',
         }} />
-        <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Đang tải danh sách liên hệ...</p>
+        <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>{t('tenant.loading_contacts')}</p>
       </div>
     );
   }
@@ -133,7 +133,7 @@ export default function TenantContactTab({ currentUser, hopDongCuaToi, adminCont
   return (
     <div style={{ animation: 'fadeIn 0.3s ease' }}>
       <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '20px' }}>
-        💬 Danh sách liên hệ của tôi
+        💬 {t('tenant.my_contacts_list')}
       </div>
 
       <style>{`
@@ -147,7 +147,7 @@ export default function TenantContactTab({ currentUser, hopDongCuaToi, adminCont
       {contacts.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
           <div style={{ fontSize: '32px', marginBottom: '8px' }}>📭</div>
-          <div>Chưa có liên hệ nào</div>
+          <div>{t('tenant.no_contacts')}</div>
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px' }}>
@@ -212,7 +212,7 @@ export default function TenantContactTab({ currentUser, hopDongCuaToi, adminCont
                       color: contact.role === 'ROLE_ADMIN' ? 'var(--warning)' : 'var(--accent)',
                       fontWeight: 600
                     }}>
-                      {contact.tag}
+                      {t(`tenant.${contact.tagKey}`)}
                     </span>
                   </div>
                   {contact.soDienThoai && (

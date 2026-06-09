@@ -684,17 +684,19 @@ function GuestPage({
                       <div className="search-engine__range">
                         <input
                           type="number"
+                          min="0"
                           placeholder={t('guest.price_min')}
                           value={searchGiaMin}
-                          onChange={e => setSearchGiaMin(e.target.value)}
+                          onChange={e => { const v = e.target.value; if (v === '' || Number(v) >= 0) setSearchGiaMin(v); }}
                           className="search-engine__input"
                         />
                         <span className="search-engine__separator">-</span>
                         <input
                           type="number"
+                          min="0"
                           placeholder={t('guest.price_max')}
                           value={searchGiaMax}
-                          onChange={e => setSearchGiaMax(e.target.value)}
+                          onChange={e => { const v = e.target.value; if (v === '' || Number(v) >= 0) setSearchGiaMax(v); }}
                           className="search-engine__input"
                         />
                       </div>
