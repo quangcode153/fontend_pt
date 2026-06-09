@@ -216,7 +216,40 @@ export default function RoomTab({
           </div>
           <div className="l-add-room-form__field" style={{ flex: 2 }}>
             <label className="l-form-label">{t('landlord.image')} ({t('common.multiple') || 'nhiều ảnh'})</label>
-            <input className="l-form-input" type="file" accept="image/*" multiple onChange={handleImageChange} disabled={isSubmitting} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', position: 'relative' }}>
+              <label
+                className="btn btn--outline"
+                style={{
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '10px 16px',
+                  fontSize: '13px',
+                  margin: 0,
+                  width: 'fit-content',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'var(--surface)',
+                  color: 'var(--text-secondary)'
+                }}
+              >
+                📁 {t('landlord.btn_choose_files') || 'Chọn tệp'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageChange}
+                  disabled={isSubmitting}
+                  style={{ display: 'none' }}
+                />
+              </label>
+              <span style={{ fontSize: '13px', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 'calc(100% - 140px)' }}>
+                {hinhAnh
+                  ? t('landlord.files_selected', { count: hinhAnh.split('|||').length })
+                  : t('landlord.no_file_selected') || 'Không có tệp nào được chọn'}
+              </span>
+            </div>
             {hinhAnh && (
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '10px', width: '100%' }}>
                 {hinhAnh.split('|||').map((imgSrc, idx) => (
