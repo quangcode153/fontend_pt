@@ -343,6 +343,11 @@ export default function Login() {
 
   return (
     <div className="auth-page">
+      <div className="auth-brand" onClick={() => navigate('/')} title="Quay về trang chủ">
+        <span className="auth-brand__logo">🏠</span>
+        <span className="auth-brand__title">Quản Lý Trọ</span>
+      </div>
+
       <div className="auth-lang-switcher">
         <button
           onClick={toggleLanguage}

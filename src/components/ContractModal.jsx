@@ -48,7 +48,7 @@ export default function ContractModal({
     try {
       const prev = JSON.parse(localStorage.getItem(sigKey) || '{}');
       localStorage.setItem(sigKey, JSON.stringify({ ...prev, ...updates }));
-    } catch (_) {}
+    } catch (_) { }
   };
 
   const loadSigFromStorage = () => {
@@ -89,7 +89,7 @@ export default function ContractModal({
           context.strokeStyle = '#1D4ED8'; // Blue ink
           context.lineWidth = 2.5;
           contextRef.current = context;
-          
+
           context.clearRect(0, 0, 240, 120);
           setIsCanvasEmpty(true);
 
@@ -98,6 +98,21 @@ export default function ContractModal({
           const savedCanvas = isAEditable ? saved.chuKyA : saved.chuKyB;
           if (savedCanvas) {
             restoreCanvasFromDataURL(savedCanvas);
+          } else {
+            // Auto-generate signature on canvas so the user sees it without drawing
+            const nameToDraw = isAEditable ? (saved.kyTenA || resolveName(chuTroInfo)) : (saved.kyTenB || resolveName(khachThueInfo));
+            if (nameToDraw) {
+              context.font = 'italic 24px Georgia, "Times New Roman", cursive';
+              context.fillStyle = '#1D4ED8';
+              context.textAlign = 'center';
+              context.textBaseline = 'middle';
+              context.save();
+              context.translate(120, 60);
+              context.rotate(-0.05);
+              context.fillText(nameToDraw, 0, 0);
+              context.restore();
+              setIsCanvasEmpty(false);
+            }
           }
         }
       }, 150);
@@ -105,9 +120,17 @@ export default function ContractModal({
     return () => {
       if (timer) clearTimeout(timer);
     };
-  }, [isOpen, role, isAEditable, isBEditable]);
+  }, [isOpen, role, isAEditable, isBEditable, chuTroInfo, khachThueInfo]);
 
   const startDrawing = ({ nativeEvent }) => {
+    // If the canvas contains the auto-generated text, clear it on first draw attempt
+    if (!isDrawing && canvasRef.current && contextRef.current) {
+      const saved = loadSigFromStorage();
+      const savedCanvas = isAEditable ? saved.chuKyA : saved.chuKyB;
+      if (!savedCanvas) {
+        contextRef.current.clearRect(0, 0, 240, 120);
+      }
+    }
     let clientX, clientY;
     if (nativeEvent.touches) {
       clientX = nativeEvent.touches[0].clientX;
@@ -200,7 +223,7 @@ export default function ContractModal({
         } else {
           // LANDLORD signing: pre-fill Bên B with what tenant actually saved
           const saved = loadSigFromStorage();
-          setKyTenA(saved.kyTenA || '');
+          setKyTenA(saved.kyTenA || landlordName);
           setKyTenB(saved.kyTenB || tenantName);
         }
       }
@@ -230,12 +253,12 @@ export default function ContractModal({
   const inputActive = { ...inputBase, background: '#fff', border: '1.5px solid #93C5FD' };
   const inputLocked = { ...inputBase, background: '#E5E7EB', color: '#6B7280', cursor: 'not-allowed' };
 
-  const canConfirm = isAEditable 
-    ? kyTenA.trim().length > 0 && !isCanvasEmpty 
-    : isBEditable 
+  const canConfirm = isAEditable
+    ? kyTenA.trim().length > 0 && !isCanvasEmpty
+    : isBEditable
       ? kyTenB.trim().length > 0 && !isCanvasEmpty
       : kyTenA.trim().length > 0 && kyTenB.trim().length > 0;
-  
+
   // Rút ngắn dots nếu dài quá
   const safeDots = ".....................";
 
@@ -291,7 +314,7 @@ export default function ContractModal({
           <div>- {t('contract.deposit')} <strong style={{ color: '#D97706' }}>{phong?.tienCoc?.toLocaleString() || 0} {t('landlord.unit_vnd') || 'VND'}</strong></div>
           <div>- {t('contract.electric_price')} {phong?.giaDien ? `${phong.giaDien.toLocaleString()} ${t('landlord.unit_kwh')}` : dots}</div>
           <div>- {t('contract.water_price')} {phong?.giaNuoc ? `${phong.giaNuoc.toLocaleString()} ${t('landlord.unit_m3')}` : dots}</div>
-          
+
           {/* Thời hạn hợp đồng - Nhập liệu/Hiển thị động */}
           <div style={{ marginTop: '12px', padding: '14px', background: '#F8FAFC', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
             <span style={{ fontWeight: 'bold', display: 'block', marginBottom: '8px', color: '#1E293B', fontSize: '13px' }}>{t('contract.duration_title')}</span>
@@ -354,7 +377,7 @@ export default function ContractModal({
             }}>
               <div style={{ fontWeight: 'bold', fontSize: '13px', marginBottom: '2px' }}>{t('contract.party_a_rep')}</div>
               <div style={{ fontSize: '11px', color: '#6B7280', marginBottom: '12px', fontStyle: 'italic' }}>{t('contract.party_a_desc')}</div>
-              
+
               {isAEditable ? (
                 <>
                   <input
@@ -445,7 +468,7 @@ export default function ContractModal({
             }}>
               <div style={{ fontWeight: 'bold', fontSize: '13px', marginBottom: '2px' }}>{t('contract.party_b_rep')}</div>
               <div style={{ fontSize: '11px', color: '#6B7280', marginBottom: '12px', fontStyle: 'italic' }}>{t('contract.party_b_desc')}</div>
-              
+
               {isBEditable ? (
                 <>
                   <input

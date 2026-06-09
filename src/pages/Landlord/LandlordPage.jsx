@@ -126,7 +126,15 @@ function LandlordPage({ currentUser, unreadSenderIds = [], setUnreadSenderIds, o
   const tenantUnreadCount = unreadSenderIds.filter(id => !adminContact?.id || String(id) !== String(adminContact.id)).length;
 
   /* ===== API CALLS ===== */
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData();
+
+    const handleRefresh = () => {
+      fetchData();
+    };
+    window.addEventListener('refresh-contract-data', handleRefresh);
+    return () => window.removeEventListener('refresh-contract-data', handleRefresh);
+  }, []);
 
   /** Fetch tất cả dữ liệu chính khi load trang */
   const fetchData = async () => {
@@ -140,8 +148,37 @@ function LandlordPage({ currentUser, unreadSenderIds = [], setUnreadSenderIds, o
         api.get('/khach-hang/ho-so/me'),
         api.get(`/thong-bao/chu-tro/${currentUser.id}`).catch(() => ({ data: [] })),
       ]);
+
+      const rawHopDongs = hdRes.data || [];
+
+      // Filter out pending contracts that were cancelled by the client using chat history
+      const pendingContracts = rawHopDongs.filter(hd => hd.trangThai === 'CHO_DUYET');
+      const checkedPending = await Promise.all(
+        pendingContracts.map(async (hd) => {
+          if (!hd.khachHang?.id) return hd;
+          try {
+            const chatRes = await api.get(`/tin-nhan/${currentUser.id}/${hd.khachHang.id}`);
+            const messages = chatRes.data || [];
+            const isCancelled = messages.some(msg => 
+              msg.noiDung && 
+              msg.noiDung.includes('[SYSTEM_CONTRACT_CANCELLED]') && 
+              msg.noiDung.includes(`(ID: ${hd.id})`)
+            );
+            return { ...hd, isCancelledByClient: isCancelled };
+          } catch {
+            return hd;
+          }
+        })
+      );
+
+      const cancelledIds = checkedPending
+        .filter(hd => hd.isCancelledByClient)
+        .map(hd => hd.id);
+
+      const filteredHopDongs = rawHopDongs.filter(hd => !cancelledIds.includes(hd.id));
+
       setPhongTros(phongRes.data || []);
-      setHopDongs(hdRes.data || []);
+      setHopDongs(filteredHopDongs);
       setHoaDons(invRes.data || []);
       setThongKeData(tkRes.data || null);
       setLandlordProfile(profRes.data || null);
@@ -324,13 +361,28 @@ function LandlordPage({ currentUser, unreadSenderIds = [], setUnreadSenderIds, o
   const handleDuyetTuModal = async (contractData) => {
     if (!previewContract) return;
     setIsSubmitting(true);
+    const tenantId = previewContract.khachHang?.id;
     try {
       await api.put(`/hop-dong/${previewContract.id}/trang-thai`, null, {
-        params: { 
+        params: {
           trangThai: CONTRACT_STATUS.APPROVED,
           ngayKetThuc: contractData?.ngayKetThuc || null
         },
       });
+
+      // Gửi WebSocket thông báo cho khách thuê
+      if (tenantId) {
+        const customEvent = new CustomEvent('send-system-message', {
+          detail: {
+            nguoiGuiId: currentUser.id,
+            nguoiNhanId: tenantId,
+            noiDung: `[SYSTEM_CONTRACT_APPROVED] Chủ trọ đã phê duyệt hợp đồng thuê phòng của bạn!`,
+            thoiGian: new Date().toISOString()
+          }
+        });
+        window.dispatchEvent(customEvent);
+      }
+
       setConfirmState({
         isOpen: true,
         type: 'success',
@@ -359,7 +411,7 @@ function LandlordPage({ currentUser, unreadSenderIds = [], setUnreadSenderIds, o
     // Tìm hợp đồng hiện tại để lấy thông tin trạng thái cũ
     const hd = hopDongs.find(h => h.id === hopDongId);
     const statusText = t(`landlord.contract_status_${trangThaiMoi}`);
-    
+
     let message = t('landlord.confirm_contract', { trangThaiMoi: statusText });
     let confirmText = t('common.confirm') || 'Xác nhận';
     let cancelText = t('common.cancel') || 'Hủy';
@@ -394,10 +446,40 @@ function LandlordPage({ currentUser, unreadSenderIds = [], setUnreadSenderIds, o
       cancelText,
       onConfirm: async () => {
         setConfirmState(prev => ({ ...prev, isOpen: false }));
+        const tenantId = hd?.khachHang?.id;
         try {
           await api.put(`/hop-dong/${hopDongId}/trang-thai`, null, {
             params: { trangThai: trangThaiMoi },
           });
+
+          // Gửi thông báo WebSocket cho khách thuê dựa trên trạng thái mới
+          if (tenantId) {
+            let sysMsg = '';
+            if (trangThaiMoi === CONTRACT_STATUS.APPROVED) {
+              if (hd.trangThai === CONTRACT_STATUS.CANCELLING) {
+                sysMsg = `[SYSTEM_CONTRACT_APPROVED] Yêu cầu hủy bị từ chối. Hợp đồng tiếp tục được duy trì.`;
+              } else {
+                sysMsg = `[SYSTEM_CONTRACT_APPROVED] Chủ trọ đã phê duyệt hợp đồng thuê phòng của bạn!`;
+              }
+            } else if (trangThaiMoi === CONTRACT_STATUS.REJECTED) {
+              sysMsg = `[SYSTEM_CONTRACT_REJECTED] Yêu cầu thuê phòng của bạn đã bị từ chối.`;
+            } else if (trangThaiMoi === CONTRACT_STATUS.CANCELLED) {
+              sysMsg = `[SYSTEM_CONTRACT_CANCELLED] Chủ trọ đã đồng ý hủy hợp đồng của bạn.`;
+            }
+            
+            if (sysMsg) {
+              const customEvent = new CustomEvent('send-system-message', {
+                detail: {
+                  nguoiGuiId: currentUser.id,
+                  nguoiNhanId: tenantId,
+                  noiDung: sysMsg,
+                  thoiGian: new Date().toISOString()
+                }
+              });
+              window.dispatchEvent(customEvent);
+            }
+          }
+
           fetchData();
         } catch {
           setConfirmState({
@@ -455,7 +537,7 @@ function LandlordPage({ currentUser, unreadSenderIds = [], setUnreadSenderIds, o
   /** Submit form chốt / cập nhật điện nước */
   const handleChotDienNuoc = async (e) => {
     e.preventDefault();
-    
+
     const soDienCu = parseInt(formDN.chiSoDauDien);
     const soDienMoi = parseInt(formDN.chiSoCuoiDien);
     const soNuocCu = parseInt(formDN.chiSoDauNuoc);
@@ -645,196 +727,196 @@ function LandlordPage({ currentUser, unreadSenderIds = [], setUnreadSenderIds, o
           </div>
         </div>
 
-      {/* Khu vực nội dung chính bên phải */}
-      <div className="dashboard-content">
-        {/* Top Header cho dashboard */}
-        <div className="dashboard-content__header">
-          <h2 className="dashboard-content__title">
-            {TABS.find(t => t.key === landlordTab)?.label}
-          </h2>
-          <div className="dashboard-content__actions">
-            <button
-              className="btn btn--outline"
-              style={{
-                position: 'relative',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '8px 16px',
-                fontSize: '13px'
-              }}
-              onClick={() => adminContact && onSetChatTarget(adminContact)}
-              disabled={loadingAdmin || !!adminError}
-            >
-              🎧 {loadingAdmin
-                ? t('landlord.btn_connecting')
-                : adminError
-                  ? t('landlord.btn_offline')
-                  : t('landlord.btn_chat_admin')}
-              {hasAdminUnread && (
-                <span style={{
-                  width: '8px',
-                  height: '8px',
-                  backgroundColor: 'var(--danger)',
-                  borderRadius: '50%',
-                  display: 'inline-block',
-                  boxShadow: '0 0 0 2px rgba(255, 255, 255, 0.3)',
-                  animation: 'pulseDot 1.2s infinite'
-                }} />
-              )}
-            </button>
+        {/* Khu vực nội dung chính bên phải */}
+        <div className="dashboard-content">
+          {/* Top Header cho dashboard */}
+          <div className="dashboard-content__header">
+            <h2 className="dashboard-content__title">
+              {TABS.find(t => t.key === landlordTab)?.label}
+            </h2>
+            <div className="dashboard-content__actions">
+              <button
+                className="btn btn--outline"
+                style={{
+                  position: 'relative',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 16px',
+                  fontSize: '13px'
+                }}
+                onClick={() => adminContact && onSetChatTarget(adminContact)}
+                disabled={loadingAdmin || !!adminError}
+              >
+                🎧 {loadingAdmin
+                  ? t('landlord.btn_connecting')
+                  : adminError
+                    ? t('landlord.btn_offline')
+                    : t('landlord.btn_chat_admin')}
+                {hasAdminUnread && (
+                  <span style={{
+                    width: '8px',
+                    height: '8px',
+                    backgroundColor: 'var(--danger)',
+                    borderRadius: '50%',
+                    display: 'inline-block',
+                    boxShadow: '0 0 0 2px rgba(255, 255, 255, 0.3)',
+                    animation: 'pulseDot 1.2s infinite'
+                  }} />
+                )}
+              </button>
 
-            {/* Language Switcher */}
-            <button
-              onClick={toggleLanguage}
-              className="dashboard-header-btn"
-              title={i18n.language === 'vi' ? 'Switch to English' : 'Đổi sang Tiếng Việt'}
-            >
-              {i18n.language === 'vi' ? '🇺🇸 EN' : '🇻🇳 VI'}
-            </button>
+              {/* Language Switcher */}
+              <button
+                onClick={toggleLanguage}
+                className="dashboard-header-btn"
+                title={i18n.language === 'vi' ? 'Switch to English' : 'Đổi sang Tiếng Việt'}
+              >
+                {i18n.language === 'vi' ? '🇺🇸 EN' : '🇻🇳 VI'}
+              </button>
 
-            {/* Profile Info */}
-            <div className="dashboard-header-profile">
-              <div className="dashboard-header-avatar">
-                {(currentUser?.username || 'G').charAt(0).toUpperCase()}
-              </div>
-              <div className="dashboard-header-userinfo">
-                <div className="dashboard-header-username">
-                  {currentUser?.username}
+              {/* Profile Info */}
+              <div className="dashboard-header-profile">
+                <div className="dashboard-header-avatar">
+                  {(currentUser?.username || 'G').charAt(0).toUpperCase()}
                 </div>
-                <div className="dashboard-header-role">
-                  {t('header.role_LANDLORD')}
+                <div className="dashboard-header-userinfo">
+                  <div className="dashboard-header-username">
+                    {currentUser?.username}
+                  </div>
+                  <div className="dashboard-header-role">
+                    {t('header.role_LANDLORD')}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-      {/* === Spinner khi đang tải lần đầu === */}
-      {loading && <Spinner text={t('landlord.syncing')} />}
+          {/* === Spinner khi đang tải lần đầu === */}
+          {loading && <Spinner text={t('landlord.syncing')} />}
 
-      {/* === Nội dung từng Tab === */}
-      {!loading && landlordTab === 'BAO_CAO' && (
-        <DashboardTab 
-          thongKeData={thongKeData} 
-          hoaDons={hoaDons} 
-          hopDongs={hopDongs} 
-          thongBaos={thongBaos} 
-          onSetChatTarget={onSetChatTarget} 
-        />
-      )}
+          {/* === Nội dung từng Tab === */}
+          {!loading && landlordTab === 'BAO_CAO' && (
+            <DashboardTab
+              thongKeData={thongKeData}
+              hoaDons={hoaDons}
+              hopDongs={hopDongs}
+              thongBaos={thongBaos}
+              onSetChatTarget={onSetChatTarget}
+            />
+          )}
 
-      {!loading && landlordTab === 'PHONG' && (
-        <RoomTab
-          phongTros={phongTros}
-          hopDongs={hopDongs}
-          tenPhong={tenPhong} setTenPhong={setTenPhong}
-          giaPhong={giaPhong} setGiaPhong={setGiaPhong}
-          trangThai={trangThai} setTrangThai={setTrangThai}
-          giaDien={giaDien} setGiaDien={setGiaDien}
-          giaNuoc={giaNuoc} setGiaNuoc={setGiaNuoc}
-          tienCoc={tienCoc} setTienCoc={setTienCoc}
-          diaChi={diaChi} setDiaChi={setDiaChi}
-          dienTich={dienTich} setDienTich={setDienTich}
-          hinhAnh={hinhAnh} setHinhAnh={setHinhAnh}
-          moTa={moTa} setMoTa={setMoTa}
-          isSubmitting={isSubmitting}
-          onThemPhong={handleThemPhong}
-          onXoaPhong={handleXoaPhong}
-          onXemChiTiet={handleXemChiTiet}
-        />
-      )}
+          {!loading && landlordTab === 'PHONG' && (
+            <RoomTab
+              phongTros={phongTros}
+              hopDongs={hopDongs}
+              tenPhong={tenPhong} setTenPhong={setTenPhong}
+              giaPhong={giaPhong} setGiaPhong={setGiaPhong}
+              trangThai={trangThai} setTrangThai={setTrangThai}
+              giaDien={giaDien} setGiaDien={setGiaDien}
+              giaNuoc={giaNuoc} setGiaNuoc={setGiaNuoc}
+              tienCoc={tienCoc} setTienCoc={setTienCoc}
+              diaChi={diaChi} setDiaChi={setDiaChi}
+              dienTich={dienTich} setDienTich={setDienTich}
+              hinhAnh={hinhAnh} setHinhAnh={setHinhAnh}
+              moTa={moTa} setMoTa={setMoTa}
+              isSubmitting={isSubmitting}
+              onThemPhong={handleThemPhong}
+              onXoaPhong={handleXoaPhong}
+              onXemChiTiet={handleXemChiTiet}
+            />
+          )}
 
-      {!loading && landlordTab === 'YEU_CAU' && (
-        <ContractTab
-          hopDongs={hopDongs}
-          onDuyetHopDong={handleDuyetHopDong}
-          onXemHopDong={handleXemHopDong}
+          {!loading && landlordTab === 'YEU_CAU' && (
+            <ContractTab
+              hopDongs={hopDongs}
+              onDuyetHopDong={handleDuyetHopDong}
+              onXemHopDong={handleXemHopDong}
+              onSetChatTarget={onSetChatTarget}
+              onXemHoSo={handleXemHoSoKhach}
+              onRefresh={fetchData}
+            />
+          )}
+
+          {!loading && landlordTab === 'DIEN_NUOC' && (
+            <UtilityTab
+              hopDongs={hopDongs}
+              onMoChotSo={handleMoChotSo}
+            />
+          )}
+
+          {!loading && landlordTab === 'HOA_DON' && (
+            <InvoiceTab
+              hoaDons={hoaDons}
+              onCapNhatSo={handleMoCapNhatSo}
+            />
+          )}
+
+          {!loading && landlordTab === 'THONG_BAO' && (
+            <NoticeTab
+              thongBaos={thongBaos}
+              tieuDeTB={tieuDeTB} setTieuDeTB={setTieuDeTB}
+              noiDungTB={noiDungTB} setNoiDungTB={setNoiDungTB}
+              isSubmitting={isSubmitting}
+              onDangThongBao={handleDangThongBao}
+            />
+          )}
+
+          {!loading && landlordTab === 'LIEN_HE' && (
+            <TenantListTab
+              hopDongs={hopDongs}
+              onSetChatTarget={onSetChatTarget}
+              unreadSenderIds={unreadSenderIds}
+            />
+          )}
+
+          {!loading && landlordTab === 'HO_SO' && (
+            <div className="l-card">
+              <HoSoForm user={currentUser} />
+            </div>
+          )}
+          <Footer />
+        </div> {/* Close dashboard-content */}
+
+        {/* === Modals === */}
+        <RoomDetailModal
+          phongChiTiet={phongChiTiet}
+          hoSoKhachThue={hoSoKhachThue}
+          onClose={() => setPhongChiTiet(null)}
+          onDoiTrangThai={handleDoiTrangThaiPhong}
           onSetChatTarget={onSetChatTarget}
-          onXemHoSo={handleXemHoSoKhach}
-          onRefresh={fetchData}
         />
-      )}
 
-      {!loading && landlordTab === 'DIEN_NUOC' && (
-        <UtilityTab
-          hopDongs={hopDongs}
-          onMoChotSo={handleMoChotSo}
-        />
-      )}
-
-      {!loading && landlordTab === 'HOA_DON' && (
-        <InvoiceTab
-          hoaDons={hoaDons}
-          onCapNhatSo={handleMoCapNhatSo}
-        />
-      )}
-
-      {!loading && landlordTab === 'THONG_BAO' && (
-        <NoticeTab
-          thongBaos={thongBaos}
-          tieuDeTB={tieuDeTB} setTieuDeTB={setTieuDeTB}
-          noiDungTB={noiDungTB} setNoiDungTB={setNoiDungTB}
+        <UtilityModal
+          dienNuocForm={dienNuocForm}
+          formDN={formDN}
+          setFormDN={setFormDN}
+          lichSuChiSo={lichSuChiSo}
           isSubmitting={isSubmitting}
-          onDangThongBao={handleDangThongBao}
+          onSubmit={handleChotDienNuoc}
+          onClose={() => setDienNuocForm(null)}
         />
-      )}
 
-      {!loading && landlordTab === 'LIEN_HE' && (
-        <TenantListTab
-          hopDongs={hopDongs}
-          onSetChatTarget={onSetChatTarget}
-          unreadSenderIds={unreadSenderIds}
+
+
+        <ContractModal
+          isOpen={!!previewContract}
+          onClose={() => setPreviewContract(null)}
+          phong={previewContract?.phongTro}
+          chuTroInfo={landlordProfile || { hoTen: currentUser.username }}
+          khachThueInfo={previewContract?.hoSoKhachHang}
+          onConfirm={previewContract?.trangThai === 'CHO_DUYET' ? handleDuyetTuModal : null}
+          confirmText={t('guest.approve_contract')}
+          isProcessing={isSubmitting}
+          role="LANDLORD"
+          hopDong={previewContract}
         />
-      )}
 
-      {!loading && landlordTab === 'HO_SO' && (
-        <div className="l-card">
-          <HoSoForm user={currentUser} />
-        </div>
-      )}
-      <Footer />
-      </div> {/* Close dashboard-content */}
-
-      {/* === Modals === */}
-      <RoomDetailModal
-        phongChiTiet={phongChiTiet}
-        hoSoKhachThue={hoSoKhachThue}
-        onClose={() => setPhongChiTiet(null)}
-        onDoiTrangThai={handleDoiTrangThaiPhong}
-        onSetChatTarget={onSetChatTarget}
-      />
-
-      <UtilityModal
-        dienNuocForm={dienNuocForm}
-        formDN={formDN}
-        setFormDN={setFormDN}
-        lichSuChiSo={lichSuChiSo}
-        isSubmitting={isSubmitting}
-        onSubmit={handleChotDienNuoc}
-        onClose={() => setDienNuocForm(null)}
-      />
-
-
-
-      <ContractModal
-        isOpen={!!previewContract}
-        onClose={() => setPreviewContract(null)}
-        phong={previewContract?.phongTro}
-        chuTroInfo={landlordProfile || { hoTen: currentUser.username }}
-        khachThueInfo={previewContract?.hoSoKhachHang}
-        onConfirm={previewContract?.trangThai === 'CHO_DUYET' ? handleDuyetTuModal : null}
-        confirmText={t('guest.approve_contract')}
-        isProcessing={isSubmitting}
-        role="LANDLORD"
-        hopDong={previewContract}
-      />
-
-      <ConfirmModal
-        {...confirmState}
-        onClose={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
-      />
-    </div>
+        <ConfirmModal
+          {...confirmState}
+          onClose={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
+        />
+      </div>
     </>
   );
 }

@@ -22,7 +22,7 @@ function ChatBox({ currentUser, targetUser, isOpen, onClose, onOpenChat, unreadS
   const [input, setInput] = useState('');
   const [isConnected, setIsConnected] = useState(false);
   const [activeToast, setActiveToast] = useState(null);
-  
+
   const stompClientRef = useRef(null);
   const messagesEndRef = useRef(null);
   const isOpenRef = useRef(isOpen);
@@ -60,9 +60,28 @@ function ChatBox({ currentUser, targetUser, isOpen, onClose, onOpenChat, unreadS
         setIsConnected(true);
         client.subscribe(`/topic/chat/${currentUser.id}`, async (msg) => {
           const newMsg = JSON.parse(msg.body);
-          
+
           // Ignore echo messages sent by currentUser
           if (newMsg.nguoiGuiId === currentUser.id) return;
+
+          // Check if message is a system message notifying contract changes
+          let isSystemMessage = false;
+          if (newMsg.noiDung.startsWith('[SYSTEM_CONTRACT_CANCELLED]') ||
+              newMsg.noiDung.startsWith('[SYSTEM_CONTRACT_APPROVED]') ||
+              newMsg.noiDung.startsWith('[SYSTEM_CONTRACT_REJECTED]')) {
+            isSystemMessage = true;
+            // Dispatch event to reload UI contract data immediately
+            window.dispatchEvent(new Event('refresh-contract-data'));
+          }
+
+          // Clean message content for UI display
+          const displayContent = newMsg.noiDung
+            .replace('[SYSTEM_CONTRACT_CANCELLED] ', '')
+            .replace('[SYSTEM_CONTRACT_APPROVED] ', '')
+            .replace('[SYSTEM_CONTRACT_REJECTED] ', '')
+            .replace('[SYSTEM_CONTRACT_CANCELLED]', '')
+            .replace('[SYSTEM_CONTRACT_APPROVED]', '')
+            .replace('[SYSTEM_CONTRACT_REJECTED]', '');
 
           // Check if chat is open with this specific sender
           const isChatOpenWithSender = isOpenRef.current && targetUserRef.current && String(targetUserRef.current.id) === String(newMsg.nguoiGuiId);
@@ -118,7 +137,7 @@ function ChatBox({ currentUser, targetUser, isOpen, onClose, onOpenChat, unreadS
             setActiveToast({
               senderId: newMsg.nguoiGuiId,
               senderName,
-              messageText: newMsg.noiDung,
+              messageText: isSystemMessage ? `📢 ${displayContent}` : displayContent,
             });
           }
         });
@@ -131,7 +150,19 @@ function ChatBox({ currentUser, targetUser, isOpen, onClose, onOpenChat, unreadS
     client.activate();
     stompClientRef.current = client;
 
+    // Listen for custom event to send system messages from other components
+    const handleSystemMessage = (e) => {
+      if (client && client.connected) {
+        client.publish({
+          destination: '/app/chat.send',
+          body: JSON.stringify(e.detail)
+        });
+      }
+    };
+    window.addEventListener('send-system-message', handleSystemMessage);
+
     return () => {
+      window.removeEventListener('send-system-message', handleSystemMessage);
       client.deactivate();
       setIsConnected(false);
     };
@@ -237,7 +268,7 @@ function ChatBox({ currentUser, targetUser, isOpen, onClose, onOpenChat, unreadS
               to { transform: translateX(0); opacity: 1; }
             }
           `}</style>
-          
+
           <div style={{
             fontSize: '16px',
             background: 'var(--accent-light)',
@@ -248,7 +279,7 @@ function ChatBox({ currentUser, targetUser, isOpen, onClose, onOpenChat, unreadS
             justifyContent: 'center',
             color: 'var(--accent)'
           }}>💬</div>
-          
+
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '3px' }}>
               {activeToast.senderName}
@@ -257,7 +288,7 @@ function ChatBox({ currentUser, targetUser, isOpen, onClose, onOpenChat, unreadS
               {activeToast.messageText}
             </div>
           </div>
-          
+
           <button
             type="button"
             onClick={(e) => {
@@ -324,6 +355,38 @@ function ChatBox({ currentUser, targetUser, isOpen, onClose, onOpenChat, unreadS
               </div>
             )}
             {messages.map((msg, index) => {
+              const isSystem = msg.noiDung.startsWith('[SYSTEM_CONTRACT_CANCELLED]') ||
+                               msg.noiDung.startsWith('[SYSTEM_CONTRACT_APPROVED]') ||
+                               msg.noiDung.startsWith('[SYSTEM_CONTRACT_REJECTED]');
+                               
+              const cleanContent = msg.noiDung
+                .replace('[SYSTEM_CONTRACT_CANCELLED] ', '')
+                .replace('[SYSTEM_CONTRACT_APPROVED] ', '')
+                .replace('[SYSTEM_CONTRACT_REJECTED] ', '')
+                .replace('[SYSTEM_CONTRACT_CANCELLED]', '')
+                .replace('[SYSTEM_CONTRACT_APPROVED]', '')
+                .replace('[SYSTEM_CONTRACT_REJECTED]', '');
+
+              if (isSystem) {
+                return (
+                  <div key={msg.id || index} style={{
+                    alignSelf: 'center',
+                    margin: '8px 0',
+                    fontSize: '11px',
+                    color: 'var(--text-secondary)',
+                    textAlign: 'center',
+                    background: 'var(--accent-light)',
+                    padding: '6px 14px',
+                    borderRadius: '999px',
+                    maxWidth: '90%',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+                    animation: 'fadeIn 0.15s ease',
+                  }}>
+                    📢 {cleanContent}
+                  </div>
+                );
+              }
+
               const isMe = msg.nguoiGuiId === currentUser.id;
               return (
                 <div key={msg.id || index} style={{
@@ -341,7 +404,7 @@ function ChatBox({ currentUser, targetUser, isOpen, onClose, onOpenChat, unreadS
                     fontSize: '13px', lineHeight: 1.5,
                     border: isMe ? 'none' : '1px solid var(--border)',
                   }}>
-                    {msg.noiDung}
+                    {cleanContent}
                   </div>
                   <div style={{
                     fontSize: '10px',

@@ -135,12 +135,40 @@ function AppContent() {
 
     setIsCanceling(true);
     const id = hopDongCuaToi.id;
+    const landlordId = hopDongCuaToi.phongTro?.chuTroId ?? hopDongCuaToi.phongTro?.chuTro?.id;
+    const roomName = hopDongCuaToi.phongTro?.tenPhong || '';
+
     try {
-      // Attempt to hit the cancel request endpoint.
-      // Note: If contract is still in CHO_DUYET, backend may reject with 400.
-      await api.put(`/hop-dong/${id}/khach-huy`);
+      if (hopDongCuaToi.trangThai === 'CHO_DUYET') {
+        // Hủy phía frontend: Gửi tin nhắn hệ thống qua WebSocket/Chat để lưu vào DB chat log
+        if (landlordId) {
+          const customEvent = new CustomEvent('send-system-message', {
+            detail: {
+              nguoiGuiId: user.id,
+              nguoiNhanId: landlordId,
+              noiDung: `[SYSTEM_CONTRACT_CANCELLED] Khách thuê ${user.username || 'ẩn danh'} đã hủy yêu cầu thuê phòng ${roomName} (ID: ${id})`,
+              thoiGian: new Date().toISOString()
+            }
+          });
+          window.dispatchEvent(customEvent);
+        }
+      } else {
+        // Đối với hợp đồng đã duyệt: Gọi API hủy hợp đồng
+        await api.put(`/hop-dong/${id}/khach-huy`);
+        if (landlordId) {
+          const customEvent = new CustomEvent('send-system-message', {
+            detail: {
+              nguoiGuiId: user.id,
+              nguoiNhanId: landlordId,
+              noiDung: `[SYSTEM_CONTRACT_CANCELLED] Khách thuê ${user.username || 'ẩn danh'} đã yêu cầu hủy hợp đồng phòng ${roomName} (ID: ${id})`,
+              thoiGian: new Date().toISOString()
+            }
+          });
+          window.dispatchEvent(customEvent);
+        }
+      }
     } catch (err) {
-      console.warn("Backend cancellation rejected (expected for pending status). Proceeding with frontend-only bypass:", err);
+      console.error("Lỗi khi gửi yêu cầu hủy hợp đồng lên backend:", err);
     } finally {
       // Store canceled pending contract ID in localStorage so the client filters it out
       const canceledIds = JSON.parse(localStorage.getItem('canceled_pending_contracts') || '[]');
@@ -160,7 +188,16 @@ function AppContent() {
     if (!user?.id) return;
     kiemTraHopDong(false);
     const interval = setInterval(() => kiemTraHopDong(true), 10000);
-    return () => clearInterval(interval);
+
+    const handleRefresh = () => {
+      kiemTraHopDong(true);
+    };
+    window.addEventListener('refresh-contract-data', handleRefresh);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('refresh-contract-data', handleRefresh);
+    };
   }, [user?.id]);
 
   const handleOpenChat = () => {
@@ -178,7 +215,7 @@ function AppContent() {
   const isDashboard = user && (
     normalizedRole === ROLES.ADMIN || 
     normalizedRole === ROLES.LANDLORD || 
-    (normalizedRole === ROLES.USER && tenantViewVal !== 'MARKET' && hopDongCuaToi)
+    (normalizedRole === ROLES.USER && tenantViewVal !== 'MARKET' && hopDongCuaToi && (hopDongCuaToi.trangThai === 'DA_DUYET' || hopDongCuaToi.trangThai === 'YEU_CAU_HUY'))
   );
 
   const renderContent = () => {
