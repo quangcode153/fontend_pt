@@ -109,15 +109,7 @@ export default function HomePage() {
           </div>
 
           <div className="hero__image-wrap">
-            <div className="hero__float-card hero__float-card--tl">
-              <div className="hero__float-value">🟢 24</div>
-              <div className="hero__float-label">{t('home.float_empty_rooms')}</div>
-            </div>
             <img src={heroImg} alt="Apartment illustration" className="hero__image" />
-            <div className="hero__float-card hero__float-card--br">
-              <div className="hero__float-value">💰 +12%</div>
-              <div className="hero__float-label">{t('home.float_revenue_growth')}</div>
-            </div>
           </div>
         </section>
       </div>
@@ -256,18 +248,13 @@ export default function HomePage() {
               <ul className="home-footer__list">
                 <li className="home-footer__contact-item">{t('footer.contact_address')}</li>
                 <li className="home-footer__contact-item">{t('footer.contact_hotline')}</li>
-                <li className="home-footer__contact-item">✉️ Email: contact@smartrental.vn</li>
-                <li className="home-footer__contact-item">{t('footer.contact_version')}</li>
+                <li className="home-footer__contact-item">✉️ Email: quang1532006@gmail.com</li>
               </ul>
             </div>
           </div>
 
-          <div className="home-footer__bottom">
-            <div className="home-footer__copy">{t('home.footer_copy') || '© 2026 Smart Room Rental.'}</div>
-            <div className="home-footer__links">
-              <Link to="/login" className="home-footer__link">{t('home.footer_login')}</Link>
-              <Link to="/login?mode=register" className="home-footer__link">{t('home.footer_register')}</Link>
-            </div>
+          <div className="home-footer__bottom" style={{ display: 'flex', justifyContent: 'center', width: '100%', textAlign: 'center' }}>
+            <div className="home-footer__copy" style={{ textAlign: 'center', width: '100%' }}>{t('home.footer_copy') || '© 2026 Quản Lý Trọ. Made with ❤️ in Vietnam.'}</div>
           </div>
         </footer>
       </div>

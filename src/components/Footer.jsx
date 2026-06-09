@@ -20,26 +20,14 @@ export default function Footer() {
           <div className="app-footer__title">{t('footer.col_vip')}</div>
           <div className="app-footer__desc">
             {t('footer.contact_hotline_fast')}<br/>
-            ✉️ Email: vip.support@smartrental.vn
-          </div>
-        </div>
-
-        {/* Column 3: Status Badges */}
-        <div className="app-footer__col">
-          <div className="app-footer__title">{t('footer.col_status')}</div>
-          <div className="app-footer__badges" style={{ marginTop: '4px' }}>
-            <span className="app-footer__badge">🛡️ Session Secure</span>
-            <span className="app-footer__badge" style={{ backgroundColor: 'var(--success-light)', color: 'var(--success)', borderColor: '#BBF7D0' }}>🟢 API Connected</span>
+            ✉️ Email: quang1532006@gmail.com
           </div>
         </div>
       </div>
 
-      <div className="app-footer__bottom">
-        <span className="app-footer__copy">
-          {t('home.footer_copy') || '© 2026 Smart Room Rental.'}
-        </span>
-        <span className="app-footer__version" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-          Premium Dashboard v2.2.0
+      <div className="app-footer__bottom" style={{ display: 'flex', justifyContent: 'center', width: '100%', textAlign: 'center' }}>
+        <span className="app-footer__copy" style={{ textAlign: 'center', width: '100%' }}>
+          {t('home.footer_copy') || '© 2026 Quản Lý Trọ. Made with ❤️ in Vietnam.'}
         </span>
       </div>
     </footer>

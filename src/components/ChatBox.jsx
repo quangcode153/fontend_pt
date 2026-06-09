@@ -64,6 +64,21 @@ function ChatBox({ currentUser, targetUser, isOpen, onClose, onOpenChat, unreadS
           // Ignore echo messages sent by currentUser
           if (newMsg.nguoiGuiId === currentUser.id) return;
 
+          // Lưu thông tin liên hệ cho Tenant khi nhận tin nhắn
+          if (currentUser?.role === 'ROLE_USER') {
+            try {
+              const key = `tenant_chat_contacts_${currentUser.id}`;
+              const savedIds = JSON.parse(localStorage.getItem(key) || '[]');
+              const senderIdNum = Number(newMsg.nguoiGuiId);
+              if (senderIdNum && !savedIds.includes(senderIdNum) && senderIdNum !== 3) {
+                savedIds.push(senderIdNum);
+                localStorage.setItem(key, JSON.stringify(savedIds));
+              }
+            } catch (err) {
+              console.error("Lỗi lưu liên hệ khi nhận tin nhắn:", err);
+            }
+          }
+
           // Check if message is a system message notifying contract changes
           let isSystemMessage = false;
           if (newMsg.noiDung.startsWith('[SYSTEM_CONTRACT_CANCELLED]') ||
@@ -216,6 +231,21 @@ function ChatBox({ currentUser, targetUser, isOpen, onClose, onOpenChat, unreadS
         noiDung: input,
         thoiGian: new Date().toISOString()
       };
+
+      // Tự động lưu thông tin liên hệ cho Tenant
+      if (currentUser?.role === 'ROLE_USER') {
+        try {
+          const key = `tenant_chat_contacts_${currentUser.id}`;
+          const savedIds = JSON.parse(localStorage.getItem(key) || '[]');
+          const targetIdNum = Number(targetUser.id);
+          if (targetIdNum && !savedIds.includes(targetIdNum) && targetIdNum !== 3) {
+            savedIds.push(targetIdNum);
+            localStorage.setItem(key, JSON.stringify(savedIds));
+          }
+        } catch (err) {
+          console.error("Lỗi lưu liên hệ vào localStorage:", err);
+        }
+      }
 
       setMessages(prev => [...prev, { ...msg, isOptimistic: true }]);
       stompClientRef.current.publish({

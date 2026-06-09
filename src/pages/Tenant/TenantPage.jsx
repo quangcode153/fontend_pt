@@ -986,6 +986,19 @@ export default function TenantPage({ currentUser, hopDongCuaToi, onBrowseRooms, 
             )}
           </div>
         )}
+
+        {cuDanTab === 'LIEN_HE' && (
+          <div className="premium-card" style={{ animation: 'fadeIn 0.3s ease' }}>
+            <TenantContactTab
+              currentUser={currentUser}
+              hopDongCuaToi={hopDongCuaToi}
+              adminContact={adminContact}
+              onSetChatTarget={onSetChatTarget}
+              unreadSenderIds={unreadSenderIds}
+            />
+          </div>
+        )}
+
         <Footer />
       </div>
 

@@ -181,7 +181,7 @@ export default function RoomDetailModalForGuest({
               style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}
               onClick={() => onChat({ id: phong.chuTroId, username: displayName })}
             >
-              💬 {t('guest.btn_chat')}
+              {t('guest.btn_chat')}
             </button>
           </div>
         </div>

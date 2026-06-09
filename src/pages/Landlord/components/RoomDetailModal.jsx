@@ -142,7 +142,7 @@ export default function RoomDetailModal({
                     onClose();
                   }}
                 >
-                  💬 {t('landlord.btn_chat')}
+                  {t('landlord.btn_chat')}
                 </button>
               </div>
 

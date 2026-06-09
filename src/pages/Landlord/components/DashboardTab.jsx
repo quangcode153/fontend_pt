@@ -78,7 +78,6 @@ export default function DashboardTab({
   if (!thongKeData) {
     return (
       <div className="l-empty" style={{ padding: '60px 0' }}>
-        <div style={{ fontSize: '40px', marginBottom: '16px' }}>📊</div>
         <div className="l-empty__text">{t('landlord.no_stats_data') || 'Chưa có dữ liệu thống kê.'}</div>
       </div>
     );
@@ -155,11 +154,77 @@ export default function DashboardTab({
   // Tạo danh sách hoạt động thực tế
   const getActivities = () => {
     const list = [];
+
+    // 1. Hóa đơn (Đã thanh toán / Chốt số)
+    if (Array.isArray(hoaDons)) {
+      hoaDons.forEach(hd => {
+        const roomName = hd.phongTro?.tenPhong || 'Phòng';
+        if (hd.trangThai === 'DA_THANH_TOAN' || hd.trangThai === 'DA_THAI_TOAN') {
+          list.push({
+            id: hd.id * 10 + 1,
+            icon: "💰",
+            text: t('landlord.log_bill_paid', { room: roomName, month: hd.thang }),
+            time: `${t('landlord.month')} ${hd.thang}/${hd.nam}`
+          });
+        } else {
+          list.push({
+            id: hd.id * 10 + 2,
+            icon: "⚡",
+            text: t('landlord.log_utility_recorded', { room: roomName }),
+            time: `${t('landlord.month')} ${hd.thang}/${hd.nam}`
+          });
+        }
+      });
+    }
+
+    // 2. Hợp đồng
+    if (Array.isArray(hopDongs)) {
+      hopDongs.forEach(hd => {
+        const roomName = hd.phongTro?.tenPhong || 'Phòng';
+        if (hd.trangThai === 'CHO_DUYET') {
+          list.push({
+            id: hd.id * 10 + 3,
+            icon: "📋",
+            text: t('landlord.log_new_contract', { room: roomName }),
+            time: hd.ngayBatDau ? `${t('landlord.since')} ${hd.ngayBatDau}` : ''
+          });
+        } else if (hd.trangThai === 'DA_DUYET') {
+          list.push({
+            id: hd.id * 10 + 4,
+            icon: "🤝",
+            text: t('landlord.log_new_contract_approved', { room: roomName }),
+            time: hd.ngayBatDau ? `${t('landlord.since')} ${hd.ngayBatDau}` : ''
+          });
+        } else if (hd.trangThai === 'YEU_CAU_HUY') {
+          list.push({
+            id: hd.id * 10 + 5,
+            icon: "⚠️",
+            text: t('landlord.log_contract_canceling', { room: roomName }),
+            time: ''
+          });
+        }
+      });
+    }
+
+    // 3. Thông báo
+    if (Array.isArray(thongBaos)) {
+      thongBaos.forEach(tb => {
+        const dateStr = tb.ngayDang ? new Date(tb.ngayDang).toLocaleDateString(i18n.language === 'vi' ? 'vi-VN' : 'en-US') : '';
+        list.push({
+          id: tb.id * 10 + 6,
+          icon: "📣",
+          text: `${t('landlord.log_new_notice')}: ${tb.tieuDe}`,
+          time: dateStr
+        });
+      });
+    }
+
+    // 4. Nếu là Admin, thêm đăng ký tài khoản mới và khiếu nại nhận được
     if (isAdmin) {
       if (Array.isArray(chuTros)) {
         chuTros.forEach(ct => {
           list.push({
-            id: ct.id * 10 + 1,
+            id: ct.id * 10 + 7,
             icon: "👥",
             text: t('landlord.log_user_registered', { username: ct.hoTen || ct.username }),
             time: t('landlord.recently')
@@ -170,68 +235,9 @@ export default function DashboardTab({
         khieuNais.forEach(kn => {
           const dateStr = kn.thoiGianGui ? new Date(kn.thoiGianGui).toLocaleDateString(i18n.language === 'vi' ? 'vi-VN' : 'en-US') : '';
           list.push({
-            id: kn.id * 10 + 2,
+            id: kn.id * 10 + 8,
             icon: "⚠️",
             text: t('landlord.log_complaint_received', { room: kn.phongTro?.tenPhong || kn.tieuDe }),
-            time: dateStr
-          });
-        });
-      }
-    } else {
-      if (Array.isArray(hoaDons)) {
-        hoaDons.forEach(hd => {
-          const roomName = hd.phongTro?.tenPhong || 'Phòng';
-          if (hd.trangThai === 'DA_THANH_TOAN') {
-            list.push({
-              id: hd.id * 10 + 1,
-              icon: "💰",
-              text: t('landlord.log_bill_paid', { room: roomName, month: hd.thang }),
-              time: `${t('landlord.month')} ${hd.thang}/${hd.nam}`
-            });
-          } else {
-            list.push({
-              id: hd.id * 10 + 2,
-              icon: "⚡",
-              text: t('landlord.log_utility_recorded', { room: roomName }),
-              time: `${t('landlord.month')} ${hd.thang}/${hd.nam}`
-            });
-          }
-        });
-      }
-      if (Array.isArray(hopDongs)) {
-        hopDongs.forEach(hd => {
-          const roomName = hd.phongTro?.tenPhong || 'Phòng';
-          if (hd.trangThai === 'CHO_DUYET') {
-            list.push({
-              id: hd.id * 10 + 3,
-              icon: "📋",
-              text: t('landlord.log_new_contract', { room: roomName }),
-              time: hd.ngayBatDau ? `${t('landlord.since')} ${hd.ngayBatDau}` : ''
-            });
-          } else if (hd.trangThai === 'DA_DUYET') {
-            list.push({
-              id: hd.id * 10 + 4,
-              icon: "🤝",
-              text: t('landlord.log_new_contract_approved', { room: roomName }),
-              time: hd.ngayBatDau ? `${t('landlord.since')} ${hd.ngayBatDau}` : ''
-            });
-          } else if (hd.trangThai === 'YEU_CAU_HUY') {
-            list.push({
-              id: hd.id * 10 + 5,
-              icon: "⚠️",
-              text: t('landlord.log_contract_canceling', { room: roomName }),
-              time: ''
-            });
-          }
-        });
-      }
-      if (Array.isArray(thongBaos)) {
-        thongBaos.forEach(tb => {
-          const dateStr = tb.ngayDang ? new Date(tb.ngayDang).toLocaleDateString(i18n.language === 'vi' ? 'vi-VN' : 'en-US') : '';
-          list.push({
-            id: tb.id * 10 + 6,
-            icon: "📣",
-            text: `${t('landlord.log_new_notice')}: ${tb.tieuDe}`,
             time: dateStr
           });
         });
@@ -253,7 +259,7 @@ export default function DashboardTab({
             background: '#fff', color: '#107C41', cursor: 'pointer',
             fontSize: '13px', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '8px'
           }}>
-          Excel 📊
+          Excel
         </button>
         <button 
           onClick={handlePrintReport}
@@ -262,7 +268,7 @@ export default function DashboardTab({
             background: 'var(--accent)', color: '#fff', cursor: 'pointer',
             fontSize: '13px', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '8px'
           }}>
-          🖨️ {t('landlord.btn_print')}
+          {t('landlord.btn_print')}
         </button>
       </div>
 
@@ -309,7 +315,6 @@ export default function DashboardTab({
       {/* === 3 Stat Cards === */}
       <div className="l-stats-grid">
         <div className="l-stat-card l-stat-card--revenue">
-          <span className="l-stat-card__icon">💰</span>
           <div className="l-stat-card__label">{t('landlord.revenue_this_month')}</div>
           <div className="l-stat-card__value">
             {(thongKeData.tongDoanhThuThangNay || 0).toLocaleString()}
@@ -322,7 +327,6 @@ export default function DashboardTab({
         </div>
 
         <div className="l-stat-card l-stat-card--occupancy">
-          <span className="l-stat-card__icon">🏠</span>
           <div className="l-stat-card__label">{t('landlord.occupancy_rate')}</div>
           <div className="l-stat-card__value">{occupancyRate}%</div>
           <div className="l-stat-card__sub">
@@ -331,7 +335,6 @@ export default function DashboardTab({
         </div>
 
         <div className="l-stat-card l-stat-card--debt">
-          <span className="l-stat-card__icon">⚠️</span>
           <div className="l-stat-card__label">{t('landlord.debt')}</div>
           <div className="l-stat-card__value" style={{ color: 'var(--warning)' }}>
             {(thongKeData.tongTienChuaThanhToan || 0).toLocaleString()}
@@ -354,7 +357,7 @@ export default function DashboardTab({
 
         {/* === Biểu đồ doanh thu === */}
         <div className="l-chart-card" style={{ height: '100%', marginBottom: 0 }}>
-          <div className="l-chart-card__title">📈 {t('landlord.revenue_chart')}</div>
+          <div className="l-chart-card__title">{t('landlord.revenue_chart')}</div>
           <div className="l-chart-bars">
             {thongKeData.bieuDoDoanhThu?.map((d, i) => {
               const height = maxDT > 0 ? (d.doanhThu / maxDT) * 100 : 0;
@@ -378,7 +381,7 @@ export default function DashboardTab({
 
         {/* === Bảng dữ liệu chi tiết === */}
         <div className="l-report-sheet" style={{ height: '100%', marginBottom: 0 }}>
-          <div className="l-chart-card__title">📄 {t('landlord.tab_report')} {t('landlord.recently').toLowerCase()}</div>
+          <div className="l-chart-card__title">{t('landlord.tab_report')} {t('landlord.recently').toLowerCase()}</div>
           <table style={{
             width: '100%', borderCollapse: 'collapse', marginTop: '10px',
             fontSize: '13px', border: '1px solid #ddd'
@@ -448,144 +451,111 @@ export default function DashboardTab({
           }
         `}</style>
 
-        {/* --- CỘT TRÁI: QUẢN LÝ THANH TOÁN (LANDLORD) HOẶC HÀNH ĐỘNG NHANH (ADMIN) --- */}
-        {!isAdmin ? (
-          <div className="l-report-sheet" style={{ height: '100%', marginBottom: 0, display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-              <div className="l-chart-card__title" style={{ marginBottom: 0 }}>🧾 {t('landlord.payment_status_manager')}</div>
-              {/* Tabs Lọc */}
-              <div style={{ display: 'flex', gap: '4px', background: 'var(--border-light)', padding: '2px', borderRadius: 'var(--radius-md)' }}>
-                {['ALL', 'UNPAID', 'PAID'].map(filter => (
-                  <button
-                    key={filter}
-                    onClick={() => setPaymentFilter(filter)}
-                    style={{
-                      padding: '4px 10px',
-                      border: 'none',
-                      borderRadius: 'var(--radius-sm)',
-                      fontSize: '11px',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      background: paymentFilter === filter ? 'var(--text-primary)' : 'transparent',
-                      color: paymentFilter === filter ? '#fff' : 'var(--text-secondary)',
-                      transition: 'all 0.2s',
-                    }}
-                  >
-                    {t(`landlord.filter_${filter.toLowerCase()}`)}
-                  </button>
-                ))}
-              </div>
+        {/* --- CỘT TRÁI: QUẢN LÝ THANH TOÁN --- */}
+        <div className="l-report-sheet" style={{ height: '100%', marginBottom: 0, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+            <div className="l-chart-card__title" style={{ marginBottom: 0 }}>{t('landlord.payment_status_manager')}</div>
+            {/* Tabs Lọc */}
+            <div style={{ display: 'flex', gap: '4px', background: 'var(--border-light)', padding: '2px', borderRadius: 'var(--radius-md)' }}>
+              {['ALL', 'UNPAID', 'PAID'].map(filter => (
+                <button
+                  key={filter}
+                  onClick={() => setPaymentFilter(filter)}
+                  style={{
+                    padding: '4px 10px',
+                    border: 'none',
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    background: paymentFilter === filter ? 'var(--text-primary)' : 'transparent',
+                    color: paymentFilter === filter ? '#fff' : 'var(--text-secondary)',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  {t(`landlord.filter_${filter.toLowerCase()}`)}
+                </button>
+              ))}
             </div>
+          </div>
 
-            {/* Danh sách phòng/hóa đơn cuộn được */}
-            <div style={{ flex: 1, overflowY: 'auto', marginTop: '16px', maxHeight: '280px', paddingRight: '4px' }}>
-              {filteredInvoices().length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '32px 16px', color: 'var(--text-muted)', fontSize: '13px' }}>
-                  {t('landlord.no_invoices_for_filter')}
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {filteredInvoices().map((hd) => {
-                    const isPaid = hd.trangThai === 'DA_THANH_TOAN';
-                    const tenantName = hd.khachHang?.khachHang?.hoTen || hd.khachHang?.username || '—';
-                    return (
-                      <div
-                        key={hd.id}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          padding: '12px 14px',
-                          background: 'var(--bg)',
-                          border: `1px solid ${isPaid ? 'var(--border-light)' : 'var(--danger-light)'}`,
-                          borderLeft: `3px solid ${isPaid ? 'var(--success)' : 'var(--danger)'}`,
-                          borderRadius: 'var(--radius-md)',
-                          fontSize: '13px',
-                          gap: '12px',
-                        }}
-                      >
-                        <div style={{ minWidth: 0, flex: 1 }}>
-                          <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
-                            🏠 {hd.phongTro?.tenPhong}
-                          </div>
-                          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                            {tenantName} · {t('landlord.month')} {hd.thang}/{hd.nam}
-                          </div>
+          {/* Danh sách phòng/hóa đơn cuộn được */}
+          <div style={{ flex: 1, overflowY: 'auto', marginTop: '16px', maxHeight: '280px', paddingRight: '4px' }}>
+            {filteredInvoices().length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '32px 16px', color: 'var(--text-muted)', fontSize: '13px' }}>
+                {t('landlord.no_invoices_for_filter')}
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {filteredInvoices().map((hd) => {
+                  const isPaid = hd.trangThai === 'DA_THANH_TOAN';
+                  const tenantName = hd.khachHang?.khachHang?.hoTen || hd.khachHang?.username || '—';
+                  return (
+                    <div
+                      key={hd.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '12px 14px',
+                        background: 'var(--bg)',
+                        border: `1px solid ${isPaid ? 'var(--border-light)' : 'var(--danger-light)'}`,
+                        borderLeft: `3px solid ${isPaid ? 'var(--success)' : 'var(--danger)'}`,
+                        borderRadius: 'var(--radius-md)',
+                        fontSize: '13px',
+                        gap: '12px',
+                      }}
+                    >
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                          {hd.phongTro?.tenPhong}
                         </div>
-
-                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                          <div style={{ fontWeight: 700, color: 'var(--accent)' }}>
-                            {hd.tongTien?.toLocaleString()}đ
-                          </div>
-                          <div style={{ marginTop: '4px' }}>
-                            {isPaid ? (
-                              <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--success)', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
-                                ✓ {t('landlord.status_paid')}
-                              </span>
-                            ) : (
-                              <button
-                                onClick={() => handleRemindTenant(hd)}
-                                className="remind-btn"
-                                style={{
-                                  padding: '3px 8px',
-                                  fontSize: '11px',
-                                  fontWeight: 600,
-                                  border: 'none',
-                                  borderRadius: 'var(--radius-sm)',
-                                  background: 'var(--danger-light)',
-                                  color: 'var(--danger)',
-                                  cursor: 'pointer',
-                                  transition: 'all 0.2s',
-                                }}
-                              >
-                                🔔 {t('landlord.btn_remind')}
-                              </button>
-                            )}
-                          </div>
+                        <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                          {tenantName} · {t('landlord.month')} {hd.thang}/{hd.nam}
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+
+                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                        <div style={{ fontWeight: 700, color: 'var(--accent)' }}>
+                          {hd.tongTien?.toLocaleString()}đ
+                        </div>
+                        <div style={{ marginTop: '4px' }}>
+                          {isPaid ? (
+                            <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--success)', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                              {t('landlord.status_paid')}
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => handleRemindTenant(hd)}
+                              className="remind-btn"
+                              style={{
+                                padding: '3px 8px',
+                                fontSize: '11px',
+                                fontWeight: 600,
+                                border: 'none',
+                                borderRadius: 'var(--radius-sm)',
+                                background: 'var(--danger-light)',
+                                color: 'var(--danger)',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                              }}
+                            >
+                              {t('landlord.btn_remind')}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="l-report-sheet" style={{ height: '100%', marginBottom: 0 }}>
-            <div className="l-chart-card__title">⚡ {t('landlord.quick_actions')}</div>
-            <div className="quick-actions-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginTop: '16px' }}>
-              <div className="quick-action-item" onClick={() => {
-                const el = document.querySelector('[class*="dashboard-sidebar"] button:nth-child(1)');
-                if (el) el.click();
-              }}>
-                <span style={qaIconStyle}>👥</span>
-                <div style={qaTitleStyle}>{t('landlord.action_manage_users')}</div>
-              </div>
-              <div className="quick-action-item" onClick={() => {
-                const el = document.querySelector('[class*="dashboard-sidebar"] button:nth-child(3)');
-                if (el) el.click();
-              }}>
-                <span style={qaIconStyle}>🏨</span>
-                <div style={qaTitleStyle}>{t('landlord.manage_room')}</div>
-              </div>
-              <div className="quick-action-item" onClick={() => {
-                const el = document.querySelector('[class*="dashboard-sidebar"] button:nth-child(4)');
-                if (el) el.click();
-              }}>
-                <span style={qaIconStyle}>⚠️</span>
-                <div style={qaTitleStyle}>{t('landlord.action_resolved_complaint')}</div>
-              </div>
-              <div className="quick-action-item" onClick={handlePrintReport}>
-                <span style={qaIconStyle}>🖨️</span>
-                <div style={qaTitleStyle}>{t('landlord.action_export_report')}</div>
-              </div>
-            </div>
-          </div>
-        )}
+        </div>
 
         {/* --- CỘT PHẢI: NHẬT KÝ HOẠT ĐỘNG REAL-TIME --- */}
         <div className="l-report-sheet" style={{ height: '100%', marginBottom: 0 }}>
-          <div className="l-chart-card__title">🕒 {t('landlord.recent_activities')}</div>
+          <div className="l-chart-card__title">{t('landlord.recent_activities')}</div>
           <div className="activity-logs-list" style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
             {getActivities().length === 0 ? (
               <div style={{ textAlign: 'center', padding: '32px 16px', color: 'var(--text-muted)', fontSize: '13px' }}>
@@ -598,7 +568,6 @@ export default function DashboardTab({
                   background: 'var(--bg)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)',
                   fontSize: '13px'
                 }}>
-                  <span style={{ fontSize: '16px' }}>{log.icon}</span>
                   <div style={{ flex: 1 }}>
                     <div style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{log.text}</div>
                     <div style={{ color: 'var(--text-muted)', fontSize: '11px', marginTop: '2px' }}>{log.time}</div>

@@ -8,6 +8,7 @@ import ContractModal from '../../components/ContractModal';
 import ConfirmModal from '../../components/ConfirmModal';
 import useAdminContact from '../../hooks/useAdminContact';
 import ImageSlider from '../../components/ImageSlider';
+import TenantContactTab from '../Tenant/TenantContactTab';
 import './GuestPage.css';
 import RoomDetailModalForGuest from '../../components/RoomDetailModalForGuest';
 
@@ -92,7 +93,10 @@ function GuestPage({
   pendingHopDong,
   onCancelPending,
   isCancelingPending,
-  onOpenChatPending
+  onOpenChatPending,
+  unreadSenderIds = [],
+  setUnreadSenderIds,
+  onSetChatTarget
 }) {
   const { t } = useTranslation();
   if (currentUser?.role !== ROLES.USER) {
@@ -480,7 +484,7 @@ function GuestPage({
                   setChatTarget({ id: phong.chuTroId, username: hostName });
                 }}
               >
-                💬 {t('guest.btn_chat') || 'Nhắn tin'}
+                {t('guest.btn_chat') || 'Nhắn tin'}
               </span>
             </div>
           </div>
@@ -581,12 +585,23 @@ function GuestPage({
         <div style={S.navBar}>
           <button className={`nav-btn ${activeTab === 'TIM_TRO' ? 'nav-btn--active' : ''}`} onClick={() => setActiveTab('TIM_TRO')}>{t('guest.tab_market')}</button>
           <button className={`nav-btn ${activeTab === 'HO_SO' ? 'nav-btn--active' : ''}`} onClick={() => setActiveTab('HO_SO')}>{t('guest.tab_profile')}</button>
+          <button className={`nav-btn ${activeTab === 'LIEN_HE' ? 'nav-btn--active' : ''}`} onClick={() => setActiveTab('LIEN_HE')} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            {t('landlord.tab_contact') || 'Liên hệ'}
+            {unreadSenderIds.length > 0 && (
+              <span className="tenant-nav__badge" style={{
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                width: '18px', height: '18px', borderRadius: '50%',
+                background: 'var(--danger)', color: '#fff', fontSize: '10px',
+                fontWeight: 700
+              }}>{unreadSenderIds.length}</span>
+            )}
+          </button>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <KhieuNaiForm />
           <button
             style={S.btnContact(loadingAdmin || !!adminError)}
-            onClick={() => adminContact && setChatTarget(adminContact)}
+            onClick={() => adminContact && (onSetChatTarget ? onSetChatTarget(adminContact) : setChatTarget(adminContact))}
             disabled={loadingAdmin || !!adminError}
           >
             🎧 {loadingAdmin ? t('guest.btn_connecting') : adminError ? t('guest.btn_offline') : t('guest.btn_chat_admin')}
@@ -595,6 +610,18 @@ function GuestPage({
       </div>
 
       {activeTab === 'HO_SO' && <HoSoForm user={currentUser} />}
+
+      {activeTab === 'LIEN_HE' && (
+        <div className="premium-card" style={{ animation: 'fadeIn 0.3s ease' }}>
+          <TenantContactTab
+            currentUser={currentUser}
+            hopDongCuaToi={pendingHopDong}
+            adminContact={adminContact}
+            onSetChatTarget={onSetChatTarget || setChatTarget}
+            unreadSenderIds={unreadSenderIds}
+          />
+        </div>
+      )}
 
       {activeTab === 'TIM_TRO' && (
         <div style={{ animation: 'fadeIn 0.3s ease' }}>

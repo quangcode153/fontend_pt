@@ -67,7 +67,7 @@ function WaitingScreen({ hopDong, onOpenChat, onCancel, isCanceling }) {
             fontSize: '13px', fontWeight: 600, transition: 'opacity var(--transition)',
           }}
         >
-          💬 {t('guest.btn_chat')}
+          {t('guest.btn_chat')}
         </button>
         <button
           onClick={onCancel}
@@ -302,6 +302,9 @@ function AppContent() {
           onCancelPending={handleCancelRequest}
           isCancelingPending={isCanceling}
           onOpenChatPending={handleOpenChat}
+          unreadSenderIds={unreadSenderIds}
+          setUnreadSenderIds={setUnreadSenderIds}
+          onSetChatTarget={setChatTarget}
         />
       );
     }

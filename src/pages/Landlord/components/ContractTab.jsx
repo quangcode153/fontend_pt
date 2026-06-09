@@ -110,7 +110,7 @@ export default function ContractTab({
                 onClick={() => onSetChatTarget({ id: hd.khachHang.id, username: tenKhach })}
                 style={{ fontSize: '12px', padding: '6px 12px' }}
               >
-                💬 {t('landlord.btn_chat')}
+                {t('landlord.btn_chat')}
               </button>
               <button
                 className="l-btn l-btn--success"

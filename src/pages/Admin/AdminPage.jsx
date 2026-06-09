@@ -6,6 +6,7 @@ import QuanLyNguoiDung from '../../components/QuanLyNguoiDung';
 import DashboardTab from '../Landlord/components/DashboardTab';
 import ConfirmModal from '../../components/ConfirmModal';
 import Footer from '../../components/Footer';
+import AdminContactTab from './AdminContactTab';
 import './AdminPage.css';
 
 const ROLES = { ADMIN: 'ROLE_ADMIN' };
@@ -291,11 +292,14 @@ export default function AdminPage({ currentUser, unreadSenderIds = [], setUnread
     if (tt === ROOM_STATUS.EMPTY) return 'green';
     if (tt === ROOM_STATUS.RENTED) return 'red';
     return 'amber';
-  };  const ADMIN_TABS = [
+  };  
+  
+  const ADMIN_TABS = [
     { key: 'USERS', label: t('admin.tab_users'), icon: '👥 ' },
     { key: 'BAO_CAO', label: t('landlord.tab_report'), icon: '📊 ' },
     { key: 'PHONG', label: t('admin.tab_rooms'), icon: '🏨 ' },
     { key: 'KHIEU_NAI', label: t('admin.tab_complaints'), icon: '⚠️ ' },
+    { key: 'LIEN_HE', label: t('landlord.tab_contact') || 'Liên hệ', icon: '💬 ' },
   ];
 
   return (
@@ -410,6 +414,13 @@ export default function AdminPage({ currentUser, unreadSenderIds = [], setUnread
         {loadingInit ? <Spinner text={t('admin.init_loading')} /> : (
           <>
             {adminTab === 'USERS' && <QuanLyNguoiDung />}
+
+            {adminTab === 'LIEN_HE' && (
+              <AdminContactTab
+                onSetChatTarget={onSetChatTarget}
+                unreadSenderIds={unreadSenderIds}
+              />
+            )}
 
             {adminTab === 'BAO_CAO' && (
               <DashboardTab 

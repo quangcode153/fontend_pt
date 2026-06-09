@@ -638,14 +638,14 @@ function LandlordPage({ currentUser, unreadSenderIds = [], setUnreadSenderIds, o
 
   /* ===== TABS CONFIG ===== */
   const TABS = [
-    { key: 'BAO_CAO', label: t('landlord.tab_report'), icon: '📊', onClick: fetchData },
-    { key: 'PHONG', label: t('landlord.tab_room'), icon: '🏠' },
-    { key: 'YEU_CAU', label: t('landlord.tab_request'), icon: '📋', badge: pendingCount, onClick: fetchData },
-    { key: 'DIEN_NUOC', label: t('landlord.tab_bill'), icon: '⚡', onClick: fetchData },
-    { key: 'HOA_DON', label: t('landlord.tab_invoice'), icon: '🧾', onClick: fetchData },
-    { key: 'THONG_BAO', label: t('landlord.tab_notice'), icon: '📣', onClick: fetchThongBao },
-    { key: 'LIEN_HE', label: t('landlord.tab_contact'), icon: '💬', badge: tenantUnreadCount, onClick: fetchData },
-    { key: 'HO_SO', label: t('landlord.tab_profile'), icon: '👤' },
+    { key: 'BAO_CAO', label: t('landlord.tab_report'), icon: '', onClick: fetchData },
+    { key: 'PHONG', label: t('landlord.tab_room'), icon: '' },
+    { key: 'YEU_CAU', label: t('landlord.tab_request'), icon: '', badge: pendingCount, onClick: fetchData },
+    { key: 'DIEN_NUOC', label: t('landlord.tab_bill'), icon: '', onClick: fetchData },
+    { key: 'HOA_DON', label: t('landlord.tab_invoice'), icon: '', onClick: fetchData },
+    { key: 'THONG_BAO', label: t('landlord.tab_notice'), icon: '', onClick: fetchThongBao },
+    { key: 'LIEN_HE', label: t('landlord.tab_contact'), icon: '', badge: tenantUnreadCount, onClick: fetchData },
+    { key: 'HO_SO', label: t('landlord.tab_profile'), icon: '' },
   ];
 
   /* ===== RENDER ===== */
@@ -722,7 +722,7 @@ function LandlordPage({ currentUser, unreadSenderIds = [], setUnreadSenderIds, o
               setIsMobileSidebarOpen(false);
               onLogout();
             }}>
-              🚪 {t('header.logout') || 'Đăng xuất'}
+              {t('header.logout') || 'Đăng xuất'}
             </button>
           </div>
         </div>
@@ -748,7 +748,7 @@ function LandlordPage({ currentUser, unreadSenderIds = [], setUnreadSenderIds, o
                 onClick={() => adminContact && onSetChatTarget(adminContact)}
                 disabled={loadingAdmin || !!adminError}
               >
-                🎧 {loadingAdmin
+                {loadingAdmin
                   ? t('landlord.btn_connecting')
                   : adminError
                     ? t('landlord.btn_offline')
@@ -864,6 +864,7 @@ function LandlordPage({ currentUser, unreadSenderIds = [], setUnreadSenderIds, o
 
           {!loading && landlordTab === 'LIEN_HE' && (
             <TenantListTab
+              currentUser={currentUser}
               hopDongs={hopDongs}
               onSetChatTarget={onSetChatTarget}
               unreadSenderIds={unreadSenderIds}
