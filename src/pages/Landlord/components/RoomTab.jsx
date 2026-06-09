@@ -139,14 +139,19 @@ export default function RoomTab({
             <label className="l-form-label">{t('landlord.price_vnd')}</label>
             <input
               className="l-form-input"
-              type="text"
+              type="number"
               min="0"
-              value={formatThousand(giaPhong)}
-              onChange={e => setGiaPhong(toCleanDigits(e.target.value))}
+              value={giaPhong}
+              onChange={e => setGiaPhong(e.target.value)}
               placeholder={t('landlord.room_price_ph')}
               required
               disabled={isSubmitting}
             />
+            {giaPhong && (
+              <div style={{ fontSize: '11px', color: 'var(--success)', marginTop: '4px', fontWeight: 600 }}>
+                👉 {Number(giaPhong).toLocaleString('vi-VN')} Đ
+              </div>
+            )}
           </div>
           <div className="l-add-room-form__field" style={{ flex: 1 }}>
             <label className="l-form-label">{t('landlord.status')}</label>
@@ -165,46 +170,62 @@ export default function RoomTab({
             <label className="l-form-label">{t('landlord.electric_price')}</label>
             <input 
               className="l-form-input" 
-              type="text" 
+              type="number" 
               min="0"
-              value={formatThousand(giaDien)} 
-              onChange={e => setGiaDien(toCleanDigits(e.target.value))} 
-              placeholder="3,500" 
+              value={giaDien} 
+              onChange={e => setGiaDien(e.target.value)} 
+              placeholder="3500" 
               disabled={isSubmitting} 
             />
+            {giaDien && (
+              <div style={{ fontSize: '11px', color: 'var(--success)', marginTop: '4px', fontWeight: 600 }}>
+                👉 {Number(giaDien).toLocaleString('vi-VN')} Đ
+              </div>
+            )}
           </div>
           <div className="l-add-room-form__field" style={{ flex: 1 }}>
             <label className="l-form-label">{t('landlord.water_price')}</label>
             <input 
               className="l-form-input" 
-              type="text" 
+              type="number" 
               min="0"
-              value={formatThousand(giaNuoc)} 
-              onChange={e => setGiaNuoc(toCleanDigits(e.target.value))} 
-              placeholder="100,000" 
+              value={giaNuoc} 
+              onChange={e => setGiaNuoc(e.target.value)} 
+              placeholder="100000" 
               disabled={isSubmitting} 
             />
+            {giaNuoc && (
+              <div style={{ fontSize: '11px', color: 'var(--success)', marginTop: '4px', fontWeight: 600 }}>
+                👉 {Number(giaNuoc).toLocaleString('vi-VN')} Đ
+              </div>
+            )}
           </div>
           <div className="l-add-room-form__field" style={{ flex: 1 }}>
             <label className="l-form-label">{t('landlord.deposit')}</label>
             <input 
               className="l-form-input" 
-              type="text" 
+              type="number" 
               min="0"
-              value={formatThousand(tienCoc)} 
-              onChange={e => setTienCoc(toCleanDigits(e.target.value))} 
-              placeholder="1,000,000" 
+              value={tienCoc} 
+              onChange={e => setTienCoc(e.target.value)} 
+              placeholder="1000000" 
               disabled={isSubmitting} 
             />
+            {tienCoc && (
+              <div style={{ fontSize: '11px', color: 'var(--success)', marginTop: '4px', fontWeight: 600 }}>
+                👉 {Number(tienCoc).toLocaleString('vi-VN')} Đ
+              </div>
+            )}
           </div>
           <div className="l-add-room-form__field" style={{ flex: 1 }}>
             <label className="l-form-label">{t('landlord.area')} (m²)</label>
             <input 
               className="l-form-input" 
-              type="text" 
+              type="number" 
+              step="any"
               min="0"
               value={dienTich} 
-              onChange={e => setDienTich(toCleanFloat(e.target.value))} 
+              onChange={e => setDienTich(e.target.value)} 
               placeholder="20" 
               disabled={isSubmitting} 
             />
