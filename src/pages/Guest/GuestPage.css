@@ -898,4 +898,10 @@
   font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
+}
+
+@media (max-width: 480px) {
+  .guest-room-detail-grid {
+    grid-template-columns: 1fr;
+  }
 }

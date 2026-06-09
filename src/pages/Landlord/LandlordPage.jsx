@@ -74,6 +74,7 @@ function LandlordPage({ currentUser, unreadSenderIds = [], setUnreadSenderIds, o
 
   /* ===== STATE ===== */
   const [landlordTab, setLandlordTab] = useState('PHONG');
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   /* Dữ liệu chính */
   const [phongTros, setPhongTros] = useState([]);
@@ -566,47 +567,82 @@ function LandlordPage({ currentUser, unreadSenderIds = [], setUnreadSenderIds, o
 
   /* ===== RENDER ===== */
   return (
-    <div className="dashboard-layout" style={{ fontFamily: 'var(--font)' }}>
-      {/* Sidebar dọc cố định */}
-      <div className="dashboard-sidebar">
-        <div className="dashboard-sidebar__top">
-          <div className="dashboard-sidebar__logo">
-            <span className="dashboard-sidebar__logo-icon">🏠</span>
-            <div className="dashboard-sidebar__logo-text">
-              <div className="dashboard-sidebar__logo-title">Smart Rental</div>
-              <div className="dashboard-sidebar__logo-subtitle">Landlord Portal</div>
+    <>
+      {/* Mobile Header */}
+      <div className="dashboard-mobile-header">
+        <div className="dashboard-mobile-header__brand">
+          <span className="dashboard-mobile-header__logo-icon">🏠</span>
+          <span className="dashboard-mobile-header__logo-title">Smart Rental</span>
+        </div>
+        <button
+          className="dashboard-mobile-header__toggle"
+          onClick={() => setIsMobileSidebarOpen(true)}
+          aria-label="Open Menu"
+        >
+          ☰
+        </button>
+      </div>
+
+      {/* Backdrop */}
+      {isMobileSidebarOpen && (
+        <div
+          className="dashboard-sidebar-backdrop"
+          onClick={() => setIsMobileSidebarOpen(false)}
+        />
+      )}
+
+      <div className="dashboard-layout" style={{ fontFamily: 'var(--font)' }}>
+        {/* Sidebar dọc cố định / Drawer di động */}
+        <div className={`dashboard-sidebar ${isMobileSidebarOpen ? 'dashboard-sidebar--open' : ''}`}>
+          <button
+            className="dashboard-sidebar__close-btn"
+            onClick={() => setIsMobileSidebarOpen(false)}
+            aria-label="Close Menu"
+          >
+            ✕
+          </button>
+          <div className="dashboard-sidebar__top">
+            <div className="dashboard-sidebar__logo">
+              <span className="dashboard-sidebar__logo-icon">🏠</span>
+              <div className="dashboard-sidebar__logo-text">
+                <div className="dashboard-sidebar__logo-title">Smart Rental</div>
+                <div className="dashboard-sidebar__logo-subtitle">Landlord Portal</div>
+              </div>
+            </div>
+            <div className="dashboard-sidebar__menu">
+              {TABS.map(tab => (
+                <button
+                  key={tab.key}
+                  className={`dashboard-sidebar__item ${landlordTab === tab.key ? 'dashboard-sidebar__item--active' : ''}`}
+                  onClick={() => {
+                    setLandlordTab(tab.key);
+                    tab.onClick?.();
+                    setIsMobileSidebarOpen(false);
+                  }}
+                >
+                  {tab.icon} {tab.label}
+                  {tab.badge > 0 && (
+                    <span className="landlord-nav-bar__badge" style={{
+                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                      width: '18px', height: '18px', borderRadius: '50%',
+                      background: 'var(--danger)', color: '#fff', fontSize: '10px',
+                      marginLeft: '6px', fontWeight: 700
+                    }}>{tab.badge}</span>
+                  )}
+                </button>
+              ))}
             </div>
           </div>
-          <div className="dashboard-sidebar__menu">
-            {TABS.map(tab => (
-              <button
-                key={tab.key}
-                className={`dashboard-sidebar__item ${landlordTab === tab.key ? 'dashboard-sidebar__item--active' : ''}`}
-                onClick={() => {
-                  setLandlordTab(tab.key);
-                  tab.onClick?.();
-                }}
-              >
-                {tab.icon} {tab.label}
-                {tab.badge > 0 && (
-                  <span className="landlord-nav-bar__badge" style={{
-                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                    width: '18px', height: '18px', borderRadius: '50%',
-                    background: 'var(--danger)', color: '#fff', fontSize: '10px',
-                    marginLeft: '6px', fontWeight: 700
-                  }}>{tab.badge}</span>
-                )}
-              </button>
-            ))}
+
+          <div className="dashboard-sidebar__footer">
+            <button className="dashboard-sidebar__logout-btn" onClick={() => {
+              setIsMobileSidebarOpen(false);
+              onLogout();
+            }}>
+              🚪 {t('header.logout') || 'Đăng xuất'}
+            </button>
           </div>
         </div>
-
-        <div className="dashboard-sidebar__footer">
-          <button className="dashboard-sidebar__logout-btn" onClick={onLogout}>
-            🚪 {t('header.logout') || 'Đăng xuất'}
-          </button>
-        </div>
-      </div>
 
       {/* Khu vực nội dung chính bên phải */}
       <div className="dashboard-content">
@@ -792,6 +828,7 @@ function LandlordPage({ currentUser, unreadSenderIds = [], setUnreadSenderIds, o
         onClose={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
       />
     </div>
+    </>
   );
 }
 

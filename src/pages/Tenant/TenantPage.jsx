@@ -99,6 +99,7 @@ export default function TenantPage({ currentUser, hopDongCuaToi, onBrowseRooms, 
   }
 
   const [cuDanTab, setCuDanTab] = useState('THONG_TIN');
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [dsThongBao, setDsThongBao] = useState([]);
   const [dsHoaDon, setDsHoaDon] = useState([]);
   const [payingHD, setPayingHD] = useState(null);
@@ -405,47 +406,87 @@ export default function TenantPage({ currentUser, hopDongCuaToi, onBrowseRooms, 
   };
 
   return (
-    <div className="dashboard-layout" style={{ fontFamily: 'var(--font)' }}>
-      {/* Sidebar dọc cố định */}
-      <div className="dashboard-sidebar">
-        <div className="dashboard-sidebar__top">
-          <div className="dashboard-sidebar__logo">
-            <span className="dashboard-sidebar__logo-icon">🏠</span>
-            <div className="dashboard-sidebar__logo-text">
-              <div className="dashboard-sidebar__logo-title">Smart Rental</div>
-              <div className="dashboard-sidebar__logo-subtitle">Tenant Portal</div>
+    <>
+      {/* Mobile Header */}
+      <div className="dashboard-mobile-header">
+        <div className="dashboard-mobile-header__brand">
+          <span className="dashboard-mobile-header__logo-icon">🏠</span>
+          <span className="dashboard-mobile-header__logo-title">Smart Rental</span>
+        </div>
+        <button
+          className="dashboard-mobile-header__toggle"
+          onClick={() => setIsMobileSidebarOpen(true)}
+          aria-label="Open Menu"
+        >
+          ☰
+        </button>
+      </div>
+
+      {/* Backdrop */}
+      {isMobileSidebarOpen && (
+        <div
+          className="dashboard-sidebar-backdrop"
+          onClick={() => setIsMobileSidebarOpen(false)}
+        />
+      )}
+
+      <div className="dashboard-layout" style={{ fontFamily: 'var(--font)' }}>
+        {/* Sidebar dọc cố định / Drawer di động */}
+        <div className={`dashboard-sidebar ${isMobileSidebarOpen ? 'dashboard-sidebar--open' : ''}`}>
+          <button
+            className="dashboard-sidebar__close-btn"
+            onClick={() => setIsMobileSidebarOpen(false)}
+            aria-label="Close Menu"
+          >
+            ✕
+          </button>
+          <div className="dashboard-sidebar__top">
+            <div className="dashboard-sidebar__logo">
+              <span className="dashboard-sidebar__logo-icon">🏠</span>
+              <div className="dashboard-sidebar__logo-text">
+                <div className="dashboard-sidebar__logo-title">Smart Rental</div>
+                <div className="dashboard-sidebar__logo-subtitle">Tenant Portal</div>
+              </div>
+            </div>
+            <div className="dashboard-sidebar__menu">
+              {TENANT_TABS.map(tab => (
+                <button
+                  key={tab.key}
+                  className={`dashboard-sidebar__item ${cuDanTab === tab.key ? 'dashboard-sidebar__item--active' : ''}`}
+                  onClick={() => {
+                    setCuDanTab(tab.key);
+                    setIsMobileSidebarOpen(false);
+                  }}
+                >
+                  {tab.icon}
+                  {tab.label}
+                </button>
+              ))}
+
+              <div style={{ margin: '16px 0', borderTop: '1px solid var(--border-light)', opacity: 0.6 }} />
+
+              <button
+                className="dashboard-sidebar__item"
+                style={{ color: 'var(--accent)', fontWeight: 600 }}
+                onClick={() => {
+                  setIsMobileSidebarOpen(false);
+                  onBrowseRooms();
+                }}
+              >
+                🔍 {t('tenant.browse_more_rooms') || 'Tìm phòng khác'}
+              </button>
             </div>
           </div>
-          <div className="dashboard-sidebar__menu">
-            {TENANT_TABS.map(tab => (
-              <button
-                key={tab.key}
-                className={`dashboard-sidebar__item ${cuDanTab === tab.key ? 'dashboard-sidebar__item--active' : ''}`}
-                onClick={() => setCuDanTab(tab.key)}
-              >
-                {tab.icon}
-                {tab.label}
-              </button>
-            ))}
 
-            <div style={{ margin: '16px 0', borderTop: '1px solid var(--border-light)', opacity: 0.6 }} />
-
-            <button
-              className="dashboard-sidebar__item"
-              style={{ color: 'var(--accent)', fontWeight: 600 }}
-              onClick={onBrowseRooms}
-            >
-              🔍 {t('tenant.browse_more_rooms') || 'Tìm phòng khác'}
+          <div className="dashboard-sidebar__footer">
+            <button className="dashboard-sidebar__logout-btn" onClick={() => {
+              setIsMobileSidebarOpen(false);
+              onLogout();
+            }}>
+              🚪 {t('header.logout') || 'Đăng xuất'}
             </button>
           </div>
         </div>
-
-        <div className="dashboard-sidebar__footer">
-          <button className="dashboard-sidebar__logout-btn" onClick={onLogout}>
-            🚪 {t('header.logout') || 'Đăng xuất'}
-          </button>
-        </div>
-      </div>
 
       {/* Khu vực nội dung chính bên phải */}
       <div className="dashboard-content">
@@ -835,5 +876,6 @@ export default function TenantPage({ currentUser, hopDongCuaToi, onBrowseRooms, 
         onClose={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
       />
     </div>
+    </>
   );
 }

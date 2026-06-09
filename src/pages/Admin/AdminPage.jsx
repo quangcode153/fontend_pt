@@ -109,6 +109,7 @@ export default function AdminPage({ currentUser, unreadSenderIds = [], setUnread
   }
 
   const [adminTab, setAdminTab] = useState('USERS');
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [thongKeData, setThongKeData] = useState(null);
   const [chuTros, setChuTros] = useState([]);
   const [tuKhoa, setTuKhoa] = useState('');
@@ -298,43 +299,78 @@ export default function AdminPage({ currentUser, unreadSenderIds = [], setUnread
   ];
 
   return (
-    <div className="dashboard-layout" style={{ fontFamily: 'var(--font)' }}>
-      {/* Sidebar dọc cố định */}
-      <div className="dashboard-sidebar">
-        <div className="dashboard-sidebar__top">
-          <div className="dashboard-sidebar__logo">
-            <span className="dashboard-sidebar__logo-icon">🏠</span>
-            <div className="dashboard-sidebar__logo-text">
-              <div className="dashboard-sidebar__logo-title">Smart Rental</div>
-              <div className="dashboard-sidebar__logo-subtitle">Admin Portal</div>
+    <>
+      {/* Mobile Header */}
+      <div className="dashboard-mobile-header">
+        <div className="dashboard-mobile-header__brand">
+          <span className="dashboard-mobile-header__logo-icon">🏠</span>
+          <span className="dashboard-mobile-header__logo-title">Smart Rental</span>
+        </div>
+        <button
+          className="dashboard-mobile-header__toggle"
+          onClick={() => setIsMobileSidebarOpen(true)}
+          aria-label="Open Menu"
+        >
+          ☰
+        </button>
+      </div>
+
+      {/* Backdrop */}
+      {isMobileSidebarOpen && (
+        <div
+          className="dashboard-sidebar-backdrop"
+          onClick={() => setIsMobileSidebarOpen(false)}
+        />
+      )}
+
+      <div className="dashboard-layout" style={{ fontFamily: 'var(--font)' }}>
+        {/* Sidebar dọc cố định / Drawer di động */}
+        <div className={`dashboard-sidebar ${isMobileSidebarOpen ? 'dashboard-sidebar--open' : ''}`}>
+          <button
+            className="dashboard-sidebar__close-btn"
+            onClick={() => setIsMobileSidebarOpen(false)}
+            aria-label="Close Menu"
+          >
+            ✕
+          </button>
+          <div className="dashboard-sidebar__top">
+            <div className="dashboard-sidebar__logo">
+              <span className="dashboard-sidebar__logo-icon">🏠</span>
+              <div className="dashboard-sidebar__logo-text">
+                <div className="dashboard-sidebar__logo-title">Smart Rental</div>
+                <div className="dashboard-sidebar__logo-subtitle">Admin Portal</div>
+              </div>
+            </div>
+            <div className="dashboard-sidebar__menu">
+              {ADMIN_TABS.map(tab => (
+                <button
+                  key={tab.key}
+                  className={`dashboard-sidebar__item ${adminTab === tab.key ? 'dashboard-sidebar__item--active' : ''}`}
+                  onClick={() => {
+                    setAdminTab(tab.key);
+                    if (tab.key === 'PHONG') setChuTroDangChon(null);
+                    setIsMobileSidebarOpen(false);
+                  }}
+                >
+                  {tab.icon}
+                  {tab.label}
+                  {tab.key === 'KHIEU_NAI' && pendingCount > 0 && (
+                    <span className="admin-nav__badge">{pendingCount}</span>
+                  )}
+                </button>
+              ))}
             </div>
           </div>
-          <div className="dashboard-sidebar__menu">
-            {ADMIN_TABS.map(tab => (
-              <button
-                key={tab.key}
-                className={`dashboard-sidebar__item ${adminTab === tab.key ? 'dashboard-sidebar__item--active' : ''}`}
-                onClick={() => {
-                  setAdminTab(tab.key);
-                  if (tab.key === 'PHONG') setChuTroDangChon(null);
-                }}
-              >
-                {tab.icon}
-                {tab.label}
-                {tab.key === 'KHIEU_NAI' && pendingCount > 0 && (
-                  <span className="admin-nav__badge">{pendingCount}</span>
-                )}
-              </button>
-            ))}
+
+          <div className="dashboard-sidebar__footer">
+            <button className="dashboard-sidebar__logout-btn" onClick={() => {
+              setIsMobileSidebarOpen(false);
+              onLogout();
+            }}>
+              🚪 {t('header.logout') || 'Đăng xuất'}
+            </button>
           </div>
         </div>
-
-        <div className="dashboard-sidebar__footer">
-          <button className="dashboard-sidebar__logout-btn" onClick={onLogout}>
-            🚪 {t('header.logout') || 'Đăng xuất'}
-          </button>
-        </div>
-      </div>
 
       {/* Khu vực nội dung chính bên phải */}
       <div className="dashboard-content">
@@ -709,6 +745,7 @@ export default function AdminPage({ currentUser, unreadSenderIds = [], setUnread
         onClose={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
       />
     </div>
+    </>
   );
 }
 
