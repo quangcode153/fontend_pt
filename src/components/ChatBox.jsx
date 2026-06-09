@@ -83,7 +83,8 @@ function ChatBox({ currentUser, targetUser, isOpen, onClose, onOpenChat, unreadS
           let isSystemMessage = false;
           if (newMsg.noiDung.startsWith('[SYSTEM_CONTRACT_CANCELLED]') ||
               newMsg.noiDung.startsWith('[SYSTEM_CONTRACT_APPROVED]') ||
-              newMsg.noiDung.startsWith('[SYSTEM_CONTRACT_REJECTED]')) {
+              newMsg.noiDung.startsWith('[SYSTEM_CONTRACT_REJECTED]') ||
+              newMsg.noiDung.startsWith('[SYSTEM_CONTRACT_REOPENED]')) {
             isSystemMessage = true;
             // Dispatch event to reload UI contract data immediately
             window.dispatchEvent(new Event('refresh-contract-data'));
@@ -94,9 +95,11 @@ function ChatBox({ currentUser, targetUser, isOpen, onClose, onOpenChat, unreadS
             .replace('[SYSTEM_CONTRACT_CANCELLED] ', '')
             .replace('[SYSTEM_CONTRACT_APPROVED] ', '')
             .replace('[SYSTEM_CONTRACT_REJECTED] ', '')
+            .replace('[SYSTEM_CONTRACT_REOPENED] ', '')
             .replace('[SYSTEM_CONTRACT_CANCELLED]', '')
             .replace('[SYSTEM_CONTRACT_APPROVED]', '')
-            .replace('[SYSTEM_CONTRACT_REJECTED]', '');
+            .replace('[SYSTEM_CONTRACT_REJECTED]', '')
+            .replace('[SYSTEM_CONTRACT_REOPENED]', '');
 
           // Check if chat is open with this specific sender
           const isChatOpenWithSender = isOpenRef.current && targetUserRef.current && String(targetUserRef.current.id) === String(newMsg.nguoiGuiId);
@@ -387,15 +390,18 @@ function ChatBox({ currentUser, targetUser, isOpen, onClose, onOpenChat, unreadS
             {messages.map((msg, index) => {
               const isSystem = msg.noiDung.startsWith('[SYSTEM_CONTRACT_CANCELLED]') ||
                                msg.noiDung.startsWith('[SYSTEM_CONTRACT_APPROVED]') ||
-                               msg.noiDung.startsWith('[SYSTEM_CONTRACT_REJECTED]');
+                               msg.noiDung.startsWith('[SYSTEM_CONTRACT_REJECTED]') ||
+                               msg.noiDung.startsWith('[SYSTEM_CONTRACT_REOPENED]');
                                
               const cleanContent = msg.noiDung
                 .replace('[SYSTEM_CONTRACT_CANCELLED] ', '')
                 .replace('[SYSTEM_CONTRACT_APPROVED] ', '')
                 .replace('[SYSTEM_CONTRACT_REJECTED] ', '')
+                .replace('[SYSTEM_CONTRACT_REOPENED] ', '')
                 .replace('[SYSTEM_CONTRACT_CANCELLED]', '')
                 .replace('[SYSTEM_CONTRACT_APPROVED]', '')
-                .replace('[SYSTEM_CONTRACT_REJECTED]', '');
+                .replace('[SYSTEM_CONTRACT_REJECTED]', '')
+                .replace('[SYSTEM_CONTRACT_REOPENED]', '');
 
               if (isSystem) {
                 return (

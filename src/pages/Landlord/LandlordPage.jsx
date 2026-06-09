@@ -159,11 +159,19 @@ function LandlordPage({ currentUser, unreadSenderIds = [], setUnreadSenderIds, o
           try {
             const chatRes = await api.get(`/tin-nhan/${currentUser.id}/${hd.khachHang.id}`);
             const messages = chatRes.data || [];
-            const isCancelled = messages.some(msg => 
-              msg.noiDung && 
-              msg.noiDung.includes('[SYSTEM_CONTRACT_CANCELLED]') && 
-              msg.noiDung.includes(`(ID: ${hd.id})`)
-            );
+            let lastCancelIndex = -1;
+            let lastReopenIndex = -1;
+            for (let idx = 0; idx < messages.length; idx++) {
+              const msg = messages[idx];
+              if (msg.noiDung && msg.noiDung.includes(`(ID: ${hd.id})`)) {
+                if (msg.noiDung.includes('[SYSTEM_CONTRACT_CANCELLED]')) {
+                  lastCancelIndex = idx;
+                } else if (msg.noiDung.includes('[SYSTEM_CONTRACT_REOPENED]')) {
+                  lastReopenIndex = idx;
+                }
+              }
+            }
+            const isCancelled = lastCancelIndex !== -1 && lastCancelIndex > lastReopenIndex;
             return { ...hd, isCancelledByClient: isCancelled };
           } catch {
             return hd;

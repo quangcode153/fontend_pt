@@ -330,7 +330,52 @@ function GuestPage({
         }
       });
     } catch (err) {
-      setConfirmState({ isOpen: true, type: 'danger', title: t('common.error'), message: t('guest.error') + (err.response?.data?.message || err.message), onConfirm: null });
+      const errMsg = err.response?.data?.message || err.response?.data || err.message || "";
+      if (typeof errMsg === 'string' && errMsg.includes("Bạn đã gửi yêu cầu thuê phòng này rồi")) {
+        try {
+          const canceledIds = JSON.parse(localStorage.getItem('canceled_pending_contracts') || '[]');
+          const res = await api.get(`/hop-dong/khach/${currentUser.id}`);
+          const matchingContracts = (res.data || []).filter(h => h.phongTro?.id === phong.id && h.trangThai === 'CHO_DUYET');
+          
+          if (matchingContracts.length > 0) {
+            const matchingIds = matchingContracts.map(h => h.id);
+            const newCanceledIds = canceledIds.filter(id => !matchingIds.includes(id));
+            localStorage.setItem('canceled_pending_contracts', JSON.stringify(newCanceledIds));
+
+            // Gửi tin nhắn hệ thống qua WebSocket/Chat để mở lại yêu cầu
+            const primaryContract = matchingContracts[0];
+            const landlordId = primaryContract.phongTro?.chuTroId ?? primaryContract.phongTro?.chuTro?.id;
+            const roomName = primaryContract.phongTro?.tenPhong || '';
+            const id = primaryContract.id;
+
+            if (landlordId) {
+              const customEvent = new CustomEvent('send-system-message', {
+                detail: {
+                  nguoiGuiId: currentUser.id,
+                  nguoiNhanId: landlordId,
+                  noiDung: `[SYSTEM_CONTRACT_REOPENED] Khách thuê ${currentUser.username || 'ẩn danh'} đã mở lại yêu cầu thuê phòng ${roomName} (ID: ${id})`,
+                  thoiGian: new Date().toISOString()
+                }
+              });
+              window.dispatchEvent(customEvent);
+            }
+          }
+        } catch (e) {
+          console.error("Lỗi khi đồng bộ lại local storage:", e);
+        }
+
+        setPhongDangCho({ ...phong, chuTroId: phong.chuTroId });
+        setConfirmState({
+          isOpen: true, type: 'success', title: t('common.success'),
+          message: t('guest.rent_success'),
+          onConfirm: () => {
+            setConfirmState(prev => ({ ...prev, isOpen: false }));
+            onRentSuccess?.();
+          }
+        });
+      } else {
+        setConfirmState({ isOpen: true, type: 'danger', title: t('common.error'), message: t('guest.error') + errMsg, onConfirm: null });
+      }
     } finally {
       setIsSubmitting(false);
       setPreviewContract(null);
