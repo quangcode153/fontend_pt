@@ -7,6 +7,7 @@ import HoSoForm from '../../components/HoSoForm';
 import ContractModal from '../../components/ContractModal';
 import ConfirmModal from '../../components/ConfirmModal';
 import useAdminContact from '../../hooks/useAdminContact';
+import Footer from '../../components/Footer';
 import './TenantPage.css';
 
 const ROLES = { USER: 'ROLE_USER' };
@@ -78,9 +79,17 @@ const S = {
   },
 };
 
-export default function TenantPage({ currentUser, hopDongCuaToi, onBrowseRooms, unreadSenderIds = [], setUnreadSenderIds, onSetChatTarget }) {
-  const { t } = useTranslation();
+export default function TenantPage({ currentUser, hopDongCuaToi, onBrowseRooms, unreadSenderIds = [], setUnreadSenderIds, onSetChatTarget, onLogout }) {
+  const { t, i18n } = useTranslation();
+
+  const toggleLanguage = () => {
+    const newLang = i18n.language === 'vi' ? 'en' : 'vi';
+    i18n.changeLanguage(newLang);
+    localStorage.setItem('i18nextLng', newLang);
+  };
+
   const userRole = (currentUser?.role || '').startsWith('ROLE_') ? currentUser.role : `ROLE_${currentUser.role}`;
+
   if (userRole !== ROLES.USER) {
     return (
       <div style={{ padding: '40px', textAlign: 'center', color: 'var(--danger)', fontWeight: 600 }}>
@@ -367,11 +376,11 @@ export default function TenantPage({ currentUser, hopDongCuaToi, onBrowseRooms, 
     }
   };
 
-  const TABS = [
-    { key: 'THONG_TIN', label: t('tenant.tab_contract') },
-    { key: 'HO_SO', label: t('tenant.tab_profile') },
-    { key: 'HOA_DON', label: t('tenant.tab_invoice') },
-    { key: 'THONG_BAO', label: t('tenant.tab_notice') },
+  const TENANT_TABS = [
+    { key: 'THONG_TIN', label: t('tenant.tab_contract'), icon: '📄 ' },
+    { key: 'HO_SO', label: t('tenant.tab_profile'), icon: '👤 ' },
+    { key: 'HOA_DON', label: t('tenant.tab_invoice'), icon: '🧾 ' },
+    { key: 'THONG_BAO', label: t('tenant.tab_notice'), icon: '🔔 ' },
   ];
 
   const Spinner = () => (
@@ -396,61 +405,118 @@ export default function TenantPage({ currentUser, hopDongCuaToi, onBrowseRooms, 
   };
 
   return (
-    <div style={{ fontFamily: 'var(--font)' }}>
-      <div style={{
-        display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between',
-        alignItems: 'flex-start', marginBottom: '20px', gap: '12px',
-      }}>
-        <div style={S.navBar}>
-          {TABS.map(t => (
-            <button key={t.key} className={`tenant-nav-btn ${cuDanTab === t.key ? 'tenant-nav-btn--active' : ''}`} onClick={() => setCuDanTab(t.key)}>
-              {t.label}
+    <div className="dashboard-layout" style={{ fontFamily: 'var(--font)' }}>
+      {/* Sidebar dọc cố định */}
+      <div className="dashboard-sidebar">
+        <div className="dashboard-sidebar__top">
+          <div className="dashboard-sidebar__logo">
+            <span className="dashboard-sidebar__logo-icon">🏠</span>
+            <div className="dashboard-sidebar__logo-text">
+              <div className="dashboard-sidebar__logo-title">Smart Rental</div>
+              <div className="dashboard-sidebar__logo-subtitle">Tenant Portal</div>
+            </div>
+          </div>
+          <div className="dashboard-sidebar__menu">
+            {TENANT_TABS.map(tab => (
+              <button
+                key={tab.key}
+                className={`dashboard-sidebar__item ${cuDanTab === tab.key ? 'dashboard-sidebar__item--active' : ''}`}
+                onClick={() => setCuDanTab(tab.key)}
+              >
+                {tab.icon}
+                {tab.label}
+              </button>
+            ))}
+
+            <div style={{ margin: '16px 0', borderTop: '1px solid var(--border-light)', opacity: 0.6 }} />
+
+            <button
+              className="dashboard-sidebar__item"
+              style={{ color: 'var(--accent)', fontWeight: 600 }}
+              onClick={onBrowseRooms}
+            >
+              🔍 {t('tenant.browse_more_rooms') || 'Tìm phòng khác'}
             </button>
-          ))}
-          <div style={{ width: '1px', background: 'var(--border)', margin: '4px 8px' }} />
-          <button 
-            className="tenant-nav-btn"
-            style={{ color: 'var(--accent)', fontWeight: 600 }} 
-            onClick={onBrowseRooms}
-          >
-            {t('tenant.browse_more_rooms')}
-          </button>
+          </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <KhieuNaiForm />
-          <button
-            style={{
-              ...S.btnContact(loadingAdmin || !!adminError),
-              position: 'relative',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-            onClick={() => adminContact && onSetChatTarget(adminContact)}
-            disabled={loadingAdmin || !!adminError}
-          >
-            🎧 {loadingAdmin ? t('tenant.btn_connecting') : adminError ? t('tenant.btn_offline') : t('tenant.btn_chat_admin')}
-            {hasAdminUnread && (
-              <span style={{
-                width: '8px',
-                height: '8px',
-                backgroundColor: 'var(--danger)',
-                borderRadius: '50%',
-                display: 'inline-block',
-                boxShadow: '0 0 0 2px rgba(255, 255, 255, 0.3)',
-                animation: 'pulseDot 1.2s infinite'
-              }} />
-            )}
+        <div className="dashboard-sidebar__footer">
+          <button className="dashboard-sidebar__logout-btn" onClick={onLogout}>
+            🚪 {t('header.logout') || 'Đăng xuất'}
           </button>
         </div>
       </div>
 
-      <div style={S.card}>
-        {cuDanTab === 'HO_SO' && <HoSoForm user={currentUser} />}
+      {/* Khu vực nội dung chính bên phải */}
+      <div className="dashboard-content">
+        {/* Top Header cho dashboard */}
+        <div className="dashboard-content__header">
+          <h2 className="dashboard-content__title">
+            {TENANT_TABS.find(t => t.key === cuDanTab)?.label}
+          </h2>
+          <div className="dashboard-content__actions">
+            {/* Khieu Nai Form */}
+            <KhieuNaiForm />
+
+            {/* Chat Admin button */}
+            <button
+              style={{
+                ...S.btnContact(loadingAdmin || !!adminError),
+                position: 'relative',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '8px 16px',
+                fontSize: '13px',
+                borderRadius: 'var(--radius-md)',
+              }}
+              onClick={() => adminContact && onSetChatTarget(adminContact)}
+              disabled={loadingAdmin || !!adminError}
+            >
+              🎧 {loadingAdmin ? t('tenant.btn_connecting') : adminError ? t('tenant.btn_offline') : t('tenant.btn_chat_admin')}
+              {hasAdminUnread && (
+                <span style={{
+                  width: '8px',
+                  height: '8px',
+                  backgroundColor: 'var(--danger)',
+                  borderRadius: '50%',
+                  display: 'inline-block',
+                  boxShadow: '0 0 0 2px rgba(255, 255, 255, 0.3)',
+                  animation: 'pulseDot 1.2s infinite'
+                }} />
+              )}
+            </button>
+
+            {/* Language Switcher */}
+            <button
+              onClick={toggleLanguage}
+              className="dashboard-header-btn"
+              title={i18n.language === 'vi' ? 'Switch to English' : 'Đổi sang Tiếng Việt'}
+            >
+              {i18n.language === 'vi' ? '🇺🇸 EN' : '🇻🇳 VI'}
+            </button>
+
+            {/* Profile Info */}
+            <div className="dashboard-header-profile">
+              <div className="dashboard-header-avatar">
+                {(currentUser?.username || 'T').charAt(0).toUpperCase()}
+              </div>
+              <div className="dashboard-header-userinfo">
+                <div className="dashboard-header-username">
+                  {currentUser?.username}
+                </div>
+                <div className="dashboard-header-role">
+                  {t('header.role_USER') || 'Tenant'}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {cuDanTab === 'HO_SO' && <div className="premium-card"><HoSoForm user={currentUser} /></div>}
 
         {cuDanTab === 'THONG_TIN' && (
-          <div style={{ animation: 'fadeIn 0.3s ease' }}>
+          <div className="premium-card" style={{ animation: 'fadeIn 0.3s ease' }}>
             <div style={S.sectionTitle}>{t('tenant.contract_info_title')}</div>
 
             {noContract ? (
@@ -562,7 +628,7 @@ export default function TenantPage({ currentUser, hopDongCuaToi, onBrowseRooms, 
         )}
 
         {cuDanTab === 'HOA_DON' && (
-          <div style={{ animation: 'fadeIn 0.3s ease' }}>
+          <div className="premium-card" style={{ animation: 'fadeIn 0.3s ease' }}>
             <div style={S.sectionTitle}>{t('tenant.invoice_title')}</div>
             {loadingTab ? <Spinner /> : dsHoaDon.length === 0 ? (
               <div style={S.emptyState}>
@@ -670,7 +736,7 @@ export default function TenantPage({ currentUser, hopDongCuaToi, onBrowseRooms, 
         )}
 
         {cuDanTab === 'THONG_BAO' && (
-          <div style={{ animation: 'fadeIn 0.3s ease' }}>
+          <div className="premium-card" style={{ animation: 'fadeIn 0.3s ease' }}>
             <div style={S.sectionTitle}>{t('tenant.notice_title')}</div>
             {loadingTab ? <Spinner /> : dsThongBao.length === 0 ? (
               <div style={S.emptyState}>
@@ -704,6 +770,7 @@ export default function TenantPage({ currentUser, hopDongCuaToi, onBrowseRooms, 
             )}
           </div>
         )}
+        <Footer />
       </div>
 
 

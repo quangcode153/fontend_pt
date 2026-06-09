@@ -296,7 +296,19 @@
     "pending_banner_text": "You are sending a rental request for room <strong>{{room}}</strong>. The request is pending landlord confirmation.",
     "pending_room_fallback": "Pending room",
     "btn_chat_host": "Message Landlord",
-    "alert_cancel_existing_request": "⚠️ You have a pending rental request for room \"{{oldRoom}}\".\n\nDo you want to cancel this existing request to register for room \"{{newRoom}}\" instead?"
+    "alert_cancel_existing_request": "⚠️ You have a pending rental request for room \"{{oldRoom}}\".\n\nDo you want to cancel this existing request to register for room \"{{newRoom}}\" instead?",
+    "quick_filter_price": "Quick Filter by Price",
+    "recent_rooms": "Recent Listings",
+    "no_recent_rooms": "No recent listings",
+    "price_under_1_5m": "Under 1.5M",
+    "price_1_5m_3m": "1.5M - 3M",
+    "price_3m_5m": "3M - 5M",
+    "price_5m_10m": "5M - 10M",
+    "quick_filter_area": "Quick Filter by Area",
+    "area_under_20": "Under 20 m²",
+    "area_20_30": "20 - 30 m²",
+    "area_30_50": "30 - 50 m²",
+    "area_over_50": "Over 50 m²"
   },
   "guest_profile": {
     "loading": "Loading profile...",

@@ -1,11 +1,32 @@
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import api from '../../api';
 import heroImg from '../../assets/hero_apartment.png';
 import './HomePage.css';
 
 export default function HomePage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+
+  const [rooms, setRooms] = useState([]);
+  const [loadingRooms, setLoadingRooms] = useState(true);
+
+  useEffect(() => {
+    api.get('/phong-tro/search', { params: { trangThai: 'TRONG' } })
+      .then(res => {
+        setRooms((res.data || []).slice(0, 3));
+      })
+      .catch(err => {
+        console.warn("Public fetch failed. Using premium mock rooms:", err);
+        setRooms([
+          { id: 1, tenPhong: "Căn Hộ View Ban Công Full Nội Thất Giá Rẻ Ngay Âu Cơ", giaPhong: 4000000, dienTich: 25, diaChi: "Tân Phú, Hồ Chí Minh", moTa: "Căn hộ dịch vụ tiện nghi, giờ giấc tự do, bảo vệ 24/7. Đầy đủ máy lạnh, giường nệm, tủ quần áo, tủ lạnh.", hinhAnh: "" },
+          { id: 2, tenPhong: "Phòng Có Ban Công Đẹp Mới Xây Gần Công Viên Gia Định", giaPhong: 5700000, dienTich: 34, diaChi: "Phú Nhuận, Hồ Chí Minh", moTa: "Phòng trọ cao cấp, thiết kế hiện đại có gác lửng, cửa sổ thoáng mát, toilet riêng biệt sạch sẽ.", hinhAnh: "" },
+          { id: 3, tenPhong: "Phòng Trọ Khép Kín Vị Trí Trung Tâm Quận 3 Tiện Di Chuyển", giaPhong: 3500000, dienTich: 20, diaChi: "Quận 3, Hồ Chí Minh", moTa: "Vị trí đắc địa, gần chợ, trường học, trạm xe buýt. An ninh đảm bảo, camera giám sát.", hinhAnh: "" }
+        ]);
+      })
+      .finally(() => setLoadingRooms(false));
+  }, []);
 
   const toggleLanguage = () => {
     const newLang = i18n.language === 'vi' ? 'en' : 'vi';
@@ -14,12 +35,12 @@ export default function HomePage() {
   };
 
   const FEATURES = [
-    { icon: '🏠', color: 'purple', title: t('home.feature_rooms_title'),    desc: t('home.feature_rooms_desc') },
-    { icon: '📄', color: 'blue',   title: t('home.feature_contract_title'), desc: t('home.feature_contract_desc') },
-    { icon: '⚡', color: 'amber',  title: t('home.feature_bill_title'),     desc: t('home.feature_bill_desc') },
-    { icon: '💬', color: 'green',  title: t('home.feature_chat_title'),     desc: t('home.feature_chat_desc') },
-    { icon: '📊', color: 'cyan',   title: t('home.feature_stats_title'),    desc: t('home.feature_stats_desc') },
-    { icon: '🔔', color: 'pink',   title: t('home.feature_notice_title'),   desc: t('home.feature_notice_desc') },
+    { icon: '🏠', color: 'purple', title: t('home.feature_rooms_title'), desc: t('home.feature_rooms_desc') },
+    { icon: '📄', color: 'blue', title: t('home.feature_contract_title'), desc: t('home.feature_contract_desc') },
+    { icon: '⚡', color: 'amber', title: t('home.feature_bill_title'), desc: t('home.feature_bill_desc') },
+    { icon: '💬', color: 'green', title: t('home.feature_chat_title'), desc: t('home.feature_chat_desc') },
+    { icon: '📊', color: 'cyan', title: t('home.feature_stats_title'), desc: t('home.feature_stats_desc') },
+    { icon: '🔔', color: 'pink', title: t('home.feature_notice_title'), desc: t('home.feature_notice_desc') },
   ];
 
   const ROLES_LIST = [
@@ -100,6 +121,53 @@ export default function HomePage() {
           </div>
         </section>
       </div>
+
+      {/* === PHÒNG TRỌ MỚI ĐĂNG SECTION === */}
+      <section className="home-rooms" style={{ padding: '60px 0', background: 'var(--surface)', borderTop: '1px solid var(--border-light)', borderBottom: '1px solid var(--border-light)' }}>
+        <div className="container" style={{ textAlign: 'center' }}>
+          <div className="features__label" style={{ background: 'var(--accent-light)', color: 'var(--accent)', fontWeight: 700 }}>{t('home.rooms_label') || 'TIN NỔI BẬT'}</div>
+          <h2 className="features__title" style={{ marginBottom: '12px' }}>{t('home.rooms_title') || 'Phòng Trọ Mới Đăng'}</h2>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '40px', fontSize: '15px' }}>{t('home.rooms_subtitle') || 'Tìm kiếm nhanh các phòng trọ trống đang cho thuê tại các khu vực trung tâm'}</p>
+
+          <div className="home-rooms__grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px', textAlign: 'left' }}>
+            {rooms.map((p, idx) => (
+              <div
+                key={p.id}
+                className="home-room-card"
+                style={{
+                  background: 'var(--bg)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-xl)',
+                  overflow: 'hidden',
+                  boxShadow: 'var(--shadow-sm)',
+                  transition: 'all 0.3s ease',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  cursor: 'pointer'
+                }}
+                onClick={() => navigate('/login')}
+              >
+                <div style={{ padding: '20px' }}>
+                  <div style={{ fontSize: '12px', color: '#FBBF24', marginBottom: '8px' }}>⭐⭐⭐⭐⭐</div>
+                  <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)', textTransform: 'uppercase', marginBottom: '8px', lineHeight: 1.4 }}>{p.tenPhong}</h3>
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '10px' }}>
+                    <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--success)' }}>{p.giaPhong?.toLocaleString()} đ/tháng</span>
+                    <span style={{ color: 'var(--text-muted)' }}>•</span>
+                    <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>{p.dienTich} m²</span>
+                  </div>
+                  <p style={{ fontSize: '12.5px', color: 'var(--text-secondary)', lineLine: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', height: '38px', marginBottom: '12px' }}>{p.moTa}</p>
+                  <div style={{ fontSize: '12.5px', color: 'var(--text-secondary)' }}>📍 {p.diaChi}</div>
+                </div>
+                <div style={{ padding: '12px 20px', borderTop: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600 }}>ID {p.id}</span>
+                  <span style={{ fontSize: '12.5px', color: 'var(--accent)', fontWeight: 700 }}>Xem chi tiết →</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       <section className="features">
         <div className="container">

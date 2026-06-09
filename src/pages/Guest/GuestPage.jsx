@@ -9,6 +9,7 @@ import ConfirmModal from '../../components/ConfirmModal';
 import useAdminContact from '../../hooks/useAdminContact';
 import ImageSlider from '../../components/ImageSlider';
 import './GuestPage.css';
+import RoomDetailModalForGuest from '../../components/RoomDetailModalForGuest';
 
 const ROLES = { USER: 'ROLE_USER' };
 const ROOM_STATUS = { EMPTY: 'TRONG', RENTED: 'DA_THUE', MAINTENANCE: 'BAO_TRI' };
@@ -85,8 +86,8 @@ const Spinner = ({ text }) => {
   );
 };
 
-function GuestPage({ 
-  currentUser, 
+function GuestPage({
+  currentUser,
   onRentSuccess,
   pendingHopDong,
   onCancelPending,
@@ -100,7 +101,7 @@ function GuestPage({
 
   const [activeTab, setActiveTab] = useState('TIM_TRO');
   const [searchMode, setSearchMode] = useState('ROOM'); // 'ROOM' (Tìm phòng trực tiếp) hoặc 'HOST' (Tìm theo chủ nhà)
-  
+
   // States cho tìm kiếm chủ nhà (Host browsing)
   const [chuTros, setChuTros] = useState([]);
   const [chuTroDangChon, setChuTroDangChon] = useState(null);
@@ -123,6 +124,7 @@ function GuestPage({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewContract, setPreviewContract] = useState(null);
   const [confirmState, setConfirmState] = useState({ isOpen: false, type: 'info', title: '', message: '', onConfirm: null });
+  const [selectedRoomDetail, setSelectedRoomDetail] = useState(null);
 
   const { admin: adminContact, loading: loadingAdmin, error: adminError } = useAdminContact();
   const latestClickId = useRef(null);
@@ -159,12 +161,12 @@ function GuestPage({
       const res = await api.get('/phong-tro/search', { params });
       setSearchResults(res.data || []);
     } catch (err) {
-      setConfirmState({ 
-        isOpen: true, 
-        type: 'danger', 
-        title: t('common.error'), 
-        message: err.response?.data?.message || err.message, 
-        onConfirm: null 
+      setConfirmState({
+        isOpen: true,
+        type: 'danger',
+        title: t('common.error'),
+        message: err.response?.data?.message || err.message,
+        onConfirm: null
       });
     } finally {
       setSearching(false);
@@ -334,6 +336,169 @@ function GuestPage({
   const displayName = hoSoChuTro?.hoTen || chuTroDangChon?.username || "?";
   const avatarChar = displayName.charAt(0).toUpperCase();
 
+  const handleQuickPriceFilter = (min, max) => {
+    setSearchGiaMin(min ? String(min) : '');
+    setSearchGiaMax(max ? String(max) : '');
+    setSearching(true);
+    const params = {
+      tenPhong: searchTenPhong.trim() || '',
+      diaChi: searchDiaChi.trim() || '',
+      giaToiThieu: min || 0,
+      giaToiDa: max || 999999999,
+      trangThai: (searchTrangThai && searchTrangThai !== 'ALL') ? searchTrangThai : ''
+    };
+    api.get('/phong-tro/search', { params })
+      .then(res => setSearchResults(res.data || []))
+      .catch(console.error)
+      .finally(() => setSearching(false));
+  };
+
+  const handleQuickAreaFilter = (min, max) => {
+    setSearching(true);
+    const params = {
+      tenPhong: searchTenPhong.trim() || '',
+      diaChi: searchDiaChi.trim() || '',
+      giaToiThieu: searchGiaMin.trim() ? Number(searchGiaMin) : 0,
+      giaToiDa: searchGiaMax.trim() ? Number(searchGiaMax) : 999999999,
+      trangThai: (searchTrangThai && searchTrangThai !== 'ALL') ? searchTrangThai : ''
+    };
+    api.get('/phong-tro/search', { params })
+      .then(res => {
+        let rooms = res.data || [];
+        if (min !== undefined || max !== undefined) {
+          rooms = rooms.filter(phong => {
+            const dt = phong.dienTich || 0;
+            if (min !== undefined && dt < min) return false;
+            if (max !== undefined && dt > max) return false;
+            return true;
+          });
+        }
+        setSearchResults(rooms);
+      })
+      .catch(console.error)
+      .finally(() => setSearching(false));
+  };
+
+  const renderRoomCardHorizontal = (phong, i) => (
+    <div
+      key={phong.id}
+      className={`room-card-horizontal room-card-horizontal--${phong.trangThai === ROOM_STATUS.EMPTY
+          ? 'empty'
+          : phong.trangThai === ROOM_STATUS.RENTED
+            ? 'rented'
+            : 'maintenance'
+        }`}
+      style={{ animation: `fadeIn 0.3s ease ${i * 0.05}s both` }}
+    >
+      {phong.hinhAnh && (
+        <div className="room-card-horizontal__img-wrap">
+          <ImageSlider hinhAnh={phong.hinhAnh} alt={phong.tenPhong} height="100%" />
+        </div>
+      )}
+      <div className="room-card-horizontal__content">
+        <div className="room-card-horizontal__header">
+          <div className="room-card-horizontal__title" onClick={() => setSelectedRoomDetail(phong)}>
+            {phong.tenPhong}
+          </div>
+          <span className={`guest-tag guest-tag--${phong.trangThai === ROOM_STATUS.EMPTY ? 'empty' : 'rented'}`}>
+            {phong.trangThai === ROOM_STATUS.EMPTY
+              ? t('guest.status_empty')
+              : phong.trangThai === ROOM_STATUS.RENTED
+                ? t('guest.status_rented')
+                : t('guest.status_maintenance')
+            }
+          </span>
+        </div>
+
+        <div className="room-card-horizontal__meta-row">
+          <span className="room-card-horizontal__price">
+            {phong.giaPhong?.toLocaleString()} {t('guest.currency_month')}
+          </span>
+          <span className="room-card-horizontal__dot">•</span>
+          <span className="room-card-horizontal__area">
+            {phong.dienTich || 0} m²
+          </span>
+        </div>
+
+        {phong.diaChi && (
+          <div className="room-card-horizontal__address">
+            📍 {phong.diaChi}
+          </div>
+        )}
+
+        {phong.moTa && (
+          <div className="room-card-horizontal__desc">
+            {phong.moTa}
+          </div>
+        )}
+
+        <div className="room-card-horizontal__details">
+          {phong.tienCoc != null && (
+            <div className="room-card-horizontal__detail-item">
+              <span>{t('guest.deposit')}:</span>
+              <span className="room-card-horizontal__detail-value">{phong.tienCoc?.toLocaleString()} {t('landlord.currency')}</span>
+            </div>
+          )}
+          {(phong.giaDien != null || phong.giaNuoc != null) && (
+            <div className="room-card-horizontal__detail-item">
+              <span>{t('guest.utility')}:</span>
+              <span className="room-card-horizontal__detail-value">
+                {phong.giaDien ? `${phong.giaDien.toLocaleString()} Đ` : '—'} / {phong.giaNuoc ? `${phong.giaNuoc.toLocaleString()} Đ` : '—'}
+              </span>
+            </div>
+          )}
+        </div>
+
+        <div className="room-card-horizontal__footer">
+          <div className="room-card__host-info" style={{ marginTop: 0, paddingTop: 0, borderTop: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div className="room-card__host-avatar">🏠</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+              <div className="room-card__host-name" style={{ fontSize: '12px', fontWeight: 600 }}>
+                {(() => {
+                  const host = chuTros.find(ct => ct.id === phong.chuTroId);
+                  return host
+                    ? (host.hoTen ? `${host.hoTen} (@${host.username})` : `@${host.username}`)
+                    : `${t('guest.host_name')} ID ${phong.chuTroId}`;
+                })()}
+              </div>
+              <span 
+                className="room-card__host-chat-link"
+                style={{
+                  color: 'var(--accent)',
+                  cursor: 'pointer',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  textDecoration: 'none'
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const host = chuTros.find(ct => ct.id === phong.chuTroId);
+                  const hostName = host ? (host.hoTen || host.username) : `${t('guest.host_name')} ID ${phong.chuTroId}`;
+                  setChatTarget({ id: phong.chuTroId, username: hostName });
+                }}
+              >
+                💬 {t('guest.btn_chat') || 'Nhắn tin'}
+              </span>
+            </div>
+          </div>
+          {phong.trangThai === ROOM_STATUS.EMPTY && (
+            <button
+              className="btn btn--primary"
+              style={{ padding: '8px 16px', fontSize: '13px' }}
+              onClick={() => openContractPreview(phong)}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? t('guest.btn_processing') : t('guest.btn_rent')}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
   if (phongDangCho) {
     return (
       <div style={{ fontFamily: 'var(--font)' }}>
@@ -436,13 +601,13 @@ function GuestPage({
           {/* Sub-selector for Search Mode (ROOM or HOST) */}
           {!chuTroDangChon && (
             <div className="search-mode-selector">
-              <button 
+              <button
                 className={`search-mode-btn ${searchMode === 'ROOM' ? 'search-mode-btn--active' : ''}`}
                 onClick={() => setSearchMode('ROOM')}
               >
                 🔍 {t('guest.search_room_directly')}
               </button>
-              <button 
+              <button
                 className={`search-mode-btn ${searchMode === 'HOST' ? 'search-mode-btn--active' : ''}`}
                 onClick={() => setSearchMode('HOST')}
               >
@@ -453,177 +618,152 @@ function GuestPage({
 
           {/* MODE 1: SEARCH ROOM DIRECTLY */}
           {searchMode === 'ROOM' && !chuTroDangChon && (
-            <div>
-              {/* Premium Search Engine Panel */}
-              <form onSubmit={handleSearchRooms} className="search-engine">
-                <div className="search-engine__title">
-                  ⚡ {t('guest.search_room_title')}
-                </div>
-                
-                <div className="search-engine__grid">
-                  {/* Field 1: Room name keyword */}
-                  <div className="search-engine__field">
-                    <label className="search-engine__label">{t('guest.room_name_keyword')}</label>
-                    <input 
-                      type="text" 
-                      placeholder={t('guest.room_name_ph')}
-                      value={searchTenPhong} 
-                      onChange={e => setSearchTenPhong(e.target.value)}
-                      className="search-engine__input" 
-                    />
+            <div className="guest-layout-wrapper">
+              {/* Cột trái: Form tìm kiếm & Danh sách phòng dạng thẻ ngang */}
+              <div className="guest-main-column">
+                <form onSubmit={handleSearchRooms} className="search-engine">
+                  <div className="search-engine__title">
+                    ⚡ {t('guest.search_room_title')}
                   </div>
 
-                  {/* Field 2: Address */}
-                  <div className="search-engine__field">
-                    <label className="search-engine__label">{t('guest.address_keyword')}</label>
-                    <input 
-                      type="text" 
-                      placeholder={t('guest.address_ph')}
-                      value={searchDiaChi} 
-                      onChange={e => setSearchDiaChi(e.target.value)}
-                      className="search-engine__input" 
-                    />
-                  </div>
+                  <div className="search-engine__grid">
+                    {/* Field 1: Room name keyword */}
+                    <div className="search-engine__field">
+                      <label className="search-engine__label">{t('guest.room_name_keyword')}</label>
+                      <input
+                        type="text"
+                        placeholder={t('guest.room_name_ph')}
+                        value={searchTenPhong}
+                        onChange={e => setSearchTenPhong(e.target.value)}
+                        className="search-engine__input"
+                      />
+                    </div>
 
-                  {/* Field 3: Price range */}
-                  <div className="search-engine__field">
-                    <label className="search-engine__label">{t('guest.price_range')} (VNĐ)</label>
-                    <div className="search-engine__range">
-                      <input 
-                        type="number" 
-                        placeholder={t('guest.price_min')}
-                        value={searchGiaMin} 
-                        onChange={e => setSearchGiaMin(e.target.value)}
-                        className="search-engine__input" 
+                    {/* Field 2: Address */}
+                    <div className="search-engine__field">
+                      <label className="search-engine__label">{t('guest.address_keyword')}</label>
+                      <input
+                        type="text"
+                        placeholder={t('guest.address_ph')}
+                        value={searchDiaChi}
+                        onChange={e => setSearchDiaChi(e.target.value)}
+                        className="search-engine__input"
                       />
-                      <span className="search-engine__separator">-</span>
-                      <input 
-                        type="number" 
-                        placeholder={t('guest.price_max')}
-                        value={searchGiaMax} 
-                        onChange={e => setSearchGiaMax(e.target.value)}
-                        className="search-engine__input" 
-                      />
+                    </div>
+
+                    {/* Field 3: Price range */}
+                    <div className="search-engine__field">
+                      <label className="search-engine__label">{t('guest.price_range')} (VNĐ)</label>
+                      <div className="search-engine__range">
+                        <input
+                          type="number"
+                          placeholder={t('guest.price_min')}
+                          value={searchGiaMin}
+                          onChange={e => setSearchGiaMin(e.target.value)}
+                          className="search-engine__input"
+                        />
+                        <span className="search-engine__separator">-</span>
+                        <input
+                          type="number"
+                          placeholder={t('guest.price_max')}
+                          value={searchGiaMax}
+                          onChange={e => setSearchGiaMax(e.target.value)}
+                          className="search-engine__input"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Field 4: Status */}
+                    <div className="search-engine__field">
+                      <label className="search-engine__label">{t('guest.room_status')}</label>
+                      <select
+                        value={searchTrangThai}
+                        onChange={e => setSearchTrangThai(e.target.value)}
+                        className="search-engine__select"
+                      >
+                        <option value="ALL">{t('guest.all_status')}</option>
+                        <option value="TRONG">{t('guest.status_empty')}</option>
+                        <option value="DA_THUE">{t('guest.status_rented')}</option>
+                        <option value="BAO_TRI">{t('guest.status_maintenance')}</option>
+                      </select>
                     </div>
                   </div>
 
-                  {/* Field 4: Status */}
-                  <div className="search-engine__field">
-                    <label className="search-engine__label">{t('guest.room_status')}</label>
-                    <select 
-                      value={searchTrangThai} 
-                      onChange={e => setSearchTrangThai(e.target.value)}
-                      className="search-engine__select"
-                    >
-                      <option value="ALL">{t('guest.all_status')}</option>
-                      <option value="TRONG">{t('guest.status_empty')}</option>
-                      <option value="DA_THUE">{t('guest.status_rented')}</option>
-                      <option value="BAO_TRI">{t('guest.status_maintenance')}</option>
-                    </select>
+                  <div className="search-engine__actions">
+                    <button type="button" onClick={handleResetFilters} className="btn-search-secondary">
+                      {t('guest.btn_reset')}
+                    </button>
+                    <button type="submit" className="btn-search-primary" disabled={searching}>
+                      {searching ? t('guest.btn_processing') : t('guest.btn_search')}
+                    </button>
                   </div>
-                </div>
+                </form>
 
-                <div className="search-engine__actions">
-                  <button type="button" onClick={handleResetFilters} className="btn-search-secondary">
-                    {t('guest.btn_reset')}
-                  </button>
-                  <button type="submit" className="btn-search-primary" disabled={searching}>
-                    {searching ? t('guest.btn_processing') : t('guest.btn_search')}
-                  </button>
-                </div>
-              </form>
-
-              {/* Search Results Display */}
-              {searching ? (
-                <Spinner text={t('common.loading')} />
-              ) : searchResults.length === 0 ? (
-                <div style={S.card}>
-                  <div style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)', fontSize: '13px' }}>
-                    <div style={{ fontSize: '28px', marginBottom: '8px', opacity: 0.5 }}>🔍</div>
-                    {t('guest.no_rooms_found')}
-                  </div>
-                </div>
-              ) : (
-                <div className="grid-cards">
-                  {searchResults.map((phong, i) => (
-                    <div key={phong.id} className="card" style={{
-                      borderTop: `3px solid ${phong.trangThai === ROOM_STATUS.EMPTY ? 'var(--success)' : 'var(--danger)'}`,
-                      borderRadius: `0 0 var(--radius-lg) var(--radius-lg)`,
-                      animation: `fadeIn 0.3s ease ${i * 0.05}s both`,
-                      display: 'flex', flexDirection: 'column'
-                    }}>
-                      {phong.hinhAnh && (
-                        <div style={{ width: '100%', height: '160px', overflow: 'hidden', borderRadius: 'var(--radius-md)', marginBottom: '14px', position: 'relative' }}>
-                          <ImageSlider hinhAnh={phong.hinhAnh} alt={phong.tenPhong} height="100%" />
-                        </div>
-                      )}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                        <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)' }}>{phong.tenPhong}</div>
-                        <span style={S.tag(phong.trangThai === ROOM_STATUS.EMPTY ? 'green' : 'red')}>
-                          {phong.trangThai === ROOM_STATUS.EMPTY ? t('guest.status_empty') : phong.trangThai === ROOM_STATUS.RENTED ? t('guest.status_rented') : t('guest.status_maintenance')}
-                        </span>
-                      </div>
-
-                      <div style={{ flex: 1 }}>
-                        <div style={S.infoRow}>
-                          <span style={{ color: 'var(--text-muted)' }}>{t('guest.rent_price')}</span>
-                          <span style={{ fontWeight: 700, color: 'var(--accent)', fontSize: '14px' }}>{phong.giaPhong?.toLocaleString()} {t('guest.currency_month')}</span>
-                        </div>
-                        {phong.dienTich && (
-                          <div style={S.infoRow}>
-                            <span style={{ color: 'var(--text-muted)' }}>{t('guest.area')}</span>
-                            <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{phong.dienTich} m²</span>
-                          </div>
-                        )}
-                        {phong.tienCoc != null && (
-                          <div style={S.infoRow}>
-                            <span style={{ color: 'var(--text-muted)' }}>{t('guest.deposit')}</span>
-                            <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{phong.tienCoc?.toLocaleString()} {t('landlord.currency')}</span>
-                          </div>
-                        )}
-                        {(phong.giaDien != null || phong.giaNuoc != null) && (
-                          <div style={S.infoRow}>
-                            <span style={{ color: 'var(--text-muted)' }}>{t('guest.utility')}</span>
-                            <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>
-                              {phong.giaDien ? `${phong.giaDien.toLocaleString()} ${t('landlord.currency')}` : '—'} / {phong.giaNuoc ? `${phong.giaNuoc.toLocaleString()} ${t('landlord.currency')}` : '—'}
-                            </span>
-                          </div>
-                        )}
-                        {phong.diaChi && (
-                          <div style={{ ...S.infoRow, alignItems: 'flex-start', flexDirection: 'column', gap: '6px', borderBottom: 'none' }}>
-                            <span style={{ color: 'var(--text-muted)' }}>{t('guest.address')}</span>
-                            <span style={{ fontWeight: 500, color: 'var(--text-primary)', lineHeight: 1.5 }}>📍 {phong.diaChi}</span>
-                          </div>
-                        )}
-                        {phong.moTa && (
-                          <div style={{ marginTop: '10px', padding: '12px', background: 'var(--bg)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)' }}>
-                            <div style={{ color: 'var(--text-muted)', fontSize: '12px', marginBottom: '6px', fontWeight: 600 }}>{t('guest.description')}</div>
-                            <div style={{ fontWeight: 400, color: 'var(--text-secondary)', fontSize: '13px', lineHeight: 1.6, whiteSpace: 'pre-line' }}>
-                              {phong.moTa}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Room host metadata identifier */}
-                        <div className="room-card__host-info">
-                          <div className="room-card__host-avatar">🏠</div>
-                          <div className="room-card__host-name">{t('guest.host_label')} ID {phong.chuTroId}</div>
-                        </div>
-                      </div>
-
-                      {phong.trangThai === ROOM_STATUS.EMPTY && (
-                        <button
-                          style={{ ...S.btnSuccess, marginTop: '16px', opacity: isSubmitting ? 0.6 : 1 }}
-                          onClick={() => openContractPreview(phong)}
-                          disabled={isSubmitting}
-                        >
-                          {isSubmitting ? t('guest.btn_processing') : t('guest.btn_rent')}
-                        </button>
-                      )}
+                {searching ? (
+                  <Spinner text={t('common.loading')} />
+                ) : searchResults.length === 0 ? (
+                  <div className="card">
+                    <div style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)', fontSize: '13px' }}>
+                      <div style={{ fontSize: '28px', marginBottom: '8px', opacity: 0.5 }}>🔍</div>
+                      {t('guest.no_rooms_found')}
                     </div>
-                  ))}
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    {searchResults.map((phong, i) => renderRoomCardHorizontal(phong, i))}
+                  </div>
+                )}
+              </div>
+
+              {/* Cột phải: Lọc nhanh và Tin tức mới */}
+              <div className="guest-sidebar-column">
+                {/* Lọc nhanh theo giá */}
+                <div className="sidebar-box">
+                  <h3 className="sidebar-box__title">⚡ {t('guest.quick_filter_price') || 'Lọc nhanh theo giá'}</h3>
+                  <div className="sidebar-box__grid">
+                    <span className="sidebar-link" onClick={() => handleQuickPriceFilter(0, 1500000)}>{t('guest.price_under_1_5m') || 'Dưới 1.5 triệu'}</span>
+                    <span className="sidebar-link" onClick={() => handleQuickPriceFilter(1500000, 3000000)}>{t('guest.price_1_5m_3m') || '1.5 - 3 triệu'}</span>
+                    <span className="sidebar-link" onClick={() => handleQuickPriceFilter(3000000, 5000000)}>{t('guest.price_3m_5m') || '3 - 5 triệu'}</span>
+                    <span className="sidebar-link" onClick={() => handleQuickPriceFilter(5000000, 10000000)}>{t('guest.price_5m_10m') || '5 - 10 triệu'}</span>
+                  </div>
                 </div>
-              )}
+
+                {/* Lọc nhanh theo diện tích */}
+                <div className="sidebar-box">
+                  <h3 className="sidebar-box__title">📐 {t('guest.quick_filter_area') || 'Lọc nhanh theo diện tích'}</h3>
+                  <div className="sidebar-box__grid">
+                    <span className="sidebar-link" onClick={() => handleQuickAreaFilter(0, 20)}>{t('guest.area_under_20') || 'Dưới 20 m²'}</span>
+                    <span className="sidebar-link" onClick={() => handleQuickAreaFilter(20, 30)}>{t('guest.area_20_30') || '20 - 30 m²'}</span>
+                    <span className="sidebar-link" onClick={() => handleQuickAreaFilter(30, 50)}>{t('guest.area_30_50') || '30 - 50 m²'}</span>
+                    <span className="sidebar-link" onClick={() => handleQuickAreaFilter(50, 999999)}>{t('guest.area_over_50') || 'Trên 50 m²'}</span>
+                  </div>
+                </div>
+
+                {/* Tin mới nhất */}
+                <div className="sidebar-box">
+                  <h3 className="sidebar-box__title">📌 {t('guest.recent_rooms') || 'Tin phòng mới đăng'}</h3>
+                  <div className="sidebar-recent-list">
+                    {searchResults.slice(0, 4).map(phong => (
+                      <div key={phong.id} className="sidebar-recent-item" onClick={() => setSelectedRoomDetail(phong)}>
+                        <div className="sidebar-recent-item__img-wrap">
+                          {phong.hinhAnh ? (
+                            <ImageSlider hinhAnh={phong.hinhAnh} alt={phong.tenPhong} height="100%" />
+                          ) : (
+                            <div className="sidebar-recent-item__avatar">🏠</div>
+                          )}
+                        </div>
+                        <div className="sidebar-recent-item__info">
+                          <h4 className="sidebar-recent-item__title">{phong.tenPhong}</h4>
+                          <p className="sidebar-recent-item__price">{phong.giaPhong?.toLocaleString()} Đ</p>
+                        </div>
+                      </div>
+                    ))}
+                    {searchResults.length === 0 && (
+                      <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{t('guest.no_recent_rooms') || 'Không có tin mới'}</div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
@@ -633,11 +773,11 @@ function GuestPage({
               {loading && <Spinner text={t('guest.loading_host_list')} />}
 
               {!loading && (
-                <div style={S.card}>
+                <div className="card">
                   <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '14px' }}>{t('guest.search_host')}</div>
-                  <input type="text" placeholder={t('guest.search_placeholder')} value={tuKhoa} onChange={e => setTuKhoa(e.target.value)} style={{ ...S.input, marginBottom: '20px' }} />
-                  {chuTros.filter(ct => 
-                    ct.username.toLowerCase().includes(tuKhoa.toLowerCase()) || 
+                  <input type="text" placeholder={t('guest.search_placeholder')} value={tuKhoa} onChange={e => setTuKhoa(e.target.value)} className="form-input" style={{ marginBottom: '20px' }} />
+                  {chuTros.filter(ct =>
+                    ct.username.toLowerCase().includes(tuKhoa.toLowerCase()) ||
                     (ct.hoTen && ct.hoTen.toLowerCase().includes(tuKhoa.toLowerCase()))
                   ).length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)', fontSize: '13px' }}>
@@ -646,22 +786,17 @@ function GuestPage({
                     </div>
                   ) : (
                     <div className="grid-cards">
-                      {chuTros.filter(ct => 
-                        ct.username.toLowerCase().includes(tuKhoa.toLowerCase()) || 
+                      {chuTros.filter(ct =>
+                        ct.username.toLowerCase().includes(tuKhoa.toLowerCase()) ||
                         (ct.hoTen && ct.hoTen.toLowerCase().includes(tuKhoa.toLowerCase()))
                       ).map((ct, i) => (
                         <div key={ct.id} className="host-card" onClick={() => handleChonChuTro(ct)} style={{
                           animation: `fadeIn 0.3s ease ${i * 0.04}s both`,
                         }}>
-                          <div style={{
-                            width: '40px', height: '40px', borderRadius: '50%', margin: '0 auto 10px',
-                            background: 'var(--accent-light)', color: 'var(--accent)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontWeight: 700, fontSize: '16px',
-                          }}>
+                          <div className="host-card__avatar">
                             {(ct.hoTen || ct.username).charAt(0).toUpperCase()}
                           </div>
-                          <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                          <div className="host-card__name">
                             {ct.hoTen ? `${ct.hoTen} (${ct.username})` : `${t('guest.host_name')} ${ct.username}`}
                           </div>
                         </div>
@@ -675,130 +810,66 @@ function GuestPage({
 
           {/* VIEW: DETAILED ROOMS OF SELECTED HOST */}
           {chuTroDangChon && (
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', ...S.card }}>
-                <button style={S.btn} onClick={() => setChuTroDangChon(null)}>{t('guest.btn_back')}</button>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>
-                    {t('guest.host_label')} <span style={{ color: 'var(--success)' }}>
-                      {chuTroDangChon.hoTen ? `${chuTroDangChon.hoTen} (${chuTroDangChon.username})` : chuTroDangChon.username}
-                    </span>
-                  </div>
-                  <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                    {loading ? t('guest.loading') : `${phongTros.filter(p => p.trangThai === ROOM_STATUS.EMPTY).length} ${t('guest.empty_rooms_count')}`}
-                  </div>
-                </div>
-              </div>
-
-              {loading ? <Spinner text={t('guest.loading_host_data')} /> : (
-                <>
-                  <div style={{
-                    ...S.card, marginBottom: '16px', background: 'var(--success-light)',
-                    border: '1px solid #BBF7D0', animation: 'fadeIn 0.3s ease',
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifycontent: 'space-between', flexWrap: 'wrap', gap: '15px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                        <div style={{
-                          width: '48px', height: '48px', borderRadius: '50%',
-                          background: '#DCFCE7', color: 'var(--success)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: '18px', fontWeight: 700,
-                        }}>{avatarChar}</div>
-                        <div>
-                          <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--success)' }}>{displayName}</div>
-                          <div style={{ fontSize: '12px', color: '#15803D', marginTop: '4px', display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
-                            <span>📞 {hoSoChuTro?.soDienThoai || t('guest.not_updated')}</span>
-                            <span>✉️ {hoSoChuTro?.email || t('guest.not_updated')}</span>
-                          </div>
+            <div className="guest-layout-wrapper">
+              {/* Cột trái: Thông tin chủ nhà chi tiết + Danh sách phòng dạng thẻ ngang */}
+              <div className="guest-main-column">
+                <div className="premium-card" style={{ background: 'var(--accent-light)', borderColor: 'rgba(99, 102, 241, 0.15)', display: 'flex', flexDirection: 'column', gap: '16px', animation: 'fadeIn 0.3s ease' }}>
+                  <div style={{ display: 'flex', justifycontent: 'space-between', flexWrap: 'wrap', gap: '15px', width: '100%' }}>
+                    <div className="host-profile__info" style={{ flex: 1 }}>
+                      <div className="host-profile__avatar">{avatarChar}</div>
+                      <div>
+                        <div className="host-profile__name">{displayName}</div>
+                        <div className="host-profile__contacts">
+                          <span>📞 {hoSoChuTro?.soDienThoai || t('guest.not_updated')}</span>
+                          <span>✉️ {hoSoChuTro?.email || t('guest.not_updated')}</span>
                         </div>
                       </div>
-                      <button style={S.btnPrimary} onClick={() => setChatTarget({ id: chuTroDangChon.id, username: displayName })}>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <button className="btn btn--outline" onClick={() => setChuTroDangChon(null)}>{t('guest.btn_back')}</button>
+                      <button className="btn btn--primary" onClick={() => setChatTarget({ id: chuTroDangChon.id, username: displayName })}>
                         {t('guest.btn_chat')}
                       </button>
                     </div>
                   </div>
+                </div>
 
-                  <div className="grid-cards">
-                    {phongTros.map((phong, i) => (
-                      <div key={phong.id} style={{
-                        ...S.card,
-                        borderTop: `3px solid ${phong.trangThai === ROOM_STATUS.EMPTY ? 'var(--success)' : 'var(--danger)'}`,
-                        borderRadius: `0 0 var(--radius-lg) var(--radius-lg)`,
-                        animation: `fadeIn 0.3s ease ${i * 0.05}s both`,
-                        display: 'flex', flexDirection: 'column'
-                      }}>
-                         {phong.hinhAnh && (
-                          <div style={{ width: '100%', height: '160px', overflow: 'hidden', borderRadius: 'var(--radius-md)', marginBottom: '14px', position: 'relative' }}>
-                            <ImageSlider hinhAnh={phong.hinhAnh} alt={phong.tenPhong} height="100%" />
-                          </div>
-                        )}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                          <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)' }}>{phong.tenPhong}</div>
-                          <span style={S.tag(phong.trangThai === ROOM_STATUS.EMPTY ? 'green' : 'red')}>
-                            {phong.trangThai === ROOM_STATUS.EMPTY ? t('guest.status_empty') : phong.trangThai === ROOM_STATUS.RENTED ? t('guest.status_rented') : t('guest.status_maintenance')}
-                          </span>
+                {loading ? <Spinner text={t('guest.loading_host_data')} /> : phongTros.length === 0 ? (
+                  <div className="card" style={{ marginTop: '16px' }}>
+                    <div style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>
+                      {t('guest.no_rooms_found')}
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
+                    {phongTros.map((phong, i) => renderRoomCardHorizontal(phong, i))}
+                  </div>
+                )}
+              </div>
+
+              {/* Cột phải: Các chủ trọ khác */}
+              <div className="guest-sidebar-column">
+                <div className="sidebar-box">
+                  <h3 className="sidebar-box__title">🏢 {t('guest.other_hosts') || 'Chủ trọ khác'}</h3>
+                  <div className="sidebar-recent-list">
+                    {chuTros.filter(ct => ct.id !== chuTroDangChon.id).slice(0, 5).map(ct => (
+                      <div key={ct.id} className="sidebar-recent-item" onClick={() => handleChonChuTro(ct)}>
+                        <div className="sidebar-recent-item__avatar">
+                          {(ct.hoTen || ct.username).charAt(0).toUpperCase()}
                         </div>
-
-                        <div style={{ flex: 1 }}>
-                          <div style={S.infoRow}>
-                            <span style={{ color: 'var(--text-muted)' }}>{t('guest.rent_price')}</span>
-                            <span style={{ fontWeight: 700, color: 'var(--accent)', fontSize: '14px' }}>{phong.giaPhong?.toLocaleString()} {t('guest.currency_month')}</span>
-                          </div>
-                          {phong.dienTich && (
-                            <div style={S.infoRow}>
-                              <span style={{ color: 'var(--text-muted)' }}>{t('guest.area')}</span>
-                              <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{phong.dienTich} m²</span>
-                            </div>
-                          )}
-                          {phong.tienCoc != null && (
-                            <div style={S.infoRow}>
-                              <span style={{ color: 'var(--text-muted)' }}>{t('guest.deposit')}</span>
-                              <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{phong.tienCoc?.toLocaleString()} {t('landlord.currency')}</span>
-                            </div>
-                          )}
-                          {(phong.giaDien != null || phong.giaNuoc != null) && (
-                            <div style={S.infoRow}>
-                              <span style={{ color: 'var(--text-muted)' }}>{t('guest.utility')}</span>
-                              <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>
-                                {phong.giaDien ? `${phong.giaDien.toLocaleString()} ${t('landlord.currency')}` : '—'} / {phong.giaNuoc ? `${phong.giaNuoc.toLocaleString()} ${t('landlord.currency')}` : '—'}
-                              </span>
-                            </div>
-                          )}
-                          {phong.diaChi && (
-                            <div style={{ ...S.infoRow, alignItems: 'flex-start', flexDirection: 'column', gap: '6px', borderBottom: 'none' }}>
-                              <span style={{ color: 'var(--text-muted)' }}>{t('guest.address')}</span>
-                              <span style={{ fontWeight: 500, color: 'var(--text-primary)', lineHeight: 1.5 }}>📍 {phong.diaChi}</span>
-                            </div>
-                          )}
-                          {phong.moTa && (
-                            <div style={{ marginTop: '10px', padding: '12px', background: 'var(--bg)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)' }}>
-                              <div style={{ color: 'var(--text-muted)', fontSize: '12px', marginBottom: '6px', fontWeight: 600 }}>{t('guest.description')}</div>
-                              <div style={{ fontWeight: 400, color: 'var(--text-secondary)', fontSize: '13px', lineHeight: 1.6, whiteSpace: 'pre-line' }}>
-                                {phong.moTa}
-                              </div>
-                            </div>
-                          )}
+                        <div className="sidebar-recent-item__info">
+                          <h4 className="sidebar-recent-item__title">{ct.hoTen || ct.username}</h4>
+                          <p className="sidebar-recent-item__price" style={{ color: 'var(--text-muted)', fontWeight: 500 }}>@{ct.username}</p>
                         </div>
-
-                        {phong.trangThai === ROOM_STATUS.EMPTY && (
-                          <button
-                            style={{ ...S.btnSuccess, marginTop: '16px', opacity: isSubmitting ? 0.6 : 1 }}
-                            onClick={() => openContractPreview(phong)}
-                            disabled={isSubmitting}
-                          >
-                            {isSubmitting ? t('guest.btn_processing') : t('guest.btn_rent')}
-                          </button>
-                        )}
                       </div>
                     ))}
                   </div>
-                </>
-              )}
+                </div>
+              </div>
             </div>
           )}
         </div>
       )}
-
       {chatTarget && <ChatBox currentUser={currentUser} targetUser={chatTarget} isOpen={true} onClose={() => setChatTarget(null)} />}
 
       <ContractModal
@@ -816,6 +887,21 @@ function GuestPage({
       <ConfirmModal
         {...confirmState}
         onClose={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
+      />
+
+      <RoomDetailModalForGuest
+        isOpen={!!selectedRoomDetail}
+        onClose={() => setSelectedRoomDetail(null)}
+        phong={selectedRoomDetail}
+        onRent={(phong) => {
+          setSelectedRoomDetail(null);
+          openContractPreview(phong);
+        }}
+        onChat={(target) => {
+          setSelectedRoomDetail(null);
+          setChatTarget(target);
+        }}
+        isSubmitting={isSubmitting}
       />
     </div>
   );

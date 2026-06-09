@@ -13,6 +13,7 @@ import LandlordPage from './pages/Landlord/LandlordPage';
 import GuestPage from './pages/Guest/GuestPage';
 import TenantPage from './pages/Tenant/TenantPage';
 import ChatBox from './components/ChatBox';
+import Footer from './components/Footer';
 import { ROLES } from './constants';
 
 function LoadingScreen({ message }) {
@@ -170,8 +171,15 @@ function AppContent() {
 
   const [tenantView, setTenantView] = useState('DASHBOARD'); // 'DASHBOARD' or 'MARKET'
 
+  const tenantViewVal = tenantView;
   const rawRole = user?.role || '';
   const normalizedRole = rawRole.startsWith('ROLE_') ? rawRole : `ROLE_${rawRole}`;
+
+  const isDashboard = user && (
+    normalizedRole === ROLES.ADMIN || 
+    normalizedRole === ROLES.LANDLORD || 
+    (normalizedRole === ROLES.USER && tenantViewVal !== 'MARKET' && hopDongCuaToi)
+  );
 
   const renderContent = () => {
     if (normalizedRole === ROLES.ADMIN) {
@@ -180,7 +188,8 @@ function AppContent() {
           currentUser={user} 
           unreadSenderIds={unreadSenderIds} 
           setUnreadSenderIds={setUnreadSenderIds} 
-          onSetChatTarget={setChatTarget} 
+          onSetChatTarget={setChatTarget}
+          onLogout={logout}
         />
       );
     }
@@ -190,7 +199,8 @@ function AppContent() {
           currentUser={user} 
           unreadSenderIds={unreadSenderIds} 
           setUnreadSenderIds={setUnreadSenderIds} 
-          onSetChatTarget={setChatTarget} 
+          onSetChatTarget={setChatTarget}
+          onLogout={logout}
         />
       );
     }
@@ -211,7 +221,7 @@ function AppContent() {
 
       const tt = hopDongCuaToi?.trangThai;
       if (tt === 'DA_DUYET' || tt === 'YEU_CAU_HUY') {
-        if (tenantView === 'MARKET') {
+        if (tenantViewVal === 'MARKET') {
           return (
             <div style={{ animation: 'fadeIn 0.3s ease' }}>
               <div style={{ marginBottom: '20px' }}>
@@ -241,6 +251,7 @@ function AppContent() {
             unreadSenderIds={unreadSenderIds} 
             setUnreadSenderIds={setUnreadSenderIds} 
             onSetChatTarget={setChatTarget} 
+            onLogout={logout}
           />
         );
       }
@@ -269,6 +280,40 @@ function AppContent() {
       </div>
     );
   };
+
+  if (isDashboard) {
+    return (
+      <div className="dashboard-app-container">
+        {dangKiemTra && (
+          <div style={{
+            position: 'fixed', top: '16px', right: '20px',
+            background: 'var(--surface)', border: '1px solid var(--border)',
+            padding: '6px 14px', borderRadius: '999px',
+            fontSize: '12px', fontWeight: 500, color: 'var(--text-muted)',
+            zIndex: 999, animation: 'fadeIn 0.2s ease',
+            display: 'flex', alignItems: 'center', gap: '6px',
+          }}>
+            <div style={{
+              width: '12px', height: '12px', border: '2px solid var(--border)',
+              borderTopColor: 'var(--accent)', borderRadius: '50%',
+              animation: 'spin 0.6s linear infinite',
+            }} />
+            {t('app.syncing')}
+          </div>
+        )}
+        {renderContent()}
+        <ChatBox 
+          currentUser={user} 
+          targetUser={chatTarget} 
+          isOpen={!!chatTarget} 
+          onClose={() => setChatTarget(null)} 
+          onOpenChat={setChatTarget} 
+          unreadSenderIds={unreadSenderIds}
+          setUnreadSenderIds={setUnreadSenderIds}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="container app-layout">
@@ -300,44 +345,7 @@ function AppContent() {
         unreadSenderIds={unreadSenderIds}
         setUnreadSenderIds={setUnreadSenderIds}
       />
-      <footer className="app-footer">
-        <div className="app-footer__grid">
-          {/* Column 1: Introduction */}
-          <div className="app-footer__col">
-            <div className="app-footer__title">🏠 Smart Room Rental</div>
-            <div className="app-footer__desc">
-              {t('footer.desc_app')}
-            </div>
-          </div>
-
-          {/* Column 2: VIP Support */}
-          <div className="app-footer__col">
-            <div className="app-footer__title">{t('footer.col_vip')}</div>
-            <div className="app-footer__desc">
-              {t('footer.contact_hotline_fast')}<br/>
-              ✉️ Email: vip.support@smartrental.vn
-            </div>
-          </div>
-
-          {/* Column 3: Status Badges */}
-          <div className="app-footer__col">
-            <div className="app-footer__title">{t('footer.col_status')}</div>
-            <div className="app-footer__badges" style={{ marginTop: '4px' }}>
-              <span className="app-footer__badge">🛡️ Session Secure</span>
-              <span className="app-footer__badge" style={{ backgroundColor: 'var(--success-light)', color: 'var(--success)', borderColor: '#BBF7D0' }}>🟢 API Connected</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="app-footer__bottom">
-          <span className="app-footer__copy">
-            {t('home.footer_copy') || '© 2026 Smart Room Rental.'}
-          </span>
-          <span className="app-footer__version" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-            Premium Dashboard v2.2.0
-          </span>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

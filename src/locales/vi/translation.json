@@ -300,7 +300,19 @@
     "pending_banner_text": "Bạn đang gửi một yêu cầu thuê phòng <strong>{{room}}</strong>. Yêu cầu đang được chờ chủ trọ xác nhận.",
     "pending_room_fallback": "Phòng chờ duyệt",
     "btn_chat_host": "Nhắn tin chủ trọ",
-    "alert_cancel_existing_request": "⚠️ Bạn đang có một yêu cầu thuê phòng \"{{oldRoom}}\" chờ duyệt.\n\nBạn có muốn hủy yêu cầu cũ này để tiến hành đăng ký thuê phòng \"{{newRoom}}\" mới hay không?"
+    "alert_cancel_existing_request": "⚠️ Bạn đang có một yêu cầu thuê phòng \"{{oldRoom}}\" chờ duyệt.\n\nBạn có muốn hủy yêu cầu cũ này để tiến hành đăng ký thuê phòng \"{{newRoom}}\" mới hay không?",
+    "quick_filter_price": "Lọc nhanh theo giá",
+    "recent_rooms": "Tin phòng mới đăng",
+    "no_recent_rooms": "Không có tin mới",
+    "price_under_1_5m": "Dưới 1.5 triệu",
+    "price_1_5m_3m": "1.5 - 3 triệu",
+    "price_3m_5m": "3 - 5 triệu",
+    "price_5m_10m": "5 - 10 triệu",
+    "quick_filter_area": "Lọc nhanh theo diện tích",
+    "area_under_20": "Dưới 20 m²",
+    "area_20_30": "20 - 30 m²",
+    "area_30_50": "30 - 50 m²",
+    "area_over_50": "Trên 50 m²"
   },
   "guest_profile": {
     "loading": "Đang tải hồ sơ...",

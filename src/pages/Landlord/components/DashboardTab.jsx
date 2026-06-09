@@ -122,7 +122,7 @@ export default function DashboardTab({ thongKeData, isAdmin = false }) {
         marginBottom: '24px',
         position: 'relative',
         height: '180px',
-        background: 'linear-gradient(135deg, #D47A95 0%, #E09BAE 60%, #ECAFC0 100%)',
+        background: 'linear-gradient(135deg, #4F46E5 0%, #6366F1 60%, #818CF8 100%)',
         display: 'flex',
         alignItems: 'center',
         boxShadow: 'var(--shadow-md)',
@@ -195,61 +195,72 @@ export default function DashboardTab({ thongKeData, isAdmin = false }) {
         </div>
       </div>
 
-      {/* === Biểu đồ doanh thu === */}
-      <div className="l-chart-card">
-        <div className="l-chart-card__title">📈 {t('landlord.revenue_chart')}</div>
-        <div className="l-chart-bars">
-          {thongKeData.bieuDoDoanhThu?.map((d, i) => {
-            const height = maxDT > 0 ? (d.doanhThu / maxDT) * 100 : 0;
-            const isCurrent = i === (thongKeData.bieuDoDoanhThu.length - 1);
-            return (
-              <div key={i} className="l-chart-col">
-                <div className="l-chart-col__label-top">
-                  {d.doanhThu > 0 ? `${Math.round(d.doanhThu / 1000)}k` : ''}
-                </div>
-                <div
-                  className={`l-chart-col__bar ${isCurrent ? 'l-chart-col__bar--current' : 'l-chart-col__bar--past'}`}
-                  style={{ height: `${Math.max(height, 4)}%` }}
-                  title={`${getFullMonth(d.thang)}: ${d.doanhThu?.toLocaleString()} ${t('landlord.currency')}`}
-                />
-                <div className="l-chart-col__label-bot">{getShortMonth(d.thang)}</div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      {/* Container song song cho biểu đồ và bảng */}
+      <div className="dashboard-grid-charts" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '24px', marginTop: '24px' }}>
+        <style>{`
+          @media (min-width: 1024px) {
+            .dashboard-grid-charts {
+              grid-template-columns: 3fr 2fr !important;
+            }
+          }
+        `}</style>
 
-      {/* === Bảng dữ liệu chi tiết (Dạng Sheet để in) === */}
-      <div className="l-report-sheet">
-        <div className="l-chart-card__title">📄 {t('landlord.tab_report')} {t('landlord.recently').toLowerCase()}</div>
-        <table style={{
-          width: '100%', borderCollapse: 'collapse', marginTop: '10px',
-          fontSize: '13px', border: '1px solid #ddd'
-        }}>
-          <thead>
-            <tr style={{ background: '#f8f9fa' }}>
-              <th style={S.th}>{t('landlord.month')}</th>
-              <th style={S.th}>{t('landlord.revenue_this_month')}</th>
-              <th style={S.th}>{t('landlord.status')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {thongKeData.bieuDoDoanhThu?.map((d, i) => (
-              <tr key={i}>
-                <td style={S.td}>{getFullMonth(d.thang)} / {d.nam}</td>
-                <td style={{ ...S.td, fontWeight: 600 }}>{d.doanhThu?.toLocaleString()} {t('landlord.currency')}</td>
-                <td style={S.td}>{t('landlord.status_paid')}</td>
+        {/* === Biểu đồ doanh thu === */}
+        <div className="l-chart-card" style={{ height: '100%', marginBottom: 0 }}>
+          <div className="l-chart-card__title">📈 {t('landlord.revenue_chart')}</div>
+          <div className="l-chart-bars">
+            {thongKeData.bieuDoDoanhThu?.map((d, i) => {
+              const height = maxDT > 0 ? (d.doanhThu / maxDT) * 100 : 0;
+              const isCurrent = i === (thongKeData.bieuDoDoanhThu.length - 1);
+              return (
+                <div key={i} className="l-chart-col">
+                  <div className="l-chart-col__label-top">
+                    {d.doanhThu > 0 ? `${Math.round(d.doanhThu / 1000)}k` : ''}
+                  </div>
+                  <div
+                    className={`l-chart-col__bar ${isCurrent ? 'l-chart-col__bar--current' : 'l-chart-col__bar--past'}`}
+                    style={{ height: `${Math.max(height, 4)}%` }}
+                    title={`${getFullMonth(d.thang)}: ${d.doanhThu?.toLocaleString()} ${t('landlord.currency')}`}
+                  />
+                  <div className="l-chart-col__label-bot">{getShortMonth(d.thang)}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* === Bảng dữ liệu chi tiết (Dạng Sheet để in) === */}
+        <div className="l-report-sheet" style={{ height: '100%', marginBottom: 0 }}>
+          <div className="l-chart-card__title">📄 {t('landlord.tab_report')} {t('landlord.recently').toLowerCase()}</div>
+          <table style={{
+            width: '100%', borderCollapse: 'collapse', marginTop: '10px',
+            fontSize: '13px', border: '1px solid #ddd'
+          }}>
+            <thead>
+              <tr style={{ background: '#f8f9fa' }}>
+                <th style={S.th}>{t('landlord.month')}</th>
+                <th style={S.th}>{t('landlord.revenue_this_month')}</th>
+                <th style={S.th}>{t('landlord.status')}</th>
               </tr>
-            ))}
-            <tr style={{ background: '#fff9f9' }}>
-              <td style={{ ...S.td, fontWeight: 'bold' }}>{t('landlord.debt')}</td>
-              <td style={{ ...S.td, fontWeight: 'bold', color: 'var(--danger)' }}>
-                {thongKeData.tongTienChuaThanhToan?.toLocaleString()} {t('landlord.currency')}
-              </td>
-              <td style={S.td}>{t('landlord.status_unpaid')} ({thongKeData.soHoaDonChuaThanhToan})</td>
-            </tr>
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {thongKeData.bieuDoDoanhThu?.map((d, i) => (
+                <tr key={i}>
+                  <td style={S.td}>{getFullMonth(d.thang)} / {d.nam}</td>
+                  <td style={{ ...S.td, fontWeight: 600 }}>{d.doanhThu?.toLocaleString()} {t('landlord.currency')}</td>
+                  <td style={S.td}>{t('landlord.status_paid')}</td>
+                </tr>
+              ))}
+              <tr style={{ background: '#fff9f9' }}>
+                <td style={{ ...S.td, fontWeight: 'bold' }}>{t('landlord.debt')}</td>
+                <td style={{ ...S.td, fontWeight: 'bold', color: 'var(--danger)' }}>
+                  {thongKeData.tongTienChuaThanhToan?.toLocaleString()} {t('landlord.currency')}
+                </td>
+                <td style={S.td}>{t('landlord.status_unpaid')} ({thongKeData.soHoaDonChuaThanhToan})</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <style>{`

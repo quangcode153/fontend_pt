@@ -12,6 +12,7 @@ import HoSoForm from '../../components/HoSoForm';
 import ContractModal from '../../components/ContractModal';
 import ConfirmModal from '../../components/ConfirmModal';
 import useAdminContact from '../../hooks/useAdminContact';
+import Footer from '../../components/Footer';
 
 /* --- Component con theo từng Tab --- */
 import DashboardTab from './components/DashboardTab';
@@ -52,8 +53,14 @@ function Spinner({ text }) {
 /* =========================================
    COMPONENT CHÍNH
    ========================================= */
-function LandlordPage({ currentUser, unreadSenderIds = [], setUnreadSenderIds, onSetChatTarget }) {
-  const { t } = useTranslation();
+function LandlordPage({ currentUser, unreadSenderIds = [], setUnreadSenderIds, onSetChatTarget, onLogout }) {
+  const { t, i18n } = useTranslation();
+
+  const toggleLanguage = () => {
+    const newLang = i18n.language === 'vi' ? 'en' : 'vi';
+    i18n.changeLanguage(newLang);
+    localStorage.setItem('i18nextLng', newLang);
+  };
 
   /* Kiểm tra quyền truy cập */
   const userRole = (currentUser?.role || '').startsWith('ROLE_') ? currentUser.role : `ROLE_${currentUser.role}`;
@@ -559,64 +566,112 @@ function LandlordPage({ currentUser, unreadSenderIds = [], setUnreadSenderIds, o
 
   /* ===== RENDER ===== */
   return (
-    <div>
-      {/* === Thanh điều hướng Tab + Nút liên hệ Admin === */}
-      <div className="landlord-header">
-        <div className="landlord-nav-bar">
-          {TABS.map(tab => (
-            <button
-              key={tab.key}
-              className={`landlord-nav-bar__btn ${landlordTab === tab.key ? 'landlord-nav-bar__btn--active' : ''}`}
-              onClick={() => {
-                setLandlordTab(tab.key);
-                tab.onClick?.();
-              }}
-            >
-              {tab.icon} {tab.label}
-              {tab.badge > 0 && (
-                <span className="landlord-nav-bar__badge">{tab.badge}</span>
-              )}
-            </button>
-          ))}
+    <div className="dashboard-layout" style={{ fontFamily: 'var(--font)' }}>
+      {/* Sidebar dọc cố định */}
+      <div className="dashboard-sidebar">
+        <div className="dashboard-sidebar__top">
+          <div className="dashboard-sidebar__logo">
+            <span className="dashboard-sidebar__logo-icon">🏠</span>
+            <div className="dashboard-sidebar__logo-text">
+              <div className="dashboard-sidebar__logo-title">Smart Rental</div>
+              <div className="dashboard-sidebar__logo-subtitle">Landlord Portal</div>
+            </div>
+          </div>
+          <div className="dashboard-sidebar__menu">
+            {TABS.map(tab => (
+              <button
+                key={tab.key}
+                className={`dashboard-sidebar__item ${landlordTab === tab.key ? 'dashboard-sidebar__item--active' : ''}`}
+                onClick={() => {
+                  setLandlordTab(tab.key);
+                  tab.onClick?.();
+                }}
+              >
+                {tab.icon} {tab.label}
+                {tab.badge > 0 && (
+                  <span className="landlord-nav-bar__badge" style={{
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    width: '18px', height: '18px', borderRadius: '50%',
+                    background: 'var(--danger)', color: '#fff', fontSize: '10px',
+                    marginLeft: '6px', fontWeight: 700
+                  }}>{tab.badge}</span>
+                )}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Nút liên hệ Admin */}
-        <button
-          className="landlord-contact-btn"
-          style={{
-            position: 'relative',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}
-          onClick={() => adminContact && onSetChatTarget(adminContact)}
-          disabled={loadingAdmin || !!adminError}
-        >
-          <style>{`
-            @keyframes pulseDot {
-              0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-              70% { transform: scale(1.1); box-shadow: 0 0 0 5px rgba(239, 68, 68, 0); }
-              100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-            }
-          `}</style>
-          🎧 {loadingAdmin
-            ? t('landlord.btn_connecting')
-            : adminError
-              ? t('landlord.btn_offline')
-              : t('landlord.btn_chat_admin')}
-          {hasAdminUnread && (
-            <span style={{
-              width: '8px',
-              height: '8px',
-              backgroundColor: 'var(--danger)',
-              borderRadius: '50%',
-              display: 'inline-block',
-              boxShadow: '0 0 0 2px rgba(255, 255, 255, 0.3)',
-              animation: 'pulseDot 1.2s infinite'
-            }} />
-          )}
-        </button>
+        <div className="dashboard-sidebar__footer">
+          <button className="dashboard-sidebar__logout-btn" onClick={onLogout}>
+            🚪 {t('header.logout') || 'Đăng xuất'}
+          </button>
+        </div>
       </div>
+
+      {/* Khu vực nội dung chính bên phải */}
+      <div className="dashboard-content">
+        {/* Top Header cho dashboard */}
+        <div className="dashboard-content__header">
+          <h2 className="dashboard-content__title">
+            {TABS.find(t => t.key === landlordTab)?.label}
+          </h2>
+          <div className="dashboard-content__actions">
+            <button
+              className="btn btn--outline"
+              style={{
+                position: 'relative',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '8px 16px',
+                fontSize: '13px'
+              }}
+              onClick={() => adminContact && onSetChatTarget(adminContact)}
+              disabled={loadingAdmin || !!adminError}
+            >
+              🎧 {loadingAdmin
+                ? t('landlord.btn_connecting')
+                : adminError
+                  ? t('landlord.btn_offline')
+                  : t('landlord.btn_chat_admin')}
+              {hasAdminUnread && (
+                <span style={{
+                  width: '8px',
+                  height: '8px',
+                  backgroundColor: 'var(--danger)',
+                  borderRadius: '50%',
+                  display: 'inline-block',
+                  boxShadow: '0 0 0 2px rgba(255, 255, 255, 0.3)',
+                  animation: 'pulseDot 1.2s infinite'
+                }} />
+              )}
+            </button>
+
+            {/* Language Switcher */}
+            <button
+              onClick={toggleLanguage}
+              className="dashboard-header-btn"
+              title={i18n.language === 'vi' ? 'Switch to English' : 'Đổi sang Tiếng Việt'}
+            >
+              {i18n.language === 'vi' ? '🇺🇸 EN' : '🇻🇳 VI'}
+            </button>
+
+            {/* Profile Info */}
+            <div className="dashboard-header-profile">
+              <div className="dashboard-header-avatar">
+                {(currentUser?.username || 'G').charAt(0).toUpperCase()}
+              </div>
+              <div className="dashboard-header-userinfo">
+                <div className="dashboard-header-username">
+                  {currentUser?.username}
+                </div>
+                <div className="dashboard-header-role">
+                  {t('header.role_LANDLORD')}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
       {/* === Spinner khi đang tải lần đầu === */}
       {loading && <Spinner text={t('landlord.syncing')} />}
@@ -695,6 +750,8 @@ function LandlordPage({ currentUser, unreadSenderIds = [], setUnreadSenderIds, o
           <HoSoForm user={currentUser} />
         </div>
       )}
+      <Footer />
+      </div> {/* Close dashboard-content */}
 
       {/* === Modals === */}
       <RoomDetailModal

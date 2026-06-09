@@ -30,7 +30,7 @@
 }
 
 .landlord-nav-bar__btn--active {
-  background: linear-gradient(135deg, var(--accent), #ECAFC0);
+  background: linear-gradient(135deg, var(--accent), #818CF8);
   color: #fff;
   box-shadow: 0 2px 8px var(--accent-glow);
 }
@@ -192,7 +192,7 @@
 }
 
 .l-btn--primary {
-  background: linear-gradient(135deg, var(--accent), #ECAFC0);
+  background: linear-gradient(135deg, var(--accent), #818CF8);
   color: #fff;
   border: none;
   box-shadow: 0 2px 8px var(--accent-glow);
@@ -285,7 +285,7 @@
 }
 
 .l-stat-card--revenue::before {
-  background: linear-gradient(90deg, var(--accent), #ECAFC0);
+  background: linear-gradient(90deg, var(--accent), #818CF8);
 }
 
 .l-stat-card--occupancy::before {
@@ -393,7 +393,7 @@
 }
 
 .l-chart-col__bar--current {
-  background: linear-gradient(to top, var(--accent), #F2C4D3);
+  background: linear-gradient(to top, var(--accent), #818CF8);
 }
 
 .l-chart-col__bar--past {

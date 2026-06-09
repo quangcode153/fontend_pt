@@ -5,6 +5,7 @@ import ChatBox from '../../components/ChatBox';
 import QuanLyNguoiDung from '../../components/QuanLyNguoiDung';
 import DashboardTab from '../Landlord/components/DashboardTab';
 import ConfirmModal from '../../components/ConfirmModal';
+import Footer from '../../components/Footer';
 import './AdminPage.css';
 
 const ROLES = { ADMIN: 'ROLE_ADMIN' };
@@ -94,8 +95,14 @@ const Spinner = ({ text }) => {
   );
 };
 
-export default function AdminPage({ currentUser, unreadSenderIds = [], setUnreadSenderIds, onSetChatTarget }) {
-  const { t } = useTranslation();
+export default function AdminPage({ currentUser, unreadSenderIds = [], setUnreadSenderIds, onSetChatTarget, onLogout }) {
+  const { t, i18n } = useTranslation();
+
+  const toggleLanguage = () => {
+    const newLang = i18n.language === 'vi' ? 'en' : 'vi';
+    i18n.changeLanguage(newLang);
+    localStorage.setItem('i18nextLng', newLang);
+  };
   const userRole = (currentUser?.role || '').startsWith('ROLE_') ? currentUser.role : `ROLE_${currentUser.role}`;
   if (userRole !== ROLES.ADMIN) {
     return <div style={{ padding: '40px', textAlign: 'center', color: 'var(--danger)', fontWeight: 600 }}>{t('admin.access_denied')}</div>;
@@ -114,6 +121,16 @@ export default function AdminPage({ currentUser, unreadSenderIds = [], setUnread
   const [loadingInit, setLoadingInit] = useState(true);
   const [loadingRooms, setLoadingRooms] = useState(false);
   const [confirmState, setConfirmState] = useState({ isOpen: false, type: 'info', title: '', message: '', onConfirm: null });
+  const [selectedComplaint, setSelectedComplaint] = useState(null);
+
+  const pendingCount = khieuNais.filter(kn => kn.trangThai === 'CHO_XU_LY').length;
+
+
+  useEffect(() => {
+    if (khieuNais.length > 0 && !selectedComplaint) {
+      setSelectedComplaint(khieuNais[0]);
+    }
+  }, [khieuNais, selectedComplaint]);
 
   useEffect(() => { fetchInitialData(); }, []);
 
@@ -273,285 +290,186 @@ export default function AdminPage({ currentUser, unreadSenderIds = [], setUnread
     if (tt === ROOM_STATUS.EMPTY) return 'green';
     if (tt === ROOM_STATUS.RENTED) return 'red';
     return 'amber';
-  };
-
-  const pendingCount = khieuNais.filter(kn => kn.trangThai === 'CHO_XU_LY').length;
+  };  const ADMIN_TABS = [
+    { key: 'USERS', label: t('admin.tab_users'), icon: '👥 ' },
+    { key: 'BAO_CAO', label: t('landlord.tab_report'), icon: '📊 ' },
+    { key: 'PHONG', label: t('admin.tab_rooms'), icon: '🏨 ' },
+    { key: 'KHIEU_NAI', label: t('admin.tab_complaints'), icon: '⚠️ ' },
+  ];
 
   return (
-    <div style={{ fontFamily: 'var(--font)' }}>
-      <div style={S.navBar}>
-        <button style={S.navItem(adminTab === 'USERS')} onClick={() => setAdminTab('USERS')}>{t('admin.tab_users')}</button>
-        <button style={S.navItem(adminTab === 'BAO_CAO')} onClick={() => setAdminTab('BAO_CAO')}>📊 {t('landlord.tab_report')}</button>
-        <button style={S.navItem(adminTab === 'PHONG')} onClick={() => { setAdminTab('PHONG'); setChuTroDangChon(null); }}>{t('admin.tab_rooms')}</button>
-        <button style={S.navItem(adminTab === 'KHIEU_NAI')} onClick={() => setAdminTab('KHIEU_NAI')}>
-          {t('admin.tab_complaints')}
-          {pendingCount > 0 && (
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              width: '18px', height: '18px', borderRadius: '50%',
-              background: 'var(--danger)', color: '#fff', fontSize: '10px',
-              marginLeft: '6px', fontWeight: 700,
-            }}>{pendingCount}</span>
-          )}
-        </button>
+    <div className="dashboard-layout" style={{ fontFamily: 'var(--font)' }}>
+      {/* Sidebar dọc cố định */}
+      <div className="dashboard-sidebar">
+        <div className="dashboard-sidebar__top">
+          <div className="dashboard-sidebar__logo">
+            <span className="dashboard-sidebar__logo-icon">🏠</span>
+            <div className="dashboard-sidebar__logo-text">
+              <div className="dashboard-sidebar__logo-title">Smart Rental</div>
+              <div className="dashboard-sidebar__logo-subtitle">Admin Portal</div>
+            </div>
+          </div>
+          <div className="dashboard-sidebar__menu">
+            {ADMIN_TABS.map(tab => (
+              <button
+                key={tab.key}
+                className={`dashboard-sidebar__item ${adminTab === tab.key ? 'dashboard-sidebar__item--active' : ''}`}
+                onClick={() => {
+                  setAdminTab(tab.key);
+                  if (tab.key === 'PHONG') setChuTroDangChon(null);
+                }}
+              >
+                {tab.icon}
+                {tab.label}
+                {tab.key === 'KHIEU_NAI' && pendingCount > 0 && (
+                  <span className="admin-nav__badge">{pendingCount}</span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="dashboard-sidebar__footer">
+          <button className="dashboard-sidebar__logout-btn" onClick={onLogout}>
+            🚪 {t('header.logout') || 'Đăng xuất'}
+          </button>
+        </div>
       </div>
 
-      {loadingInit ? <Spinner text={t('admin.init_loading')} /> : (
-        <>
-          {adminTab === 'USERS' && <QuanLyNguoiDung />}
+      {/* Khu vực nội dung chính bên phải */}
+      <div className="dashboard-content">
+        {/* Top Header cho dashboard */}
+        <div className="dashboard-content__header">
+          <h2 className="dashboard-content__title">
+            {ADMIN_TABS.find(t => t.key === adminTab)?.label}
+          </h2>
+          <div className="dashboard-content__actions">
+            {/* Language Switcher */}
+            <button
+              onClick={toggleLanguage}
+              className="dashboard-header-btn"
+              title={i18n.language === 'vi' ? 'Switch to English' : 'Đổi sang Tiếng Việt'}
+            >
+              {i18n.language === 'vi' ? '🇺🇸 EN' : '🇻🇳 VI'}
+            </button>
 
-          {adminTab === 'BAO_CAO' && <DashboardTab thongKeData={thongKeData} isAdmin={true} />}
-
-          {adminTab === 'PHONG' && (
-            !chuTroDangChon ? (
-              <div style={S.card}>
-                {thongKeData && (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-                    <div style={{
-                      padding: '16px 20px',
-                      background: 'var(--accent-light)',
-                      border: '1px solid var(--accent)',
-                      borderRadius: 'var(--radius-lg)',
-                      boxShadow: '0 2px 8px var(--accent-glow)'
-                    }}>
-                      <div style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--accent)', fontWeight: 600, letterSpacing: '0.5px' }}>
-                        🏨 {t('admin.stats_total_rooms')}
-                      </div>
-                      <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--accent)', marginTop: '6px' }}>
-                        {thongKeData.tongSoPhong} <span style={{ fontSize: '14px', fontWeight: 500 }}>{t('admin.stats_rooms_unit')}</span>
-                      </div>
-                    </div>
-
-                    <div style={{
-                      padding: '16px 20px',
-                      background: 'var(--danger-light)',
-                      border: '1px solid var(--danger)',
-                      borderRadius: 'var(--radius-lg)',
-                      boxShadow: '0 2px 8px rgba(239, 68, 68, 0.08)'
-                    }}>
-                      <div style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--danger)', fontWeight: 600, letterSpacing: '0.5px' }}>
-                        🔴 {t('admin.stats_rented_rooms')}
-                      </div>
-                      <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--danger)', marginTop: '6px' }}>
-                        {thongKeData.soPhongDaThue} <span style={{ fontSize: '14px', fontWeight: 500 }}>{t('admin.stats_rooms_unit')}</span>
-                      </div>
-                    </div>
-
-                    <div style={{
-                      padding: '16px 20px',
-                      background: 'var(--success-light)',
-                      border: '1px solid var(--success)',
-                      borderRadius: 'var(--radius-lg)',
-                      boxShadow: '0 2px 8px rgba(16, 185, 129, 0.08)'
-                    }}>
-                      <div style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--success)', fontWeight: 600, letterSpacing: '0.5px' }}>
-                        🟢 {t('admin.stats_empty_rooms')}
-                      </div>
-                      <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--success)', marginTop: '6px' }}>
-                        {thongKeData.soPhongTrong} <span style={{ fontSize: '14px', fontWeight: 500 }}>{t('admin.stats_rooms_unit')}</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '16px' }}>{t('admin.search_rooms')}</div>
-                <input type="text" placeholder={t('admin.search_placeholder')} value={tuKhoa} onChange={e => setTuKhoa(e.target.value)} style={{ ...S.input, marginBottom: '20px' }} />
-                {chuTros.filter(ct =>
-                  ct.username.toLowerCase().includes(tuKhoa.toLowerCase()) ||
-                  (ct.hoTen && ct.hoTen.toLowerCase().includes(tuKhoa.toLowerCase()))
-                ).length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)', fontSize: '13px' }}>
-                    <div style={{ fontSize: '28px', marginBottom: '8px', opacity: 0.5 }}>🔍</div>
-                    {t('admin.no_rooms_found')}
-                  </div>
-                ) : (
-                  <div className="grid-cards">
-                    {chuTros.filter(ct =>
-                      ct.username.toLowerCase().includes(tuKhoa.toLowerCase()) ||
-                      (ct.hoTen && ct.hoTen.toLowerCase().includes(tuKhoa.toLowerCase()))
-                    ).map((ct, i) => {
-                      const isUnread = unreadSenderIds.some(id => String(id) === String(ct.id));
-                      return (
-                        <div key={ct.id}
-                          onClick={() => { if (!ct.locked) handleChonChuTro(ct); }}
-                          style={{
-                            position: 'relative',
-                            padding: '20px', background: 'var(--bg)', border: isUnread ? '1px solid var(--danger)' : '1px solid var(--border-light)',
-                            borderRadius: 'var(--radius-md)', textAlign: 'center',
-                            transition: 'all var(--transition)',
-                            opacity: ct.locked ? 0.5 : 1, cursor: ct.locked ? 'not-allowed' : 'pointer',
-                            animation: `fadeIn 0.3s ease ${i * 0.04}s both`,
-                            boxShadow: isUnread ? '0 0 12px rgba(239, 68, 68, 0.15)' : 'none',
-                          }}>
-                          <style>{`
-                            @keyframes pulseDot {
-                              0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-                              70% { transform: scale(1.1); box-shadow: 0 0 0 5px rgba(239, 68, 68, 0); }
-                              100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-                            }
-                          `}</style>
-                          {isUnread && (
-                            <span style={{
-                              position: 'absolute',
-                              top: '12px',
-                              right: '12px',
-                              width: '10px',
-                              height: '10px',
-                              backgroundColor: 'var(--danger)',
-                              borderRadius: '50%',
-                              display: 'inline-block',
-                              boxShadow: '0 0 0 2px rgba(255, 255, 255, 0.3)',
-                              animation: 'pulseDot 1.2s infinite'
-                            }} />
-                          )}
-                          <div style={{ ...S.avatar(i), margin: '0 auto 10px', width: '44px', height: '44px', fontSize: '15px' }}>
-                            {(ct.hoTen || ct.username).charAt(0).toUpperCase()}
-                          </div>
-                          <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
-                            {ct.hoTen ? `${ct.hoTen} (${ct.username})` : ct.username}
-                          </div>
-                          {ct.locked && <div style={{ fontSize: '11px', color: 'var(--danger)', fontWeight: 600, marginTop: '4px' }}>🔒 {t('admin.locked')}</div>}
-                          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '3px' }}>{t('admin.id')}: {ct.id}</div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
+            {/* Profile Info */}
+            <div className="dashboard-header-profile">
+              <div className="dashboard-header-avatar">
+                {(currentUser?.username || 'A').charAt(0).toUpperCase()}
               </div>
-            ) : (
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', ...S.card }}>
-                  <button style={S.btn} onClick={() => setChuTroDangChon(null)}>{t('admin.back')}</button>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>
-                      {t('admin.room_label')} <span style={{ color: chuTroDangChon.locked ? 'var(--danger)' : 'var(--success)' }}>
-                        {chuTroDangChon.hoTen ? `${chuTroDangChon.hoTen} (${chuTroDangChon.username})` : chuTroDangChon.username} {chuTroDangChon.locked && `(${t('admin.locked')})`}
-                      </span>
-                    </div>
-                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>{phongTros.length} {t('admin.room_count')}</div>
-                  </div>
-                  <button
-                    style={{ 
-                      ...S.btnPrimary, 
-                      opacity: chuTroDangChon.locked ? 0.4 : 1, 
-                      cursor: chuTroDangChon.locked ? 'not-allowed' : 'pointer',
-                      position: 'relative',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '8px'
-                    }}
-                    onClick={() => {
-                      if (chuTroDangChon.locked) {
-                        setConfirmState({ isOpen: true, type: 'danger', title: t('common.error'), message: t('admin.account_locked'), onConfirm: null });
-                        return;
-                      }
-                      onSetChatTarget(chuTroDangChon);
-                    }}
-                  >
-                    {t('admin.btn_chat')}
-                    {unreadSenderIds.some(id => String(id) === String(chuTroDangChon.id)) && (
-                      <span style={{
-                        width: '8px',
-                        height: '8px',
-                        backgroundColor: 'var(--danger)',
-                        borderRadius: '50%',
-                        display: 'inline-block',
-                        boxShadow: '0 0 0 2px rgba(255, 255, 255, 0.3)',
-                        animation: 'pulseDot 1.2s infinite'
-                      }} />
-                    )}
-                  </button>
+              <div className="dashboard-header-userinfo">
+                <div className="dashboard-header-username">
+                  {currentUser?.username}
                 </div>
-
-                {loadingRooms ? <Spinner text={t('admin.loading_rooms')} /> : (
-                  <div className="grid-cards">
-                    {phongTros.map((phong, i) => (
-                      <div key={phong.id}
-                        onClick={() => setPhongDangXem(phong)}
-                        style={{
-                          ...S.card, padding: '20px',
-                          borderTop: `3px solid ${phong.trangThai === ROOM_STATUS.EMPTY ? 'var(--success)' : phong.trangThai === ROOM_STATUS.RENTED ? 'var(--danger)' : 'var(--warning)'}`,
-                          borderRadius: `0 0 var(--radius-lg) var(--radius-lg)`,
-                          animation: `fadeIn 0.3s ease ${i * 0.04}s both`,
-                          cursor: 'pointer',
-                          transition: 'all var(--transition)',
-                        }}
-                        className="admin-room-card"
-                      >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                          <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>{phong.tenPhong}</div>
-                          <span style={S.tag(tagColorPhong(phong.trangThai))}>{t('admin.room_status_' + phong.trangThai) || phong.trangThai}</span>
-                        </div>
-                        <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '8px' }}>{t('admin.price')}: <strong style={{ color: 'var(--accent)' }}>{phong.giaPhong?.toLocaleString()} {t('landlord.currency')}</strong></div>
-                        <div style={{ fontSize: '11px', color: 'var(--accent)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          {t('admin.view_room_detail') || '🔍 Xem chi tiết phòng →'}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )
-          )}
-
-          {adminTab === 'KHIEU_NAI' && (
-            <div style={S.card}>
-              <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '20px', paddingBottom: '12px', borderBottom: '1px solid var(--border-light)' }}>
-                {t('admin.complaint_list')}
-              </div>
-              {khieuNais.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)', fontSize: '13px', animation: 'fadeIn 0.3s ease' }}>
-                  <div style={{ fontSize: '28px', marginBottom: '8px', opacity: 0.5 }}>📭</div>
-                  {t('admin.no_complaints')}
+                <div className="dashboard-header-role">
+                  {t('header.role_ADMIN') || 'Admin'}
                 </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  {khieuNais.map((kn, i) => (
-                    <div key={kn.id} style={{
-                      border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', overflow: 'hidden',
-                      opacity: kn.trangThai === 'DA_GIAI_QUYET' ? 0.6 : 1,
-                      animation: `fadeIn 0.3s ease ${i * 0.04}s both`,
-                    }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', background: 'var(--bg)', borderBottom: '1px solid var(--border-light)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <div style={S.avatar(i)}>{(kn.nguoiGui?.username || '?').charAt(0).toUpperCase()}</div>
-                          <div>
-                            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>{kn.tieuDe}</div>
-                            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>{kn.nguoiGui?.username} — {t('admin.id')}: {kn.nguoiGui?.id || kn.nguoiGuiId}</div>
-                          </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        {loadingInit ? <Spinner text={t('admin.init_loading')} /> : (
+          <>
+            {adminTab === 'USERS' && <QuanLyNguoiDung />}
+
+            {adminTab === 'BAO_CAO' && <DashboardTab thongKeData={thongKeData} isAdmin={true} />}
+
+            {adminTab === 'PHONG' && (
+              !chuTroDangChon ? (
+                <div className="premium-card">
+                  {thongKeData && (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+                      <div style={{
+                        padding: '16px 20px',
+                        background: 'var(--accent-light)',
+                        border: '1px solid var(--accent)',
+                        borderRadius: 'var(--radius-lg)',
+                        boxShadow: '0 2px 8px var(--accent-glow)'
+                      }}>
+                        <div style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--accent)', fontWeight: 600, letterSpacing: '0.5px' }}>
+                          🏨 {t('admin.stats_total_rooms')}
                         </div>
-                        <span style={S.tag(kn.trangThai === 'DA_GIAI_QUYET' ? 'blue' : 'amber')}>{kn.trangThai === 'DA_GIAI_QUYET' ? t('admin.status_resolved') : t('admin.status_pending')}</span>
+                        <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--accent)', marginTop: '6px' }}>
+                          {thongKeData.tongSoPhong} <span style={{ fontSize: '14px', fontWeight: 500 }}>{t('admin.stats_rooms_unit')}</span>
+                        </div>
                       </div>
-                      <div style={{ padding: '12px 16px' }}>
-                        <div style={{
-                          fontSize: '13px', color: 'var(--text-secondary)', fontStyle: 'italic',
-                          padding: '10px 14px', background: 'var(--warning-light)',
-                          borderRadius: 'var(--radius-sm)', border: '1px solid #FDE68A',
-                          borderLeft: '3px solid var(--warning)', marginBottom: '12px',
-                        }}>"{kn.noiDung}"</div>
-                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                          <button
-                            style={{ 
-                              ...S.btn, 
-                              opacity: kn.nguoiGui?.locked ? 0.4 : 1, 
-                              cursor: kn.nguoiGui?.locked ? 'not-allowed' : 'pointer',
+
+                      <div style={{
+                        padding: '16px 20px',
+                        background: 'var(--danger-light)',
+                        border: '1px solid var(--danger)',
+                        borderRadius: 'var(--radius-lg)',
+                        boxShadow: '0 2px 8px rgba(239, 68, 68, 0.08)'
+                      }}>
+                        <div style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--danger)', fontWeight: 600, letterSpacing: '0.5px' }}>
+                          🔴 {t('admin.stats_rented_rooms')}
+                        </div>
+                        <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--danger)', marginTop: '6px' }}>
+                          {thongKeData.soPhongDaThue} <span style={{ fontSize: '14px', fontWeight: 500 }}>{t('admin.stats_rooms_unit')}</span>
+                        </div>
+                      </div>
+
+                      <div style={{
+                        padding: '16px 20px',
+                        background: 'var(--success-light)',
+                        border: '1px solid var(--success)',
+                        borderRadius: 'var(--radius-lg)',
+                        boxShadow: '0 2px 8px rgba(16, 185, 129, 0.08)'
+                      }}>
+                        <div style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--success)', fontWeight: 600, letterSpacing: '0.5px' }}>
+                          🟢 {t('admin.stats_empty_rooms')}
+                        </div>
+                        <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--success)', marginTop: '6px' }}>
+                          {thongKeData.soPhongTrong} <span style={{ fontSize: '14px', fontWeight: 500 }}>{t('admin.stats_rooms_unit')}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '16px' }}>{t('admin.search_rooms')}</div>
+                  <input type="text" placeholder={t('admin.search_placeholder')} value={tuKhoa} onChange={e => setTuKhoa(e.target.value)} className="form-input" style={{ marginBottom: '20px' }} />
+                  {chuTros.filter(ct =>
+                    ct.username.toLowerCase().includes(tuKhoa.toLowerCase()) ||
+                    (ct.hoTen && ct.hoTen.toLowerCase().includes(tuKhoa.toLowerCase()))
+                  ).length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)', fontSize: '13px' }}>
+                      <div style={{ fontSize: '28px', marginBottom: '8px', opacity: 0.5 }}>🔍</div>
+                      {t('admin.no_rooms_found')}
+                    </div>
+                  ) : (
+                    <div className="grid-cards">
+                      {chuTros.filter(ct =>
+                        ct.username.toLowerCase().includes(tuKhoa.toLowerCase()) ||
+                        (ct.hoTen && ct.hoTen.toLowerCase().includes(tuKhoa.toLowerCase()))
+                      ).map((ct, i) => {
+                        const isUnread = unreadSenderIds.some(id => String(id) === String(ct.id));
+                        return (
+                          <div key={ct.id}
+                            className="admin-host-card"
+                            onClick={() => { if (!ct.locked) handleChonChuTro(ct); }}
+                            style={{
                               position: 'relative',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '8px'
-                            }}
-                            onClick={() => {
-                              if (kn.nguoiGui?.locked) {
-                                setConfirmState({ isOpen: true, type: 'danger', title: t('common.error'), message: t('admin.account_locked'), onConfirm: null });
-                                return;
+                              border: isUnread ? '1px solid var(--danger)' : '1px solid var(--border-light)',
+                              opacity: ct.locked ? 0.5 : 1, cursor: ct.locked ? 'not-allowed' : 'pointer',
+                              animation: `fadeIn 0.3s ease ${i * 0.04}s both`,
+                              boxShadow: isUnread ? '0 0 12px rgba(239, 68, 68, 0.15)' : 'none',
+                            }}>
+                            <style>{`
+                              @keyframes pulseDot {
+                                0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+                                70% { transform: scale(1.1); box-shadow: 0 0 0 5px rgba(239, 68, 68, 0); }
+                                100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
                               }
-                              onSetChatTarget({ id: kn.nguoiGui?.id, username: kn.nguoiGui?.username });
-                            }}
-                          >
-                            {t('admin.btn_contact')}
-                            {unreadSenderIds.some(id => String(id) === String(kn.nguoiGui?.id || kn.nguoiGuiId)) && (
+                            `}</style>
+                            {isUnread && (
                               <span style={{
-                                width: '8px',
-                                height: '8px',
+                                position: 'absolute',
+                                top: '12px',
+                                right: '12px',
+                                width: '10px',
+                                height: '10px',
                                 backgroundColor: 'var(--danger)',
                                 borderRadius: '50%',
                                 display: 'inline-block',
@@ -559,22 +477,221 @@ export default function AdminPage({ currentUser, unreadSenderIds = [], setUnread
                                 animation: 'pulseDot 1.2s infinite'
                               }} />
                             )}
-                          </button>
-                          {kn.trangThai === 'CHO_XU_LY' && (
-                            <button style={S.btnSuccess} onClick={() => handleXuLyKhieuNai(kn.id)}>{t('admin.btn_resolved')}</button>
-                          )}
-                        </div>
-                      </div>
+                            <div style={{ ...S.avatar(i), margin: '0 auto 10px', width: '44px', height: '44px', fontSize: '15px' }}>
+                              {(ct.hoTen || ct.username).charAt(0).toUpperCase()}
+                            </div>
+                            <div className="admin-host-card__name">
+                              {ct.hoTen ? `${ct.hoTen} (${ct.username})` : ct.username}
+                            </div>
+                            {ct.locked && <div className="admin-host-card__locked-label">🔒 {t('admin.locked')}</div>}
+                            <div className="admin-host-card__id">{t('admin.id')}: {ct.id}</div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  ))}
+                  )}
                 </div>
-              )}
-            </div>
-          )}
-        </>
-      )}
+              ) : (
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }} className="premium-card">
+                    <button className="btn btn--outline" onClick={() => setChuTroDangChon(null)}>{t('admin.back')}</button>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                        {t('admin.room_label')} <span style={{ color: chuTroDangChon.locked ? 'var(--danger)' : 'var(--success)' }}>
+                          {chuTroDangChon.hoTen ? `${chuTroDangChon.hoTen} (${chuTroDangChon.username})` : chuTroDangChon.username} {chuTroDangChon.locked && `(${t('admin.locked')})`}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>{phongTros.length} {t('admin.room_count')}</div>
+                    </div>
+                    <button
+                      className="btn btn--primary"
+                      style={{ 
+                        opacity: chuTroDangChon.locked ? 0.4 : 1, 
+                        cursor: chuTroDangChon.locked ? 'not-allowed' : 'pointer',
+                        position: 'relative',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                      }}
+                      onClick={() => {
+                        if (chuTroDangChon.locked) {
+                          setConfirmState({ isOpen: true, type: 'danger', title: t('common.error'), message: t('admin.account_locked'), onConfirm: null });
+                          return;
+                        }
+                        onSetChatTarget(chuTroDangChon);
+                      }}
+                    >
+                      {t('admin.btn_chat')}
+                      {unreadSenderIds.some(id => String(id) === String(chuTroDangChon.id)) && (
+                        <span style={{
+                          width: '8px',
+                          height: '8px',
+                          backgroundColor: 'var(--danger)',
+                          borderRadius: '50%',
+                          display: 'inline-block',
+                          boxShadow: '0 0 0 2px rgba(255, 255, 255, 0.3)',
+                          animation: 'pulseDot 1.2s infinite'
+                        }} />
+                      )}
+                    </button>
+                  </div>
 
+                  {loadingRooms ? <Spinner text={t('admin.loading_rooms')} /> : (
+                    <div className="grid-cards">
+                      {phongTros.map((phong, i) => (
+                        <div key={phong.id}
+                          onClick={() => setPhongDangXem(phong)}
+                          style={{
+                            ...S.card, padding: '20px',
+                            borderTop: `3px solid ${phong.trangThai === ROOM_STATUS.EMPTY ? 'var(--success)' : phong.trangThai === ROOM_STATUS.RENTED ? 'var(--danger)' : 'var(--warning)'}`,
+                            borderRadius: `0 0 var(--radius-lg) var(--radius-lg)`,
+                            animation: `fadeIn 0.3s ease ${i * 0.04}s both`,
+                            cursor: 'pointer',
+                            transition: 'all var(--transition)',
+                          }}
+                          className="admin-room-card"
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                            <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>{phong.tenPhong}</div>
+                            <span style={S.tag(tagColorPhong(phong.trangThai))}>{t('admin.room_status_' + phong.trangThai) || phong.trangThai}</span>
+                          </div>
+                          <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '8px' }}>{t('admin.price')}: <strong style={{ color: 'var(--accent)' }}>{phong.giaPhong?.toLocaleString()} {t('landlord.currency')}</strong></div>
+                          <div style={{ fontSize: '11px', color: 'var(--accent)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            {t('admin.view_room_detail') || '🔍 Xem chi tiết phòng →'}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            )}
 
+            {adminTab === 'KHIEU_NAI' && (
+              <div className="premium-card">
+                {khieuNais.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)', fontSize: '13px', animation: 'fadeIn 0.3s ease' }}>
+                    <div style={{ fontSize: '28px', marginBottom: '8px', opacity: 0.5 }}>📭</div>
+                    {t('admin.no_complaints')}
+                  </div>
+                ) : (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }} className="complaints-split-layout">
+                    <style>{`
+                      @media (min-width: 768px) {
+                        .complaints-split-layout {
+                          grid-template-columns: 320px 1fr !important;
+                        }
+                      }
+                    `}</style>
+                    
+                    {/* Danh sách khiếu nại bên trái */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '500px', overflowY: 'auto', paddingRight: '8px' }}>
+                      {khieuNais.map((kn, i) => {
+                        const isSelected = selectedComplaint?.id === kn.id;
+                        return (
+                          <div 
+                            key={kn.id} 
+                            onClick={() => setSelectedComplaint(kn)}
+                            style={{
+                              border: isSelected ? '2px solid var(--accent)' : '1px solid var(--border)',
+                              borderRadius: 'var(--radius-md)', 
+                              padding: '12px',
+                              cursor: 'pointer',
+                              background: isSelected ? 'var(--accent-light)' : 'var(--surface)',
+                              opacity: kn.trangThai === 'DA_GIAI_QUYET' ? 0.6 : 1,
+                              transition: 'all var(--transition)',
+                              animation: `fadeIn 0.3s ease ${i * 0.04}s both`,
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+                              <div style={{ fontWeight: 600, fontSize: '13px', color: 'var(--text-primary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                                {kn.tieuDe}
+                              </div>
+                              <span style={S.tag(kn.trangThai === 'DA_GIAI_QUYET' ? 'blue' : 'amber')}>
+                                {kn.trangThai === 'DA_GIAI_QUYET' ? t('admin.status_resolved') : t('admin.status_pending')}
+                              </span>
+                            </div>
+                            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                              {kn.nguoiGui?.username}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Nội dung chi tiết & hành động bên phải */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '20px', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', background: 'var(--bg)', height: 'fit-content' }}>
+                      {selectedComplaint ? (
+                        <div style={{ animation: 'fadeIn 0.2s ease' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px', borderBottom: '1px solid var(--border-light)', paddingBottom: '12px', marginBottom: '12px' }}>
+                            <div>
+                              <h4 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)' }}>{selectedComplaint.tieuDe}</h4>
+                              <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                                👤 {selectedComplaint.nguoiGui?.hoTen || selectedComplaint.nguoiGui?.username} (@{selectedComplaint.nguoiGui?.username})
+                              </div>
+                            </div>
+                            <span style={S.tag(selectedComplaint.trangThai === 'DA_GIAI_QUYET' ? 'blue' : 'amber')}>
+                              {selectedComplaint.trangThai === 'DA_GIAI_QUYET' ? t('admin.status_resolved') : t('admin.status_pending')}
+                            </span>
+                          </div>
+
+                          <div className="admin-complaint__content" style={{ fontSize: '14px', lineHeight: 1.6 }}>
+                            "{selectedComplaint.noiDung}"
+                          </div>
+
+                          <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
+                            <button
+                              className="btn btn--outline"
+                              style={{ 
+                                opacity: selectedComplaint.nguoiGui?.locked ? 0.4 : 1, 
+                                cursor: selectedComplaint.nguoiGui?.locked ? 'not-allowed' : 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                padding: '8px 16px'
+                              }}
+                              onClick={() => {
+                                if (selectedComplaint.nguoiGui?.locked) {
+                                  setConfirmState({ isOpen: true, type: 'danger', title: t('common.error'), message: t('admin.account_locked'), onConfirm: null });
+                                  return;
+                                }
+                                onSetChatTarget({ id: selectedComplaint.nguoiGui?.id, username: selectedComplaint.nguoiGui?.username });
+                              }}
+                            >
+                              💬 {t('admin.btn_contact')}
+                              {unreadSenderIds.some(id => String(id) === String(selectedComplaint.nguoiGui?.id || selectedComplaint.nguoiGuiId)) && (
+                                <span style={{
+                                  width: '8px',
+                                  height: '8px',
+                                  backgroundColor: 'var(--danger)',
+                                  borderRadius: '50%',
+                                  display: 'inline-block',
+                                  boxShadow: '0 0 0 2px rgba(255, 255, 255, 0.3)',
+                                  animation: 'pulseDot 1.2s infinite'
+                                }} />
+                              )}
+                            </button>
+                            {selectedComplaint.trangThai === 'CHO_XU_LY' && (
+                              <button className="btn btn--primary" onClick={() => handleXuLyKhieuNai(selectedComplaint.id)}>
+                                ✔ {t('admin.btn_resolved')}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                          👉 Chọn một khiếu nại để xem chi tiết
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        )}
+        <Footer />
+      </div>
 
       {phongDangXem && (
         <AdminRoomDetailModal
