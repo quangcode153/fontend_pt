@@ -147,11 +147,6 @@ export default function RoomTab({
               required
               disabled={isSubmitting}
             />
-            {giaPhong && (
-              <div style={{ fontSize: '11px', color: 'var(--success)', marginTop: '4px', fontWeight: 600 }}>
-                👉 {Number(giaPhong).toLocaleString('vi-VN')} Đ
-              </div>
-            )}
           </div>
           <div className="l-add-room-form__field" style={{ flex: 1 }}>
             <label className="l-form-label">{t('landlord.status')}</label>
@@ -177,11 +172,6 @@ export default function RoomTab({
               placeholder="3500" 
               disabled={isSubmitting} 
             />
-            {giaDien && (
-              <div style={{ fontSize: '11px', color: 'var(--success)', marginTop: '4px', fontWeight: 600 }}>
-                👉 {Number(giaDien).toLocaleString('vi-VN')} Đ
-              </div>
-            )}
           </div>
           <div className="l-add-room-form__field" style={{ flex: 1 }}>
             <label className="l-form-label">{t('landlord.water_price')}</label>
@@ -194,11 +184,6 @@ export default function RoomTab({
               placeholder="100000" 
               disabled={isSubmitting} 
             />
-            {giaNuoc && (
-              <div style={{ fontSize: '11px', color: 'var(--success)', marginTop: '4px', fontWeight: 600 }}>
-                👉 {Number(giaNuoc).toLocaleString('vi-VN')} Đ
-              </div>
-            )}
           </div>
           <div className="l-add-room-form__field" style={{ flex: 1 }}>
             <label className="l-form-label">{t('landlord.deposit')}</label>
@@ -211,11 +196,6 @@ export default function RoomTab({
               placeholder="1000000" 
               disabled={isSubmitting} 
             />
-            {tienCoc && (
-              <div style={{ fontSize: '11px', color: 'var(--success)', marginTop: '4px', fontWeight: 600 }}>
-                👉 {Number(tienCoc).toLocaleString('vi-VN')} Đ
-              </div>
-            )}
           </div>
           <div className="l-add-room-form__field" style={{ flex: 1 }}>
             <label className="l-form-label">{t('landlord.area')} (m²)</label>
