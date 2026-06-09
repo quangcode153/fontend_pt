@@ -59,7 +59,7 @@ export default function AdminContactTab({ onSetChatTarget, unreadSenderIds = [] 
           borderTopColor: 'var(--accent)', borderRadius: '50%',
           animation: 'spin 0.6s linear infinite', margin: '0 auto 12px',
         }} />
-        <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>{t('admin_users.syncing') || 'Đang tải danh sách...'}</p>
+        <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>{t('common.loading')}</p>
       </div>
     );
   }

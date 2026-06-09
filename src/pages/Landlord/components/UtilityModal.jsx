@@ -44,6 +44,8 @@ export default function UtilityModal({
                   value={formDN.thang}
                   onChange={e => setFormDN({ ...formDN, thang: e.target.value })}
                   required min="1" max="12"
+                  onInvalid={e => e.target.setCustomValidity(t('common.validation_required'))}
+                  onInput={e => e.target.setCustomValidity('')}
                   disabled={dienNuocForm.isUpdate}
                 />
               </div>
@@ -55,6 +57,8 @@ export default function UtilityModal({
                   value={formDN.nam}
                   onChange={e => setFormDN({ ...formDN, nam: e.target.value })}
                   required min="2000"
+                  onInvalid={e => e.target.setCustomValidity(t('common.validation_required'))}
+                  onInput={e => e.target.setCustomValidity('')}
                   disabled={dienNuocForm.isUpdate}
                 />
               </div>
@@ -72,6 +76,8 @@ export default function UtilityModal({
                     value={formDN.chiSoDauDien}
                     onChange={e => setFormDN({ ...formDN, chiSoDauDien: e.target.value.replace(/\D/g, '') })}
                     required
+                    onInvalid={e => e.target.setCustomValidity(t('common.validation_required'))}
+                    onInput={e => e.target.setCustomValidity('')}
                   />
                 </div>
                 <div>
@@ -82,6 +88,8 @@ export default function UtilityModal({
                     value={formDN.chiSoCuoiDien}
                     onChange={e => setFormDN({ ...formDN, chiSoCuoiDien: e.target.value.replace(/\D/g, '') })}
                     required
+                    onInvalid={e => e.target.setCustomValidity(t('common.validation_required'))}
+                    onInput={e => e.target.setCustomValidity('')}
                   />
                 </div>
               </div>
@@ -99,6 +107,8 @@ export default function UtilityModal({
                     value={formDN.chiSoDauNuoc}
                     onChange={e => setFormDN({ ...formDN, chiSoDauNuoc: e.target.value.replace(/\D/g, '') })}
                     required
+                    onInvalid={e => e.target.setCustomValidity(t('common.validation_required'))}
+                    onInput={e => e.target.setCustomValidity('')}
                   />
                 </div>
                 <div>
@@ -109,6 +119,8 @@ export default function UtilityModal({
                     value={formDN.chiSoCuoiNuoc}
                     onChange={e => setFormDN({ ...formDN, chiSoCuoiNuoc: e.target.value.replace(/\D/g, '') })}
                     required
+                    onInvalid={e => e.target.setCustomValidity(t('common.validation_required'))}
+                    onInput={e => e.target.setCustomValidity('')}
                   />
                 </div>
               </div>

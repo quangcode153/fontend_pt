@@ -50,8 +50,8 @@ function KhieuNaiForm() {
             {t('guest_complaint.title')}
           </div>
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <input type="text" placeholder={t('guest_complaint.title_ph')} value={tieuDe} onChange={e => setTieuDe(e.target.value)} required style={inputStyle} />
-            <textarea placeholder={t('guest_complaint.content_ph')} value={noiDung} onChange={e => setNoiDung(e.target.value)} required rows="3" style={{ ...inputStyle, resize: 'vertical' }} />
+            <input type="text" placeholder={t('guest_complaint.title_ph')} value={tieuDe} onChange={e => setTieuDe(e.target.value)} required onInvalid={e => e.target.setCustomValidity(t('common.validation_required'))} onInput={e => e.target.setCustomValidity('')} style={inputStyle} />
+            <textarea placeholder={t('guest_complaint.content_ph')} value={noiDung} onChange={e => setNoiDung(e.target.value)} required onInvalid={e => e.target.setCustomValidity(t('common.validation_required'))} onInput={e => e.target.setCustomValidity('')} rows="3" style={{ ...inputStyle, resize: 'vertical' }} />
             <button type="submit" style={{
               padding: '9px 18px', borderRadius: 'var(--radius-md)',
               border: 'none', background: 'var(--text-primary)', color: '#fff',

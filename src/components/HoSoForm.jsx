@@ -142,7 +142,7 @@ function HoSoForm({ user }) {
       <form onSubmit={handleLuuHoSo} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
         <div style={{ gridColumn: 'span 2' }}>
           <label style={labelStyle}>{t('guest_profile.fullname')}</label>
-          <input type="text" name="hoTen" value={hoSo.hoTen} onChange={handleChange} required style={inputStyle} placeholder={t('guest_profile.fullname_ph')} />
+          <input type="text" name="hoTen" value={hoSo.hoTen} onChange={handleChange} required onInvalid={e => e.target.setCustomValidity(t('common.validation_required'))} onInput={e => e.target.setCustomValidity('')} style={inputStyle} placeholder={t('guest_profile.fullname_ph')} />
         </div>
 
         <div>
@@ -153,6 +153,8 @@ function HoSoForm({ user }) {
             value={hoSo.ngaySinh}
             onChange={handleChange}
             required
+            onInvalid={e => e.target.setCustomValidity(t('common.validation_required'))}
+            onInput={e => e.target.setCustomValidity('')}
             style={inputStyle}
             max={getMaxDate18YearsAgo()}
             min="1900-01-01"
@@ -169,12 +171,12 @@ function HoSoForm({ user }) {
 
         <div>
           <label style={labelStyle}>{t('guest_profile.id_card')}</label>
-          <input type="text" name="soCccd" value={hoSo.soCccd} onChange={handleChange} required style={inputStyle} placeholder={t('guest_profile.id_card_ph')} />
+          <input type="text" name="soCccd" value={hoSo.soCccd} onChange={handleChange} required onInvalid={e => e.target.setCustomValidity(t('common.validation_required'))} onInput={e => e.target.setCustomValidity('')} style={inputStyle} placeholder={t('guest_profile.id_card_ph')} />
         </div>
 
         <div>
           <label style={labelStyle}>{t('guest_profile.phone')}</label>
-          <input type="tel" name="soDienThoai" value={hoSo.soDienThoai} onChange={handleChange} required style={inputStyle} placeholder={t('guest_profile.phone_ph')} />
+          <input type="tel" name="soDienThoai" value={hoSo.soDienThoai} onChange={handleChange} required onInvalid={e => e.target.setCustomValidity(t('common.validation_required'))} onInput={e => e.target.setCustomValidity('')} style={inputStyle} placeholder={t('guest_profile.phone_ph')} />
         </div>
 
         <div style={{ gridColumn: 'span 2' }}>
@@ -184,7 +186,7 @@ function HoSoForm({ user }) {
 
         <div style={{ gridColumn: 'span 2' }}>
           <label style={labelStyle}>{t('guest_profile.address')}</label>
-          <textarea name="diaChiThuongTru" value={hoSo.diaChiThuongTru} onChange={handleChange} required rows="3" style={{ ...inputStyle, resize: 'vertical' }} placeholder={t('guest_profile.address_ph')} />
+          <textarea name="diaChiThuongTru" value={hoSo.diaChiThuongTru} onChange={handleChange} required onInvalid={e => e.target.setCustomValidity(t('common.validation_required'))} onInput={e => e.target.setCustomValidity('')} rows="3" style={{ ...inputStyle, resize: 'vertical' }} placeholder={t('guest_profile.address_ph')} />
         </div>
 
         {/* Bank Information section (rendered for both Tenant & Landlord) */}

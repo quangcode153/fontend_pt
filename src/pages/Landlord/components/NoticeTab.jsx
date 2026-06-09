@@ -25,6 +25,8 @@ export default function NoticeTab({
           value={tieuDeTB}
           onChange={e => setTieuDeTB(e.target.value)}
           required
+          onInvalid={e => e.target.setCustomValidity(t('common.validation_required'))}
+          onInput={e => e.target.setCustomValidity('')}
           disabled={isSubmitting}
         />
         <textarea
@@ -33,6 +35,8 @@ export default function NoticeTab({
           value={noiDungTB}
           onChange={e => setNoiDungTB(e.target.value)}
           required
+          onInvalid={e => e.target.setCustomValidity(t('common.validation_required'))}
+          onInput={e => e.target.setCustomValidity('')}
           disabled={isSubmitting}
           style={{ minHeight: '100px', resize: 'vertical' }}
         />

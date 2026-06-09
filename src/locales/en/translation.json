@@ -9,7 +9,8 @@
     "back": "Back",
     "multiple": "upload multiple images",
     "or": "OR",
-    "popup_blocked": "Please allow popups in your browser to print the invoice!"
+    "popup_blocked": "Please allow popups in your browser to print the invoice!",
+    "validation_required": "Please fill out this field"
   },
   "home": {
     "brand": "Smart Rental",
@@ -134,10 +135,14 @@
     "role_ADMIN": "Administrator",
     "role_LANDLORD": "Landlord",
     "role_USER": "Tenant",
-    "logout": "Logout"
+    "logout": "Logout",
+    "portal_admin": "Admin Portal",
+    "portal_landlord": "Landlord Portal",
+    "portal_tenant": "Tenant Portal"
   },
   "admin": {
     "app_name": "System Overview",
+    "system_rooms_summary": "System has {{total}} rooms · {{rented}} currently rented",
     "access_denied": "Access Denied.",
     "tab_users": "Users",
     "tab_rooms": "Rooms",
@@ -237,7 +242,11 @@
     "success_lock": "Account locked successfully!",
     "success_unlock": "Account unlocked successfully!",
     "error_lock": "Error locking account: ",
-    "error_unlock": "Error unlocking account: "
+    "error_unlock": "Error unlocking account: ",
+    "btn_delete": "Delete",
+    "confirm_delete": "Confirm to DELETE account permanently:",
+    "success_delete": "Account deleted successfully!",
+    "error_delete": "Error deleting account: "
   },
   "guest": {
     "loading": "Loading...",

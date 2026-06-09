@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../hooks/useAuth';
 import api from '../../api';
+import LanguageSwitcher from '../../components/LanguageSwitcher';
 
 import loginBg from '../../assets/login-bg.png';
 import './Login.css';
@@ -335,12 +336,6 @@ export default function Login() {
     }
   };
 
-  const toggleLanguage = () => {
-    const newLang = i18n.language === 'vi' ? 'en' : 'vi';
-    i18n.changeLanguage(newLang);
-    localStorage.setItem('i18nextLng', newLang);
-  };
-
   return (
     <div className="auth-page">
       <div className="auth-brand" onClick={() => navigate('/')} title={t('login.back_to_home') || 'Quay về trang chủ'}>
@@ -348,14 +343,8 @@ export default function Login() {
         <span className="auth-brand__title">{t('home.brand')}</span>
       </div>
 
-      <div className="auth-lang-switcher">
-        <button
-          onClick={toggleLanguage}
-          className="btn btn--outline auth-lang-btn"
-          title={i18n.language === 'vi' ? 'Switch to English' : 'Đổi sang Tiếng Việt'}
-        >
-          {i18n.language === 'vi' ? '🇺🇸 EN' : '🇻🇳 VI'}
-        </button>
+      <div className="auth-lang-switcher" style={{ position: 'absolute', top: 20, right: 20, zIndex: 100 }}>
+        <LanguageSwitcher />
       </div>
 
       <div className="auth-hero">
@@ -394,6 +383,8 @@ export default function Login() {
                     onChange={e => setForgotUsername(e.target.value)}
                     placeholder={t('login.username_ph')}
                     required
+                    onInvalid={e => e.target.setCustomValidity(t('common.validation_required'))}
+                    onInput={e => e.target.setCustomValidity('')}
                   />
                   {errors.username && <span className="error-message" style={{ color: '#F87171', fontSize: '12px', marginTop: '4px', display: 'block' }}>{errors.username}</span>}
                 </div>
@@ -407,6 +398,8 @@ export default function Login() {
                     onChange={e => setForgotEmail(e.target.value)}
                     placeholder="your-email@gmail.com"
                     required
+                    onInvalid={e => e.target.setCustomValidity(t('common.validation_required'))}
+                    onInput={e => e.target.setCustomValidity('')}
                   />
                   {errors.email && <span className="error-message" style={{ color: '#F87171', fontSize: '12px', marginTop: '4px', display: 'block' }}>{errors.email}</span>}
                 </div>
@@ -431,6 +424,8 @@ export default function Login() {
                     onChange={e => setForgotOtp(e.target.value)}
                     placeholder={t('login.otp_code_ph')}
                     required
+                    onInvalid={e => e.target.setCustomValidity(t('common.validation_required'))}
+                    onInput={e => e.target.setCustomValidity('')}
                   />
                   {errors.otp && <span className="error-message" style={{ color: '#F87171', fontSize: '12px', marginTop: '4px', display: 'block' }}>{errors.otp}</span>}
                   {forgotCountdown > 0 ? (
@@ -456,6 +451,8 @@ export default function Login() {
                     onChange={e => setForgotNewPassword(e.target.value)}
                     placeholder="••••••••"
                     required
+                    onInvalid={e => e.target.setCustomValidity(t('common.validation_required'))}
+                    onInput={e => e.target.setCustomValidity('')}
                   />
                   {errors.newPassword && <span className="error-message" style={{ color: '#F87171', fontSize: '12px', marginTop: '4px', display: 'block' }}>{errors.newPassword}</span>}
                 </div>
@@ -469,6 +466,8 @@ export default function Login() {
                     onChange={e => setForgotConfirmPassword(e.target.value)}
                     placeholder="••••••••"
                     required
+                    onInvalid={e => e.target.setCustomValidity(t('common.validation_required'))}
+                    onInput={e => e.target.setCustomValidity('')}
                   />
                   {errors.confirmPassword && <span className="error-message" style={{ color: '#F87171', fontSize: '12px', marginTop: '4px', display: 'block' }}>{errors.confirmPassword}</span>}
                 </div>
@@ -540,6 +539,8 @@ export default function Login() {
                       onChange={e => setHoTen(e.target.value)}
                       placeholder={t('guest_profile.fullname_ph') || 'Nguyễn Văn A'}
                       required
+                      onInvalid={e => e.target.setCustomValidity(t('common.validation_required'))}
+                      onInput={e => e.target.setCustomValidity('')}
                     />
                     {errors.hoTen && <span className="error-message" style={{ color: '#F87171', fontSize: '12px', marginTop: '4px', display: 'block' }}>{errors.hoTen}</span>}
                   </div>
@@ -583,6 +584,8 @@ export default function Login() {
                   placeholder={t('login.username_ph')}
                   required
                   autoFocus
+                  onInvalid={e => e.target.setCustomValidity(t('common.validation_required'))}
+                  onInput={e => e.target.setCustomValidity('')}
                 />
                 {errors.username && <span className="error-message" style={{ color: '#F87171', fontSize: '12px', marginTop: '4px', display: 'block' }}>{errors.username}</span>}
               </div>
@@ -606,6 +609,8 @@ export default function Login() {
                   onChange={e => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
+                  onInvalid={e => e.target.setCustomValidity(t('common.validation_required'))}
+                  onInput={e => e.target.setCustomValidity('')}
                 />
                 {errors.password && <span className="error-message" style={{ color: '#F87171', fontSize: '12px', marginTop: '4px', display: 'block' }}>{errors.password}</span>}
               </div>
@@ -621,6 +626,8 @@ export default function Login() {
                       onChange={e => setConfirmPassword(e.target.value)}
                       placeholder="••••••••"
                       required
+                      onInvalid={e => e.target.setCustomValidity(t('common.validation_required'))}
+                      onInput={e => e.target.setCustomValidity('')}
                     />
                     {errors.confirmPassword && <span className="error-message" style={{ color: '#F87171', fontSize: '12px', marginTop: '4px', display: 'block' }}>{errors.confirmPassword}</span>}
                   </div>

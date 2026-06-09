@@ -9,7 +9,8 @@
     "back": "Quay lại",
     "multiple": "tải nhiều ảnh",
     "or": "HOẶC",
-    "popup_blocked": "Vui lòng cho phép trình duyệt mở popup để in hóa đơn!"
+    "popup_blocked": "Vui lòng cho phép trình duyệt mở popup để in hóa đơn!",
+    "validation_required": "Vui lòng điền vào trường này"
   },
   "home": {
     "brand": "Quản Lý Trọ",
@@ -134,10 +135,14 @@
     "role_ADMIN": "Quản trị",
     "role_LANDLORD": "Chủ trọ",
     "role_USER": "Khách thuê",
-    "logout": "Đăng xuất"
+    "logout": "Đăng xuất",
+    "portal_admin": "Cổng Quản Trị",
+    "portal_landlord": "Cổng Chủ Trọ",
+    "portal_tenant": "Cổng Khách Thuê"
   },
   "admin": {
     "app_name": "Tổng Quan Hệ Thống",
+    "system_rooms_summary": "Hệ thống có {{total}} phòng · {{rented}} đang thuê",
     "access_denied": "Truy cập bị từ chối.",
     "tab_users": "Người dùng",
     "tab_rooms": "Khu trọ",

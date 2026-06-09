@@ -8,6 +8,7 @@ import ContractModal from '../../components/ContractModal';
 import ConfirmModal from '../../components/ConfirmModal';
 import useAdminContact from '../../hooks/useAdminContact';
 import Footer from '../../components/Footer';
+import LanguageSwitcher from '../../components/LanguageSwitcher';
 import './TenantPage.css';
 
 const ROLES = { USER: 'ROLE_USER' };
@@ -81,12 +82,6 @@ const S = {
 
 export default function TenantPage({ currentUser, hopDongCuaToi, onBrowseRooms, unreadSenderIds = [], setUnreadSenderIds, onSetChatTarget, onLogout }) {
   const { t, i18n } = useTranslation();
-
-  const toggleLanguage = () => {
-    const newLang = i18n.language === 'vi' ? 'en' : 'vi';
-    i18n.changeLanguage(newLang);
-    localStorage.setItem('i18nextLng', newLang);
-  };
 
   const userRole = (currentUser?.role || '').startsWith('ROLE_') ? currentUser.role : `ROLE_${currentUser.role}`;
 
@@ -412,7 +407,7 @@ export default function TenantPage({ currentUser, hopDongCuaToi, onBrowseRooms, 
       <div className="dashboard-mobile-header">
         <div className="dashboard-mobile-header__brand">
           <span className="dashboard-mobile-header__logo-icon">🏠</span>
-          <span className="dashboard-mobile-header__logo-title">Smart Rental</span>
+          <span className="dashboard-mobile-header__logo-title">{t('home.brand')}</span>
         </div>
         <button
           className="dashboard-mobile-header__toggle"
@@ -445,8 +440,8 @@ export default function TenantPage({ currentUser, hopDongCuaToi, onBrowseRooms, 
             <div className="dashboard-sidebar__logo">
               <span className="dashboard-sidebar__logo-icon">🏠</span>
               <div className="dashboard-sidebar__logo-text">
-                <div className="dashboard-sidebar__logo-title">Smart Rental</div>
-                <div className="dashboard-sidebar__logo-subtitle">Tenant Portal</div>
+                <div className="dashboard-sidebar__logo-title">{t('home.brand')}</div>
+                <div className="dashboard-sidebar__logo-subtitle">{t('header.portal_tenant')}</div>
               </div>
             </div>
             <div className="dashboard-sidebar__menu">
@@ -530,13 +525,7 @@ export default function TenantPage({ currentUser, hopDongCuaToi, onBrowseRooms, 
             </button>
 
             {/* Language Switcher */}
-            <button
-              onClick={toggleLanguage}
-              className="dashboard-header-btn"
-              title={i18n.language === 'vi' ? 'Switch to English' : 'Đổi sang Tiếng Việt'}
-            >
-              {i18n.language === 'vi' ? '🇺🇸 EN' : '🇻🇳 VI'}
-            </button>
+            <LanguageSwitcher />
 
             {/* Profile Info */}
             <div className="dashboard-header-profile">

@@ -306,7 +306,7 @@ export default function DashboardTab({
           </div>
           <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.75)' }}>
             {isAdmin 
-              ? `Hệ thống có ${thongKeData.tongSoPhong || 0} phòng · ${thongKeData.soPhongDaThue || 0} đang thuê`
+              ? t('admin.system_rooms_summary', { total: thongKeData.tongSoPhong || 0, rented: thongKeData.soPhongDaThue || 0 })
               : t('landlord.manage_rooms_summary', { total: thongKeData.tongSoPhong || 0, rented: thongKeData.soPhongDaThue || 0 })}
           </div>
         </div>

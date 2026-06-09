@@ -132,6 +132,8 @@ export default function RoomTab({
               onChange={e => setTenPhong(e.target.value)}
               placeholder={t('landlord.room_name_ph')}
               required
+              onInvalid={e => e.target.setCustomValidity(t('common.validation_required'))}
+              onInput={e => e.target.setCustomValidity('')}
               disabled={isSubmitting}
             />
           </div>
@@ -145,6 +147,8 @@ export default function RoomTab({
               onChange={e => setGiaPhong(e.target.value)}
               placeholder={t('landlord.room_price_ph')}
               required
+              onInvalid={e => e.target.setCustomValidity(t('common.validation_required'))}
+              onInput={e => e.target.setCustomValidity('')}
               disabled={isSubmitting}
             />
           </div>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from '../LanguageSwitcher';
 
 function Header({ user, onLogout }) {
   const { t, i18n } = useTranslation();
@@ -14,12 +15,7 @@ function Header({ user, onLogout }) {
     USER: t('header.role_USER') 
   };
 
-  // Toggle between Vietnamese and English
-  const toggleLanguage = () => {
-    const newLang = i18n.language === 'vi' ? 'en' : 'vi';
-    i18n.changeLanguage(newLang);
-    localStorage.setItem('i18nextLng', newLang);
-  };
+  // Toggle between Vietnamese and English (Migrated to LanguageSwitcher)
 
   const firstLetter = (user?.username || 'G').charAt(0).toUpperCase();
 
@@ -36,13 +32,7 @@ function Header({ user, onLogout }) {
       {/* Action Buttons & User Info */}
       <div className="header__actions">
         {/* Language Switcher */}
-        <button
-          onClick={toggleLanguage}
-          className="btn btn--outline header__btn-lang"
-          title={i18n.language === 'vi' ? 'Switch to English' : 'Đổi sang Tiếng Việt'}
-        >
-          {i18n.language === 'vi' ? '🇺🇸 EN' : '🇻🇳 VI'}
-        </button>
+        <LanguageSwitcher />
 
         {/* User Profile Info with Avatar */}
         <div className="header__profile">
